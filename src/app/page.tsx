@@ -1,5 +1,12 @@
 import React from "react";
 import BrowseNavigation from "@/components/BrowseNavigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "The Watchman Reviews | Guarding Your Screen, Guiding Your Choices",
+  description:
+    "Guiding families and groups to make informed viewing choices. Get detailed content analysis of movies and TV shows, including themes, language, and values.",
+};
 
 async function getStrapiData(path: string) {
   const baseUrl = "http://localhost:1337";

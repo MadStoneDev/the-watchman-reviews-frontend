@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 
 import Logo from "@/components/logo";
@@ -17,8 +17,8 @@ export default function MainNavigation({
 }: {
   items?: NavigationItem[];
 }) {
+  // Hooks
   const pathname = usePathname();
-  console.log(pathname);
 
   return (
     <nav className={`p-10 min-w-[250px] bg-neutral-800`}>
@@ -27,11 +27,16 @@ export default function MainNavigation({
       <section className={`mt-20 flex flex-col gap-14`}>
         {items.map(({ icon, label, href }) => (
           <Link
+            key={href}
             href={href}
             className={`flex gap-7 max-w-fit ${
-              pathname === href
-                ? "text-lime-400"
-                : "text-neutral-500 hover:text-neutral-50"
+              href === "/"
+                ? pathname === href
+                  ? "text-lime-400"
+                  : "text-neutral-500 hover:text-neutral-50"
+                : pathname.includes(href)
+                  ? "text-lime-400"
+                  : "text-neutral-500 hover:text-neutral-50"
             } font-bold transition-all duration-300 ease-in-out`}
           >
             {icon}
