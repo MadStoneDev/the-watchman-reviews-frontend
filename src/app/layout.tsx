@@ -53,7 +53,11 @@ export default function RootLayout({
           ]}
         />
 
-        <main className={`flex-grow p-10`}>{children}</main>
+        <main
+          className={`flex-grow px-24 py-10 transition-all duration-300 ease-in-out`}
+        >
+          {children}
+        </main>
       </body>
     </html>
   );

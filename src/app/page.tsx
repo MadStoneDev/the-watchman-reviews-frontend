@@ -1,5 +1,5 @@
-import Link from "next/link";
 import React from "react";
+import BrowseNavigation from "@/components/BrowseNavigation";
 
 async function getStrapiData(path: string) {
   const baseUrl = "http://localhost:1337";
@@ -20,8 +20,23 @@ export default async function Home() {
 
   return (
     <>
-      <h1 className={`text-5xl font-bold`}>{title}</h1>
-      <p className={`mt-4 text-xl`}>{description}</p>
+      <BrowseNavigation
+        items={[
+          { label: "New", href: "/browse/new" },
+          { label: "Movies", href: "/browse/movies" },
+          { label: "Series", href: "/browse/series" },
+          { label: "Kids", href: "/browse/kids" },
+          // {label: "Popular", href: "/browse/popular"},
+          // {label: "Trending", href: "/browse/trending"},
+        ]}
+      />
+
+      <section className={`mt-20`}>
+        <h1 className={`max-w-60 text-4xl font-bold`}>{title}</h1>
+        <p className={`mt-6 max-w-64 text-base font-bold text-neutral-400`}>
+          {description}
+        </p>
+      </section>
     </>
   );
 }
