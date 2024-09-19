@@ -1,3 +1,6 @@
+import Link from "next/link";
+import React from "react";
+
 async function getStrapiData(path: string) {
   const baseUrl = "http://localhost:1337";
   try {
@@ -12,13 +15,13 @@ async function getStrapiData(path: string) {
 export default async function Home() {
   const strapiData = await getStrapiData("/api/home-page");
   console.log(strapiData);
-  
-  const {title, description} = strapiData.data.attributes;
-  
+
+  const { title, description } = strapiData.data.attributes;
+
   return (
-    <main className={`container mx-auto py-6`}>
+    <>
       <h1 className={`text-5xl font-bold`}>{title}</h1>
       <p className={`mt-4 text-xl`}>{description}</p>
-    </main>
+    </>
   );
 }

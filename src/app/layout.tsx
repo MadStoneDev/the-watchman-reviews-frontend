@@ -1,6 +1,18 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
+
+import React from "react";
+import type { Metadata } from "next";
+
+import Logo from "@/components/logo";
+import localFont from "next/font/local";
+
+import {
+  IconSearch,
+  IconHome,
+  IconLayout2,
+  IconChartBar,
+} from "@tabler/icons-react";
+import MainNavigation from "@/components/MainNavigation";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,9 +38,22 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col-reverse sm:flex-row min-h-screen bg-neutral-900 text-neutral-50`}
       >
-        {children}
+        <MainNavigation
+          items={[
+            { icon: <IconSearch />, label: "Search", href: "/search" },
+            { icon: <IconHome />, label: "Home", href: "/" },
+            { icon: <IconLayout2 />, label: "Browse", href: "/browse" },
+            {
+              icon: <IconChartBar />,
+              label: "Statistics",
+              href: "/statistics",
+            },
+          ]}
+        />
+
+        <main className={`flex-grow p-10`}>{children}</main>
       </body>
     </html>
   );

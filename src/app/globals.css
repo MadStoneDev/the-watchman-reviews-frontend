@@ -1,3 +1,5 @@
+@import url("https://use.typekit.net/lew0jru.css");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,7 +19,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Century Gothic", sans-serif;
 }
 
 @layer utilities {
