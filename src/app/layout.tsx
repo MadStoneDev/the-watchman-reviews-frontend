@@ -59,9 +59,9 @@ export default function RootLayout({
           <div className={`mt-16 md:mt-0 md:min-w-[250px] min-h-[120px]`}></div>
 
           <main
-            className={`flex-grow px-5 md:px-10 xl:px-24 pt-5 md:pt-10 transition-all duration-300 ease-in-out`}
+            className={`flex-grow px-5 md:px-10 xl:px-24 pt-5 md:pt-10 flex flex-col transition-all duration-300 ease-in-out`}
           >
-            {children}
+            <div className={`flex-grow`}>{children}</div>
 
             <MainFooter className={`hidden md:block`} />
           </main>

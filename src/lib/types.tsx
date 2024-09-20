@@ -1,4 +1,9 @@
-﻿export interface MediaItem {
+﻿export interface Genre {
+  id: number;
+  name: string;
+}
+
+export interface MediaItem {
   id: number;
   type: string;
   title: string;

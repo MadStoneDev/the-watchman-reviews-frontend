@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { MediaItem } from "@/lib/types";
+import { IconSearch } from "@tabler/icons-react";
 
 export default function SearchForm({
   onSearch,
@@ -81,7 +82,7 @@ export default function SearchForm({
   return (
     <>
       <section
-        className={`flex flex-col sm:flex-row gap-3 transition-all duration-300 ease-in-out`}
+        className={`flex flex-row gap-3 transition-all duration-300 ease-in-out`}
       >
         <Input
           type="search"
@@ -92,8 +93,14 @@ export default function SearchForm({
           onKeyUp={(e) => e.key === "Enter" && handleSearch()}
         />
 
-        <Button type="button" variant={"secondary"} onClick={handleSearch}>
-          Search
+        <Button
+          type="button"
+          variant={"secondary"}
+          onClick={handleSearch}
+          className={`flex items-center gap-1 bg-lime-400 hover:bg-lime-400 hover:scale-110 transition-all duration-300 ease-in-out`}
+        >
+          <IconSearch size={20} strokeWidth={1.5} />
+          <p className={`hidden sm:block`}>Search</p>
         </Button>
       </section>
     </>
