@@ -13,6 +13,7 @@ import {
 import MainNavigation from "@/components/main-navigation";
 import { ThemeProvider } from "@/components/theme-provider";
 import Logo from "@/components/logo";
+import MainFooter from "@/components/main-footer";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -54,10 +55,15 @@ export default function RootLayout({
             ]}
           />
 
+          {/* Spacing */}
+          <div className={`mt-16 md:mt-0 md:min-w-[250px] min-h-[120px]`}></div>
+
           <main
-            className={`flex-grow px-5 md:px-10 lg:px-24 pt-5 md:pt-10 pb-10 transition-all duration-300 ease-in-out`}
+            className={`flex-grow px-5 md:px-10 xl:px-24 pt-5 md:pt-10 transition-all duration-300 ease-in-out`}
           >
             {children}
+
+            <MainFooter className={`hidden md:block`} />
           </main>
 
           <section className={`block md:hidden p-5 origin-left scale-75`}>

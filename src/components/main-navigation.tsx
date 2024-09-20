@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import Logo from "@/components/logo";
 import { usePathname } from "next/navigation";
+import MainFooter from "@/components/main-footer";
 
 interface NavigationItem {
   icon: React.JSX.Element;
@@ -21,7 +22,9 @@ export default function MainNavigation({
   const pathname = usePathname();
 
   return (
-    <nav className={`px-10 py-5 md:p-10 min-w-[250px] bg-neutral-800`}>
+    <nav
+      className={`fixed md:top-0 bottom-0 left-0 right-0 md:right-auto px-10 py-5 md:p-10 min-h-[70px] md:min-h-auto md:min-w-[250px] bg-neutral-800`}
+    >
       <Logo className={`hidden md:block`} />
 
       <section
@@ -46,6 +49,7 @@ export default function MainNavigation({
           </Link>
         ))}
       </section>
+      <MainFooter className={`block md:hidden`} />
     </nav>
   );
 }
