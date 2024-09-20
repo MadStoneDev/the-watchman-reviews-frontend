@@ -7,12 +7,6 @@ export default function Logo(props: any) {
       xmlSpace="preserve"
       width={138}
       height={44}
-      style={{
-        fillRule: "evenodd",
-        clipRule: "evenodd",
-        strokeLinejoin: "round",
-        strokeMiterlimit: 2,
-      }}
       {...props}
     >
       <path

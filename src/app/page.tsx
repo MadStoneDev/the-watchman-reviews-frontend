@@ -42,7 +42,9 @@ export default async function Home() {
       <section
         className={`mt-14 lg:mt-20 transition-all duration-300 ease-in-out`}
       >
-        <h1 className={`max-w-60 text-4xl font-bold`}>What to Watch Next?</h1>
+        <h1 className={`max-w-60 text-2xl sm:3xl md:text-4xl font-bold`}>
+          What to Watch Next?
+        </h1>
         <p className={`mt-6 max-w-64 text-base font-bold text-neutral-400`}>
           Browse through our reviews on popular movies and TV shows
         </p>

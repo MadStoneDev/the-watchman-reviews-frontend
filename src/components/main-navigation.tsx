@@ -21,12 +21,10 @@ export default function MainNavigation({
   const pathname = usePathname();
 
   return (
-    <nav className={`p-10 min-w-[250px] bg-neutral-800`}>
+    <nav className={`px-10 py-5 md:p-10 min-w-[250px] bg-neutral-800`}>
       <Logo className={`hidden md:block`} />
 
-      <section
-        className={`md:mt-20 flex md:flex-col justify-center sm:justify-evenly gap-14`}
-      >
+      <section className={`md:mt-20 flex md:flex-col justify-between`}>
         {items.map(({ icon, label, href }) => (
           <Link
             key={href}

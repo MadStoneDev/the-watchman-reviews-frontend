@@ -53,7 +53,7 @@ export default function BrowseNavigation({
 
   return (
     <section
-      className={`relative flex gap-10 transition-all duration-300 ease-in-out`}
+      className={`relative flex gap-5 md:gap-10 transition-all duration-300 ease-in-out`}
     >
       {items.map(({ label, href }, index) => (
         <Link
@@ -64,11 +64,11 @@ export default function BrowseNavigation({
             }
           }}
           href={href}
-          className={`px-4 py-2 flex max-w-fit ${
+          className={`px-2 md:px-4 py-2 flex max-w-fit ${
             pathname === href
               ? "text-neutral-900"
               : "text-neutral-500 hover:text-lime-400"
-          } font-bold transition-all duration-300 ease-in-out z-50`}
+          } text-sm md:text-base font-bold transition-all duration-300 ease-in-out z-50`}
         >
           <span>{label}</span>
         </Link>
