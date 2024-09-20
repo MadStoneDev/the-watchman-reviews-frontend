@@ -1,6 +1,7 @@
 import React from "react";
-import BrowseNavigation from "@/components/BrowseNavigation";
 import type { Metadata } from "next";
+
+import BrowseNavigation from "@/components/browse-navigation";
 
 export const metadata: Metadata = {
   title: "The Watchman Reviews | Guarding Your Screen, Guiding Your Choices",
@@ -38,7 +39,9 @@ export default async function Home() {
         ]}
       />
 
-      <section className={`mt-20`}>
+      <section
+        className={`mt-14 lg:mt-20 transition-all duration-300 ease-in-out`}
+      >
         <h1 className={`max-w-60 text-4xl font-bold`}>What to Watch Next?</h1>
         <p className={`mt-6 max-w-64 text-base font-bold text-neutral-400`}>
           Browse through our reviews on popular movies and TV shows

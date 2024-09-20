@@ -1,5 +1,6 @@
 ﻿import React from "react";
-import BrowseNavigation from "@/components/BrowseNavigation";
+
+import BrowseNavigation from "@/components/browse-navigation";
 
 export default function BrowseLayout({
   children,

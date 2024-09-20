@@ -22,9 +22,11 @@ export default function MainNavigation({
 
   return (
     <nav className={`p-10 min-w-[250px] bg-neutral-800`}>
-      <Logo />
+      <Logo className={`hidden md:block`} />
 
-      <section className={`mt-20 flex flex-col gap-14`}>
+      <section
+        className={`md:mt-20 flex md:flex-col justify-center sm:justify-evenly gap-14`}
+      >
         {items.map(({ icon, label, href }) => (
           <Link
             key={href}
@@ -40,7 +42,7 @@ export default function MainNavigation({
             } font-bold transition-all duration-300 ease-in-out`}
           >
             {icon}
-            <span>{label}</span>
+            <span className={`hidden md:block`}>{label}</span>
           </Link>
         ))}
       </section>

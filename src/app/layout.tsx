@@ -1,9 +1,6 @@
 import "./globals.css";
 
 import React from "react";
-import type { Metadata } from "next";
-
-import Logo from "@/components/logo";
 import localFont from "next/font/local";
 
 import {
@@ -12,7 +9,8 @@ import {
   IconLayout2,
   IconChartBar,
 } from "@tabler/icons-react";
-import MainNavigation from "@/components/MainNavigation";
+
+import MainNavigation from "@/components/main-navigation";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = localFont({
@@ -34,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col-reverse sm:flex-row min-h-screen bg-neutral-900 text-neutral-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col-reverse md:flex-row min-h-screen bg-neutral-900 text-neutral-50`}
       >
         <ThemeProvider
           attribute="class"
@@ -56,7 +54,7 @@ export default function RootLayout({
           />
 
           <main
-            className={`flex-grow px-24 py-10 transition-all duration-300 ease-in-out`}
+            className={`flex-grow px-10 lg:px-24 py-10 transition-all duration-300 ease-in-out`}
           >
             {children}
           </main>

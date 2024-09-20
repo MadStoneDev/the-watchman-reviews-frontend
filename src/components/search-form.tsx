@@ -72,7 +72,7 @@ export default function SearchForm({
       setTimeout(() => {
         onSearch(searchResults);
         onLoading?.(false);
-      }, 1000);
+      }, 1500);
     } catch (error) {
       console.error(`Error fetching search results: ${error}`);
     }
@@ -80,7 +80,9 @@ export default function SearchForm({
 
   return (
     <>
-      <section className={`flex gap-3 transition-all duration-300 ease-in-out`}>
+      <section
+        className={`flex flex-col sm:flex-row gap-3 transition-all duration-300 ease-in-out`}
+      >
         <Input
           type="search"
           placeholder="Search"

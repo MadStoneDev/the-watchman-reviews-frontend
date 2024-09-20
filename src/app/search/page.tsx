@@ -1,11 +1,14 @@
 ﻿"use client";
 
 import React, { useEffect, useState } from "react";
-import SearchForm from "@/components/SearchForm";
+
 import axios from "axios";
-import { MediaItem } from "@/lib/types";
-import { IconStarFilled } from "@tabler/icons-react";
+import SearchForm from "@/components/search-form";
+
 import { Popcorn } from "lucide-react";
+import { IconStarFilled } from "@tabler/icons-react";
+
+import { MediaItem } from "@/lib/types";
 
 interface Genre {
   id: number;
@@ -62,7 +65,9 @@ export default function SearchPage() {
 
   return (
     <>
-      <section className={`mt-20 mb-10 flex flex-col gap-5`}>
+      <section
+        className={`mt-14 lg:mt-20 mb-10 flex flex-col gap-5 transition-all duration-300 ease-in-out`}
+      >
         <h1 className={`max-w-60 text-4xl font-bold`}>Search</h1>
         <SearchForm onSearch={handleSearch} onLoading={setLoading} />
       </section>
@@ -74,7 +79,9 @@ export default function SearchPage() {
       )}
 
       {!loading && data.length > 0 && (
-        <section className={`grid grid-cols-5 2xl:grid-cols-7 gap-5`}>
+        <section
+          className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5`}
+        >
           {data.map((item: any) => (
             <MediaBlock
               key={item.id}
@@ -101,8 +108,43 @@ const MediaBlock = ({
   seriesGenres = [],
 }: MediaItemProps) => {
   if (!data.title || !data.releaseDate) return null;
-
   const cleanRating = Math.floor(data.rating / 2);
+
+  // const breakpoints = {
+  //   sm: 640,
+  //   md: 768,
+  //   lg: 1024,
+  //   xl: 1280,
+  //   "2xl": 1536,
+  // };
+  //
+  // const imageSizes = {
+  //   poster: ["w92", "w154", "w185", "w342", "w500", "w780", "original"],
+  //   backdrop: ["w300", "w780", "w1280", "original"],
+  // };
+
+  // States
+  // const [posterSize, setPosterSize] = useState(imageSizes.poster[4]);
+
+  // Effects
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     const width = window.innerWidth;
+  //     if (width < breakpoints.sm) {
+  //       setPosterSize(imageSizes.poster[3]);
+  //     } else if (width < breakpoints.md) {
+  //       setPosterSize(imageSizes.poster[3]);
+  //     } else if (width < breakpoints.lg) {
+  //       setPosterSize(imageSizes.poster[3]);
+  //     } else {
+  //       setPosterSize(imageSizes.poster[3]);
+  //     }
+  //   };
+  //
+  //   handleResize();
+  //   window.addEventListener("resize", handleResize);
+  //   return () => window.removeEventListener("resize", handleResize);
+  // }, []);
 
   return (
     <article
@@ -115,7 +157,7 @@ const MediaBlock = ({
           <img
             className={`w-full h-full bg-black object-top object-cover`}
             style={{ aspectRatio: "1/1" }}
-            src={`https://image.tmdb.org/t/p/w500${data.poster}`}
+            src={`https://image.tmdb.org/t/p/w342${data.poster}`}
             alt={`${data.title} Poster`}
             onClick={() => console.log(data)}
           ></img>
