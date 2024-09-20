@@ -20,10 +20,10 @@ async function getStrapiData(path: string) {
 }
 
 export default async function Home() {
-  const strapiData = await getStrapiData("/api/home-page");
-  console.log(strapiData);
-
-  const { title, description } = strapiData.data.attributes;
+  // const strapiData = await getStrapiData("/api/home-page");
+  // console.log(strapiData);
+  //
+  // const { title, description } = strapiData.data.attributes;
 
   return (
     <>
@@ -39,9 +39,9 @@ export default async function Home() {
       />
 
       <section className={`mt-20`}>
-        <h1 className={`max-w-60 text-4xl font-bold`}>{title}</h1>
+        <h1 className={`max-w-60 text-4xl font-bold`}>What to Watch Next?</h1>
         <p className={`mt-6 max-w-64 text-base font-bold text-neutral-400`}>
-          {description}
+          Browse through our reviews on popular movies and TV shows
         </p>
       </section>
     </>
