@@ -24,7 +24,9 @@ export default function MainNavigation({
     <nav className={`px-10 py-5 md:p-10 min-w-[250px] bg-neutral-800`}>
       <Logo className={`hidden md:block`} />
 
-      <section className={`md:mt-20 flex md:flex-col justify-between`}>
+      <section
+        className={`md:mt-20 flex md:flex-col justify-between md:gap-14`}
+      >
         {items.map(({ icon, label, href }) => (
           <Link
             key={href}
