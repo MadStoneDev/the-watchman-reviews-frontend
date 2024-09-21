@@ -63,7 +63,7 @@ export default function RootLayout({
           >
             <div className={`flex-grow`}>{children}</div>
 
-            <MainFooter className={`hidden md:block`} />
+            <MainFooter className={`hidden md:flex`} />
           </main>
 
           <section className={`block md:hidden p-5 origin-left scale-75`}>

@@ -23,7 +23,7 @@ export default function MainNavigation({
 
   return (
     <nav
-      className={`fixed md:top-0 bottom-0 left-0 right-0 md:right-auto px-10 py-5 md:p-10 min-h-[70px] md:min-h-auto md:min-w-[250px] bg-neutral-800 z-50`}
+      className={`fixed md:top-0 bottom-0 left-0 right-0 md:right-auto px-10 pb-2 pt-5 md:p-10 min-h-[70px] md:min-h-auto md:min-w-[250px] bg-neutral-800 z-50`}
     >
       <Logo className={`hidden md:block`} />
 
@@ -49,7 +49,7 @@ export default function MainNavigation({
           </Link>
         ))}
       </section>
-      <MainFooter className={`block md:hidden`} />
+      <MainFooter className={`flex md:hidden`} />
     </nav>
   );
 }
