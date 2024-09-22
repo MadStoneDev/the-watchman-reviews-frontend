@@ -23,13 +23,13 @@ export default function MainFooter({ className }: { className?: string }) {
           Blog
         </Link>
         <Link
-          href={`/privacy`}
+          href={`/privacy-policy`}
           className={`hover:text-lime-400 transition-all duration-300 ease-in-out`}
         >
           Privacy
         </Link>
         <Link
-          href={`/terms`}
+          href={`/terms-of-use`}
           className={`hover:text-lime-400 transition-all duration-300 ease-in-out`}
         >
           Terms

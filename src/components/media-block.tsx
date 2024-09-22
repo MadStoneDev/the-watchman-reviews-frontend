@@ -11,15 +11,24 @@ interface MediaItemProps {
   data: any;
   movieGenres: Genre[];
   seriesGenres: Genre[];
+  admin?: boolean;
 }
 
 export default function MediaBlock({
   data = {},
   movieGenres = [],
   seriesGenres = [],
+  admin = false,
 }: MediaItemProps) {
   if (!data.title || !data.releaseDate) return null;
   const cleanRating = Math.floor(data.rating / 2);
+
+  // Functions
+  const getYearFromDate = (date: string) => {
+    const timestamp = Date.parse(date);
+    if (isNaN(timestamp)) return "";
+    return new Date(timestamp).getFullYear();
+  };
 
   // const breakpoints = {
   //   sm: 640,
@@ -58,18 +67,27 @@ export default function MediaBlock({
   // }, []);
 
   return (
-    <Link
-      className={`cursor-pointer p-3 pb-5 flex flex-col justify-between gap-4 bg-black rounded-3xl hover:scale-105 transition-all duration-300 ease-in-out`}
-      href={`/media/${data.type === "movie" ? "m" : "s"}${data.id}`}
+    <article
+      className={`p-3 pb-5 flex ${
+        admin ? "flex-row" : "flex-col"
+      } justify-between gap-4 bg-black rounded-3xl transition-all duration-300 ease-in-out`}
     >
       <div
-        className={`grid place-items-center w-full aspect-square bg-neutral-800 rounded-xl overflow-hidden`}
+        className={`group place-items-center ${
+          admin
+            ? "w-[125px] min-w-[125px] hover:w-1/2 hover:min-w-1/2 h-[190px]"
+            : "w-full aspect-square"
+        } bg-neutral-800 rounded-xl overflow-hidden transition-all duration-300 ease-in-out`}
       >
         {data.poster ? (
           <img
-            className={`w-full h-full bg-black object-top object-cover`}
+            className={`w-full h-full bg-black ${
+              admin ? "object-center" : "object-top"
+            } object-cover`}
             style={{ aspectRatio: "1/1" }}
-            src={`https://image.tmdb.org/t/p/w342${data.poster}`}
+            src={`https://image.tmdb.org/t/p/${admin ? "w500" : "w342"}${
+              data.poster
+            }`}
             alt={`${data.title} Poster`}
           ></img>
         ) : (
@@ -77,36 +95,79 @@ export default function MediaBlock({
         )}
       </div>
 
-      <div className={`flex-grow w-full`}>
-        <h3 className={`text-neutral-50 whitespace-nowrap truncate`}>
-          {data.title}
-        </h3>
-        <h4 className={`text-sm text-neutral-500`}>
-          {data.genres &&
-            data.genres
-              .map((genre: number) => {
-                if (data.type === "movie")
-                  return movieGenres.find((g) => g.id === genre)?.name;
-                else return seriesGenres.find((g) => g.id === genre)?.name;
-              })
-              .join(", ")}
-        </h4>
-      </div>
-
-      <div
-        className={`flex items-center`}
-        title={`User Rating: ${data.rating / 2} / 5`}
-      >
-        {Array.from({ length: 5 }, (_, index) => (
-          <IconStarFilled
-            key={`${data.id}-${index}`}
-            size={15}
-            className={`${
-              index <= cleanRating ? "text-lime-400" : "text-neutral-50"
+      <section className={`flex-grow flex flex-col gap-2`}>
+        <div className={`flex-grow w-full`}>
+          <h3
+            className={`text-neutral-50 ${
+              admin ? "" : "whitespace-nowrap truncate"
             }`}
-          />
-        ))}
-      </div>
-    </Link>
+          >
+            {data.title}
+          </h3>
+          <h4 className={`text-sm text-neutral-500`}>
+            {data.genres &&
+              data.genres
+                .map((genre: number) => {
+                  if (data.type === "movie")
+                    return movieGenres.find((g) => g.id === genre)?.name;
+                  else return seriesGenres.find((g) => g.id === genre)?.name;
+                })
+                .join(", ")}
+          </h4>
+        </div>
+
+        {admin ? (
+          <div className={`flex flex-col justify-center gap-4 text-sm`}>
+            <p
+              className={`flex items-center justify-between font-bold uppercase text-neutral-50`}
+            >
+              Date:{" "}
+              <span
+                className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal lowercase text-neutral-950`}
+              >
+                {getYearFromDate(data.releaseDate)}
+              </span>
+            </p>
+
+            <p
+              className={`flex items-center justify-between font-bold uppercase text-neutral-50`}
+            >
+              Id:{" "}
+              <span
+                className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal text-neutral-950`}
+              >
+                {data.id}
+              </span>
+            </p>
+
+            <p
+              className={`flex items-center justify-between font-bold uppercase text-neutral-50`}
+            >
+              Type:{" "}
+              <span
+                className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal lowercase text-neutral-950`}
+              >
+                {data.type}
+              </span>
+            </p>
+          </div>
+        ) : (
+          <div
+            className={`flex items-center`}
+            title={`User Rating: ${data.rating / 2} / 5`}
+          >
+            {Array.from({ length: 5 }, (_, index) => (
+              <IconStarFilled
+                key={`${data.id}-${index}`}
+                size={15}
+                className={`${
+                  index <= cleanRating ? "text-lime-400" : "text-neutral-50"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+    </article>
   );
 }

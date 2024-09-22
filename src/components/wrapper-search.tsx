@@ -9,7 +9,7 @@ import { Genre, MediaItem } from "@/lib/types";
 import SearchForm from "@/components/search-form";
 import MediaBlock from "@/components/media-block";
 
-export default function SearchWrapper() {
+export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
   // States
   const [data, setData] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,19 +54,16 @@ export default function SearchWrapper() {
   }, []);
 
   const handleSearch = (results: MediaItem[]) => {
-    setData(results);
+    const sortedResults = results.sort((a, b) =>
+      a.releaseDate > b.releaseDate ? -1 : 1,
+    );
+
+    setData(sortedResults);
   };
 
   return (
     <>
-      <section
-        className={`mt-0 md:mt-14 lg:mt-20 mb-10 flex flex-col gap-5 transition-all duration-300 ease-in-out`}
-      >
-        <h1 className={`max-w-60 text-2xl sm:3xl md:text-4xl font-bold`}>
-          Search
-        </h1>
-        <SearchForm onSearch={handleSearch} onLoading={setLoading} />
-      </section>
+      <SearchForm onSearch={handleSearch} onLoading={setLoading} />
 
       {loading && (
         <section className={`grid place-items-center min-h-[200px]`}>
@@ -76,7 +73,12 @@ export default function SearchWrapper() {
 
       {!loading && data.length > 0 && (
         <section
-          className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5`}
+          className={`grid ${
+            admin
+              ? "grid-cols-1"
+              : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" +
+                " 2xl:grid-cols-6"
+          } gap-5`}
         >
           {data.map((item: any) => (
             <MediaBlock
@@ -84,6 +86,7 @@ export default function SearchWrapper() {
               data={item}
               movieGenres={movieGenres}
               seriesGenres={seriesGenres}
+              admin={admin}
             />
           ))}
         </section>
