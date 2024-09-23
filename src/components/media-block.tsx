@@ -118,7 +118,12 @@ export default function MediaBlock({
             style={{ aspectRatio: "1/1" }}
           ></Image>
         ) : (
-          <Popcorn className={``} />
+          <div
+            className={`flex flex-col items-center justify-center gap-2 text-neutral-400`}
+          >
+            <Popcorn />
+            <p className={`text-xs`}>No image found</p>
+          </div>
         )}
       </div>
 
