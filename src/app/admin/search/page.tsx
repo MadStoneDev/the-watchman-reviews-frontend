@@ -1,6 +1,7 @@
 ﻿import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import SearchWrapper from "@/components/wrapper-search";
+import SearchSkeletonBoundary from "@/components/search-skeleton-boundary";
 
 export const metadata: Metadata = {
   title: "Admin Search - The Watchman Reviews",
@@ -17,7 +18,7 @@ export default function AdminSearchPage() {
           Admin Search
         </h1>
 
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<SearchSkeletonBoundary />}>
           <SearchWrapper admin={true} />
         </Suspense>
       </section>

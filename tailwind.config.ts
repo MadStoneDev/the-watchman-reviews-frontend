@@ -67,9 +67,20 @@ const config: Config = {
             animationTimingFunction: "cubic-bezier(0, 0, 0.2, 1)",
           },
         },
+        skeleton: {
+          "0%, 100%": {
+            opacity: "1",
+            animationTimingFunction: "cubic-bezier(0.4, 0, 0.6, 1)",
+          },
+          "50%": {
+            opacity: "0",
+            animationTimingFunction: "cubic-bezier(0.4, 0, 0.6, 1)",
+          },
+        },
       },
       animation: {
         bouncing: `bouncing 1s infinite`,
+        skeleton: `skeleton 2s infinite`,
       },
     },
   },

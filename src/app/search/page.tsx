@@ -1,6 +1,8 @@
 ﻿import type { Metadata } from "next";
 import SearchWrapper from "@/components/wrapper-search";
 import React, { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import SearchSkeletonBoundary from "@/components/search-skeleton-boundary";
 
 export const metadata: Metadata = {
   title: "Search - The Watchman Reviews",
@@ -18,7 +20,7 @@ export default function SearchPage() {
           Search
         </h1>
 
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<SearchSkeletonBoundary />}>
           <SearchWrapper />
         </Suspense>
       </section>
