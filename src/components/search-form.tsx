@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,18 @@ import { IconSearch } from "@tabler/icons-react";
 export default function SearchForm({
   onSearch,
   onLoading,
+  setMessage,
+  setAnimateMessage,
 }: {
   onSearch: (results: MediaItem[]) => void;
   onLoading?: (loading: boolean) => void;
+  setMessage: (message: string) => void;
+  setAnimateMessage: (animateMessage: boolean) => void;
 }) {
+  // Hooks
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   // States
   const [search, setSearch] = useState("");
 
@@ -30,16 +39,18 @@ export default function SearchForm({
     return encodeURIComponent(cleaned);
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (searchString: string) => {
     onSearch?.([]);
-    if (search.length < 3) return;
+    if (searchString.length < 3) return;
     onLoading?.(true);
+    setMessage("Searching...");
+    setAnimateMessage(true);
 
     const options = {
       method: "GET",
       url: `https://api.themoviedb.org/3/search/multi`,
       params: {
-        query: cleanSearchTerm(search),
+        query: cleanSearchTerm(searchString),
         include_adult: false,
         language: `en-US`,
         page: 1,
@@ -70,14 +81,31 @@ export default function SearchForm({
           releaseDate: item.release_date || item.first_air_date,
         }));
 
+      router.push(`/search?q=${encodeURIComponent(searchString)}`);
+
       setTimeout(() => {
         onSearch(searchResults);
         onLoading?.(false);
+
+        if (searchResults.length === 0) {
+          setMessage("No results found...try something else?");
+          setAnimateMessage(false);
+        } else {
+          setMessage("");
+        }
       }, 1500);
     } catch (error) {
       console.error(`Error fetching search results: ${error}`);
     }
   };
+
+  // Hooks
+  useEffect(() => {
+    if (searchParams.has("q")) {
+      setSearch(searchParams.get("q") as string);
+      handleSearch(searchParams.get("q") as string);
+    }
+  }, []);
 
   return (
     <>
@@ -90,13 +118,13 @@ export default function SearchForm({
           className={`outline-none ring-none border-none bg-neutral-800 hover:bg-neutral-600 focus:bg-neutral-600 transition-all duration-300 ease-in-out`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onKeyUp={(e) => e.key === "Enter" && handleSearch()}
+          onKeyUp={(e) => e.key === "Enter" && handleSearch(search)}
         />
 
         <Button
           type="button"
           variant={"secondary"}
-          onClick={handleSearch}
+          onClick={() => handleSearch(search)}
           className={`flex items-center gap-1 bg-lime-400 hover:bg-lime-400 hover:scale-110 transition-all duration-300 ease-in-out`}
         >
           <IconSearch size={20} strokeWidth={1.5} />

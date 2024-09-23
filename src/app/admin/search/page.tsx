@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import SearchWrapper from "@/components/wrapper-search";
 
@@ -16,7 +16,10 @@ export default function AdminSearchPage() {
         <h1 className={`text-2xl sm:3xl md:text-4xl font-bold`}>
           Admin Search
         </h1>
-        <SearchWrapper admin={true} />
+
+        <Suspense fallback={<div>Loading...</div>}>
+          <SearchWrapper admin={true} />
+        </Suspense>
       </section>
     </>
   );

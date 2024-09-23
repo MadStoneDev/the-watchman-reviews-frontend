@@ -19,8 +19,6 @@ interface FullMediaItem {
 }
 
 export default function SingleMediaWrapper({ data }: { data: FullMediaItem }) {
-  console.log(data);
-
   const breakpoints = {
     sm: 640,
     md: 768,

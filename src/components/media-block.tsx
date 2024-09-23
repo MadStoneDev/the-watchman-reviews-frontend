@@ -1,11 +1,10 @@
-﻿import React from "react";
+﻿import Image from "next/image";
+import React, { useMemo, useEffect, useState } from "react";
 
 import { Popcorn } from "lucide-react";
 import { IconStarFilled } from "@tabler/icons-react";
 
 import { Genre } from "@/lib/types";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface MediaItemProps {
   data: any;
@@ -23,12 +22,22 @@ export default function MediaBlock({
   if (!data.title || !data.releaseDate) return null;
   const cleanRating = Math.floor(data.rating / 2);
 
+  const randomDelay = useMemo(() => Math.floor(Math.random() * 1000), []);
+
+  // States
+  const [loadingImage, setLoadingImage] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
   // Functions
   const getYearFromDate = (date: string) => {
     const timestamp = Date.parse(date);
     if (isNaN(timestamp)) return "";
     return new Date(timestamp).getFullYear();
   };
+
+  useEffect(() => {
+    if (!data.poster) setLoadingImage(false);
+  }, [data.poster]);
 
   // const breakpoints = {
   //   sm: 640,
@@ -73,23 +82,41 @@ export default function MediaBlock({
       } justify-between gap-4 bg-black rounded-3xl transition-all duration-300 ease-in-out`}
     >
       <div
-        className={`group place-items-center ${
+        className={`group grid place-items-center ${
           admin
             ? "w-[125px] min-w-[125px] hover:w-1/2 hover:min-w-1/2 h-[190px]"
             : "w-full aspect-square"
         } bg-neutral-800 rounded-xl overflow-hidden transition-all duration-300 ease-in-out`}
       >
+        {loadingImage && (
+          <Popcorn
+            className={`absolute text-neutral-500 animate-bouncing`}
+            style={{
+              animationDelay: `${randomDelay}ms`,
+            }}
+          />
+        )}
+
         {data.poster ? (
-          <img
-            className={`w-full h-full bg-black ${
-              admin ? "object-center" : "object-top"
-            } object-cover`}
-            style={{ aspectRatio: "1/1" }}
+          <Image
             src={`https://image.tmdb.org/t/p/${admin ? "w500" : "w342"}${
               data.poster
             }`}
             alt={`${data.title} Poster`}
-          ></img>
+            width={admin ? 500 : 342}
+            height={admin ? 190 : 342}
+            onLoad={() => setLoadingImage(false)}
+            onError={() => {
+              setLoadingImage(false);
+              setImageError(true);
+            }}
+            className={`${
+              loadingImage ? "opacity-0" : "opacity-100"
+            } w-full h-full bg-black ${
+              admin ? "object-center" : "object-top"
+            } object-cover`}
+            style={{ aspectRatio: "1/1" }}
+          ></Image>
         ) : (
           <Popcorn className={``} />
         )}

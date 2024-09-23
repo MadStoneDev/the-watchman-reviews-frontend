@@ -1,6 +1,6 @@
 ﻿import type { Metadata } from "next";
 import SearchWrapper from "@/components/wrapper-search";
-import React from "react";
+import React, { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Search - The Watchman Reviews",
@@ -17,7 +17,10 @@ export default function SearchPage() {
         <h1 className={`max-w-60 text-2xl sm:3xl md:text-4xl font-bold`}>
           Search
         </h1>
-        <SearchWrapper />
+
+        <Suspense fallback={<div>Loading...</div>}>
+          <SearchWrapper />
+        </Suspense>
       </section>
     </>
   );

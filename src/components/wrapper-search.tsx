@@ -13,6 +13,8 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
   // States
   const [data, setData] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("Start Searching!");
+  const [animateMessage, setAnimateMessage] = useState(false);
 
   const [movieGenres, setMovieGenres] = useState<Genre[]>([]);
   const [seriesGenres, setSeriesGenres] = useState<Genre[]>([]);
@@ -63,11 +65,21 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
 
   return (
     <>
-      <SearchForm onSearch={handleSearch} onLoading={setLoading} />
+      <SearchForm
+        onSearch={handleSearch}
+        onLoading={setLoading}
+        setMessage={setMessage}
+        setAnimateMessage={setAnimateMessage}
+      />
 
-      {loading && (
-        <section className={`grid place-items-center min-h-[200px]`}>
-          <Popcorn size={40} strokeWidth={1.5} className={`animate-pulse`} />
+      {message && (
+        <section
+          className={`flex flex-col gap-3 justify-center items-center min-h-[200px] ${
+            animateMessage ? "animate-pulse" : ""
+          }`}
+        >
+          <Popcorn size={40} strokeWidth={1.5} />
+          <p className={`text-neutral-50 text-sm italic`}>{message}</p>
         </section>
       )}
 
