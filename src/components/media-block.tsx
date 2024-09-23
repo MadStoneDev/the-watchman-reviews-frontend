@@ -2,7 +2,16 @@
 import React, { useMemo, useEffect, useState } from "react";
 
 import { Popcorn } from "lucide-react";
-import { IconStarFilled } from "@tabler/icons-react";
+import {
+  IconBed,
+  IconFlame,
+  IconGhost2,
+  IconGhost2Filled,
+  IconStarFilled,
+  IconSwords,
+  IconTank,
+  IconUsers,
+} from "@tabler/icons-react";
 
 import { Genre } from "@/lib/types";
 
@@ -27,6 +36,7 @@ export default function MediaBlock({
   // States
   const [loadingImage, setLoadingImage] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Functions
   const getYearFromDate = (date: string) => {
@@ -185,21 +195,85 @@ export default function MediaBlock({
           </div>
         ) : (
           <div
-            className={`flex items-center`}
+            className={`flex items-center gap-1`}
             title={`User Rating: ${data.rating / 2} / 5`}
           >
             {Array.from({ length: 5 }, (_, index) => (
               <IconStarFilled
                 key={`${data.id}-${index}`}
-                size={15}
+                size={13}
                 className={`${
-                  index <= cleanRating ? "text-lime-400" : "text-neutral-50"
+                  index <= cleanRating ? "text-lime-400" : "text-neutral-600"
                 }`}
               />
             ))}
           </div>
         )}
+
+        <section
+          className={`mt-3 pt-2 flex flex-col gap-2 border-t border-neutral-800`}
+        >
+          <h4 className={`text-sm font-bold text-neutral-300`}>Stats:</h4>
+          <div
+            className={`flex flex-row flex-wrap items-center justify-evenly gap-1 text-neutral-300`}
+          >
+            <StatBlock
+              title={"Horror"}
+              value={20}
+              colour={"border-neutral-700"}
+            />
+            <StatBlock
+              title={"Violence"}
+              value={60}
+              colour={"border-violet-700"}
+            />
+            <StatBlock title={"Nudity"} value={80} colour={"border-pink-500"} />
+            <StatBlock
+              title={"Sexual Content"}
+              value={100}
+              colour={"border-rose-600"}
+            />
+            <StatBlock
+              title={"Age Rating"}
+              value={0}
+              colour={"border-lime-600"}
+            />
+          </div>
+        </section>
       </section>
     </article>
   );
 }
+
+const StatBlock = ({
+  title,
+  value,
+  colour,
+}: {
+  title: string;
+  value: number;
+  colour?: string;
+}) => {
+  const baseHeight = 100 - value;
+  const finalHeight = baseHeight === 0 ? `0px` : `${baseHeight}% + 6px`;
+
+  return (
+    <article
+      className={`relative box-border w-8 h-8 flex items-center justify-center border-[3px] ${
+        colour ? colour : "border-lime-600"
+      } rounded-full`}
+      title={`${title}: ${value}%`}
+    >
+      <IconUsers size={16} className={`z-30`} />
+      <div
+        className={`absolute -top-[3px] -left-[3px] -right-[3px] ${
+          value === 100 ? "opacity-0" : "opacity-100"
+        }`}
+        style={{
+          height: `calc(${100 - value}% + 6px)`,
+          background: "linear-gradient(to bottom, black 80%, transparent 100%)",
+        }}
+      ></div>
+    </article>
+  );
+};
