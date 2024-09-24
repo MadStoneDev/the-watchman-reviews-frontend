@@ -76,21 +76,26 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
         <section
           className={`flex flex-col gap-3 justify-center items-center min-h-[200px] ${
             animateMessage ? "animate-pulse" : ""
-          }`}
+          } text-neutral-200`}
         >
           <Popcorn size={40} strokeWidth={1.5} />
-          <p className={`text-neutral-50 text-sm italic`}>{message}</p>
+          <p className={`text-sm italic`}>{message}</p>
         </section>
       )}
 
       {!loading && data.length > 0 && (
         <section
+          // className={`grid ${
+          //   admin
+          //     ? "grid-cols-1"
+          //     : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" +
+          //       " 2xl:grid-cols-6"
+          // } gap-5`}
           className={`grid ${
             admin
               ? "grid-cols-1"
-              : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" +
-                " 2xl:grid-cols-6"
-          } gap-5`}
+              : "grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+          } gap-x-5 gap-y-5 transition-all duration-300 ease-in-out`}
         >
           {data.map((item: any) => (
             <MediaBlock

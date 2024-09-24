@@ -116,7 +116,7 @@ export default function SingleMediaWrapper({ data }: { data: FullMediaItem }) {
           </p>
         </article>
 
-        <article className={`bg-neutral-50 p-6 rounded-3xl`}></article>
+        <article className={`bg-neutral-200 p-6 rounded-3xl`}></article>
       </section>
     </>
   );

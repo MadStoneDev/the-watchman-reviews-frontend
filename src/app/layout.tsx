@@ -15,15 +15,10 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Logo from "@/components/logo";
 import MainFooter from "@/components/main-footer";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const montserrat = localFont({
+  src: "./fonts/Montserrat.ttf",
+  variable: "--font-montserrat",
+  weight: "400 600 700",
 });
 
 export default function RootLayout({
@@ -34,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col-reverse md:flex-row min-h-dvh bg-neutral-900 text-neutral-50`}
+        className={`${montserrat.variable} antialiased flex flex-col-reverse md:flex-row min-h-dvh bg-neutral-900 text-neutral-50`}
       >
         <ThemeProvider
           attribute="class"
@@ -59,11 +54,11 @@ export default function RootLayout({
           <div className={`mt-16 md:mt-0 md:min-w-[250px] min-h-[120px]`}></div>
 
           <main
-            className={`flex-grow px-5 md:px-10 xl:px-24 pt-5 md:pt-10 flex flex-col transition-all duration-300 ease-in-out`}
+            className={`px-5 md:px-10 xl:px-24 pt-5 md:pt-10 flex flex-col w-full overflow-x-hidden transition-all duration-300 ease-in-out`}
           >
             <div className={`flex-grow`}>{children}</div>
 
-            <MainFooter className={`hidden md:flex`} />
+            <MainFooter className={` hidden md:flex`} />
           </main>
 
           <section className={`block md:hidden p-5 origin-left scale-75`}>

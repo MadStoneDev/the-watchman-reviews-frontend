@@ -1,9 +1,12 @@
-﻿import Image from "next/image";
+﻿"use client";
+
+import Image from "next/image";
 import React, { useMemo, useEffect, useState } from "react";
 
 import { Popcorn } from "lucide-react";
 import {
   IconBed,
+  IconFlag,
   IconFlame,
   IconGhost2,
   IconGhost2Filled,
@@ -14,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 
 import { Genre } from "@/lib/types";
+import { CircularProgress } from "@mui/material";
 
 interface MediaItemProps {
   data: any;
@@ -87,16 +91,17 @@ export default function MediaBlock({
 
   return (
     <article
-      className={`p-3 pb-5 flex ${
+      className={`pb-5 flex ${
         admin ? "flex-row" : "flex-col"
-      } justify-between gap-4 bg-black rounded-3xl transition-all duration-300 ease-in-out`}
+      } justify-between gap-4 rounded-3xl transition-all duration-300 ease-in-out`}
     >
       <div
         className={`group grid place-items-center ${
           admin
             ? "w-[125px] min-w-[125px] hover:w-1/2 hover:min-w-1/2 h-[190px]"
-            : "w-full aspect-square"
-        } bg-neutral-800 rounded-xl overflow-hidden transition-all duration-300 ease-in-out`}
+            : "w-full"
+        } bg-neutral-800 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out`}
+        style={{ aspectRatio: "1/1.25" }}
       >
         {loadingImage && (
           <Popcorn
@@ -114,7 +119,7 @@ export default function MediaBlock({
             }`}
             alt={`${data.title} Poster`}
             width={admin ? 500 : 342}
-            height={admin ? 190 : 342}
+            height={admin ? 190 : 430}
             onLoad={() => setLoadingImage(false)}
             onError={() => {
               setLoadingImage(false);
@@ -123,9 +128,11 @@ export default function MediaBlock({
             className={`${
               loadingImage ? "opacity-0" : "opacity-100"
             } w-full h-full bg-black ${
-              admin ? "object-center" : "object-top"
+              admin ? "object-center" : ""
             } object-cover`}
-            style={{ aspectRatio: "1/1" }}
+            style={{
+              objectPosition: "top center",
+            }}
           ></Image>
         ) : (
           <div
@@ -137,25 +144,25 @@ export default function MediaBlock({
         )}
       </div>
 
-      <section className={`flex-grow flex flex-col gap-2`}>
+      <section className={`flex-grow flex flex-col gap-4`}>
         <div className={`flex-grow w-full`}>
           <h3
-            className={`text-neutral-50 ${
+            className={`text-neutral-200 ${
               admin ? "" : "whitespace-nowrap truncate"
-            }`}
+            } text-sm font-semibold`}
           >
             {data.title}
           </h3>
-          <h4 className={`text-sm text-neutral-500`}>
-            {data.genres &&
-              data.genres
-                .map((genre: number) => {
-                  if (data.type === "movie")
-                    return movieGenres.find((g) => g.id === genre)?.name;
-                  else return seriesGenres.find((g) => g.id === genre)?.name;
-                })
-                .join(", ")}
-          </h4>
+          {/*<h4 className={`text-xs text-neutral-500`}>*/}
+          {/*  {data.genres &&*/}
+          {/*    data.genres*/}
+          {/*      .map((genre: number) => {*/}
+          {/*        if (data.type === "movie")*/}
+          {/*          return movieGenres.find((g) => g.id === genre)?.name;*/}
+          {/*        else return seriesGenres.find((g) => g.id === genre)?.name;*/}
+          {/*      })*/}
+          {/*      .join(", ")}*/}
+          {/*</h4>*/}
         </div>
 
         {admin ? (
@@ -194,49 +201,76 @@ export default function MediaBlock({
             </p>
           </div>
         ) : (
-          <div
-            className={`flex items-center gap-1`}
-            title={`User Rating: ${data.rating / 2} / 5`}
-          >
-            {Array.from({ length: 5 }, (_, index) => (
-              <IconStarFilled
-                key={`${data.id}-${index}`}
-                size={13}
-                className={`${
-                  index <= cleanRating ? "text-lime-400" : "text-neutral-600"
-                }`}
-              />
-            ))}
+          <div className={`flex items-center gap-2`} title={`TMDB Rating`}>
+            <div
+              className={`pr-2 flex items-center gap-2 border-r border-neutral-700`}
+            >
+              <IconStarFilled size={15} className={`text-lime-400`} />
+              <span className={`text-xs text-neutral-300`}>
+                {data.rating.toFixed(1)}
+              </span>
+            </div>
+            <div className={`pr-2 flex items-center`}>
+              <span className={`text-xs text-neutral-300`}>
+                {getYearFromDate(data.releaseDate)}
+              </span>
+            </div>
           </div>
         )}
 
-        <section
-          className={`mt-3 pt-2 flex flex-col gap-2 border-t border-neutral-800`}
-        >
-          <h4 className={`text-sm font-bold text-neutral-300`}>Stats:</h4>
+        <section className={`pt-2 flex flex-col border-t border-neutral-800`}>
           <div
-            className={`flex flex-row flex-wrap items-center justify-evenly gap-1 text-neutral-300`}
+            className={`flex flex-row flex-wrap items-center justify-between gap-1 lg:gap-2 text-neutral-300`}
           >
             <StatBlock
               title={"Horror"}
-              value={20}
-              colour={"border-neutral-700"}
+              value={100}
+              icon={<IconGhost2 size={14} className={`z-30`} />}
+              colour={"#737373"}
             />
+
+            <div
+              className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+            ></div>
+
             <StatBlock
               title={"Violence"}
               value={60}
-              colour={"border-violet-700"}
+              icon={<IconSwords size={14} className={`z-30`} />}
+              colour={"#7e22ce"}
             />
-            <StatBlock title={"Nudity"} value={80} colour={"border-pink-500"} />
+
+            <div
+              className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+            ></div>
+
+            <StatBlock
+              title={"Nudity"}
+              value={80}
+              icon={<IconBed size={15} className={`z-30`} />}
+              colour={"#ec4899"}
+            />
+
+            <div
+              className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+            ></div>
+
             <StatBlock
               title={"Sexual Content"}
               value={100}
-              colour={"border-rose-600"}
+              icon={<IconFlame size={15} className={`z-30`} />}
+              colour={"#be123c"}
             />
+
+            <div
+              className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+            ></div>
+
             <StatBlock
               title={"Age Rating"}
-              value={0}
-              colour={"border-lime-600"}
+              value={50}
+              icon={<IconUsers size={14} className={`z-30`} />}
+              colour={"#38bdf8"}
             />
           </div>
         </section>
@@ -245,35 +279,39 @@ export default function MediaBlock({
   );
 }
 
-const StatBlock = ({
+export const StatBlock = ({
   title,
   value,
-  colour,
+  icon = <IconUsers size={16} className={`z-30`} />,
+  colour = "text-lime-600",
 }: {
   title: string;
   value: number;
+  icon?: React.ReactElement;
   colour?: string;
 }) => {
-  const baseHeight = 100 - value;
-  const finalHeight = baseHeight === 0 ? `0px` : `${baseHeight}% + 6px`;
-
   return (
     <article
-      className={`relative box-border w-8 h-8 flex items-center justify-center border-[3px] ${
-        colour ? colour : "border-lime-600"
-      } rounded-full`}
+      className={`relative flex items-center justify-center`}
       title={`${title}: ${value}%`}
     >
-      <IconUsers size={16} className={`z-30`} />
-      <div
-        className={`absolute -top-[3px] -left-[3px] -right-[3px] ${
-          value === 100 ? "opacity-0" : "opacity-100"
-        }`}
+      <CircularProgress
+        variant="determinate"
+        value={value}
+        size={25}
+        className={`rounded-full`}
         style={{
-          height: `calc(${100 - value}% + 6px)`,
-          background: "linear-gradient(to bottom, black 80%, transparent 100%)",
+          color: colour,
         }}
-      ></div>
+      />
+      <div
+        className={`absolute`}
+        style={{
+          color: colour,
+        }}
+      >
+        {icon}
+      </div>
     </article>
   );
 };
