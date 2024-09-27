@@ -6,13 +6,10 @@ import React, { useMemo, useEffect, useState } from "react";
 import { Popcorn } from "lucide-react";
 import {
   IconBed,
-  IconFlag,
   IconFlame,
   IconGhost2,
-  IconGhost2Filled,
   IconStarFilled,
   IconSwords,
-  IconTank,
   IconUsers,
 } from "@tabler/icons-react";
 
