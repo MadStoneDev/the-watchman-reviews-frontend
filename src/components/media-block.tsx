@@ -8,6 +8,7 @@ import {
   IconBed,
   IconFlame,
   IconGhost2,
+  IconRainbow,
   IconStarFilled,
   IconSwords,
   IconUsers,
@@ -215,14 +216,22 @@ export default function MediaBlock({
           </div>
         )}
 
+        {/* Statistic Blocks */}
         <section className={`pt-2 flex flex-col border-t border-neutral-800`}>
           <div
             className={`flex flex-row flex-wrap items-center justify-between gap-1 lg:gap-2 text-neutral-300`}
           >
+            {/* Horror */}
+            {/* Violence */}
+            {/* Nudity */}
+            {/* Sexual Content */}
+            {/* Substance Abuse */}
+            {/* Rainbow Meter */}
+
             <StatBlock
               title={"Horror"}
               value={100}
-              icon={<IconGhost2 size={14} className={`z-30`} />}
+              icon={<IconGhost2 size={14} className={``} />}
               colour={"#737373"}
             />
 
@@ -233,7 +242,7 @@ export default function MediaBlock({
             <StatBlock
               title={"Violence"}
               value={60}
-              icon={<IconSwords size={14} className={`z-30`} />}
+              icon={<IconSwords size={14} className={``} />}
               colour={"#7e22ce"}
             />
 
@@ -244,7 +253,7 @@ export default function MediaBlock({
             <StatBlock
               title={"Nudity"}
               value={80}
-              icon={<IconBed size={15} className={`z-30`} />}
+              icon={<IconBed size={15} className={``} />}
               colour={"#ec4899"}
             />
 
@@ -255,7 +264,7 @@ export default function MediaBlock({
             <StatBlock
               title={"Sexual Content"}
               value={100}
-              icon={<IconFlame size={15} className={`z-30`} />}
+              icon={<IconFlame size={15} className={` `} />}
               colour={"#be123c"}
             />
 
@@ -266,7 +275,14 @@ export default function MediaBlock({
             <StatBlock
               title={"Age Rating"}
               value={50}
-              icon={<IconUsers size={14} className={`z-30`} />}
+              icon={<IconUsers size={14} className={``} />}
+              colour={"#38bdf8"}
+            />
+
+            <StatBlock
+              title={"Age Rating"}
+              value={50}
+              icon={<IconRainbow size={14} className={``} />}
               colour={"#38bdf8"}
             />
           </div>
@@ -279,7 +295,7 @@ export default function MediaBlock({
 export const StatBlock = ({
   title,
   value,
-  icon = <IconUsers size={16} className={`z-30`} />,
+  icon = <IconUsers size={16} />,
   colour = "text-lime-600",
 }: {
   title: string;
@@ -289,20 +305,20 @@ export const StatBlock = ({
 }) => {
   return (
     <article
-      className={`relative flex items-center justify-center`}
+      className={`group/stat relative flex items-center justify-center transition-all duration-300 ease-in-out`}
       title={`${title}: ${value}%`}
     >
       <CircularProgress
         variant="determinate"
         value={value}
-        size={25}
-        className={`rounded-full`}
+        size={30}
+        className={`rounded-full opacity-100 group-hover/stat:opacity-20 transition-all duration-300 ease-in-out`}
         style={{
           color: colour,
         }}
       />
       <div
-        className={`absolute`}
+        className={`absolute scale-100 group-hover/stat:scale-150 z-30 transition-all duration-300 ease-in-out`}
         style={{
           color: colour,
         }}

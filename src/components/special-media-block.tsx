@@ -4,11 +4,12 @@ import {
   IconBed,
   IconFlame,
   IconGhost2,
+  IconRainbow,
   IconStarFilled,
   IconSwords,
   IconUsers,
 } from "@tabler/icons-react";
-import { StatBlock } from "@/components/media-block";
+import { CircularProgress } from "@mui/material";
 
 interface SpecialMediaBlockProps {
   myIndex: number;
@@ -148,20 +149,27 @@ export default function SpecialMediaBlock({
               </p>
             </div>
 
-            {/* Statics */}
+            {/* Statistics */}
             <div className={`flex flex-col gap-1`}>
               <h4 className={`text-sm font-bold text-neutral-200`}>
                 Statistics:
               </h4>
 
               <div
-                className={`px-3 py-4 flex flex-row flex-wrap items-center gap-2 lg:gap-2 bg-neutral-900 rounded-xl text-neutral-300`}
+                className={`px-3 py-2.5 flex flex-row flex-wrap items-center gap-2 lg:gap-2 bg-neutral-900 rounded-xl text-neutral-300 transition-all duration-300 ease-in-out`}
               >
+                {/* Horror */}
+                {/* Violence */}
+                {/* Nudity */}
+                {/* Sexual Content */}
+                {/* Substance Abuse */}
+                {/* Rainbow Meter */}
+
                 <StatBlock
                   title={"Horror"}
                   value={100}
-                  icon={<IconGhost2 size={14} className={`z-30`} />}
-                  colour={"#a3a3a3"}
+                  icon={<IconGhost2 size={14} className={`text-neutral-500`} />}
+                  colour={"#737373"}
                 />
 
                 <div
@@ -171,8 +179,8 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Violence"}
                   value={60}
-                  icon={<IconSwords size={14} className={`z-30`} />}
-                  colour={"#4f46e5"}
+                  icon={<IconSwords size={14} className={`text-purple-600`} />}
+                  colour={"#7e22ce"}
                 />
 
                 <div
@@ -182,8 +190,8 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Nudity"}
                   value={80}
-                  icon={<IconBed size={15} className={`z-30`} />}
-                  colour={"#e11d48"}
+                  icon={<IconBed size={15} className={`text-pink-500`} />}
+                  colour={"#ec4899"}
                 />
 
                 <div
@@ -193,8 +201,8 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Sexual Content"}
                   value={100}
-                  icon={<IconFlame size={15} className={`z-30`} />}
-                  colour={"#f97316"}
+                  icon={<IconFlame size={16} className={`text-rose-700`} />}
+                  colour={"#be123c"}
                 />
 
                 <div
@@ -204,8 +212,15 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Age Rating"}
                   value={50}
-                  icon={<IconUsers size={14} className={`z-30`} />}
-                  colour={"#22d3ee"}
+                  icon={<IconUsers size={14} className={`text-sky-400`} />}
+                  colour={"#38bdf8"}
+                />
+
+                <StatBlock
+                  title={"Age Rating"}
+                  value={50}
+                  icon={<IconRainbow size={14} className={``} />}
+                  colour={"#38bdf8"}
                 />
               </div>
             </div>
@@ -246,3 +261,37 @@ export default function SpecialMediaBlock({
     </article>
   );
 }
+
+export const StatBlock = ({
+  title,
+  value,
+  icon = <IconUsers size={16} />,
+  colour = "lime-600",
+}: {
+  title: string;
+  value: number;
+  icon?: React.ReactElement;
+  colour?: string;
+}) => {
+  return (
+    <article
+      className={`group/stat relative flex items-center justify-center transition-all duration-300 ease-in-out`}
+      title={`${title}: ${value}%`}
+    >
+      <CircularProgress
+        variant="determinate"
+        value={value}
+        size={30}
+        className={`rounded-full opacity-100 group-hover/stat:opacity-20 transition-all duration-300 ease-in-out`}
+        style={{
+          color: colour,
+        }}
+      />
+      <div
+        className={`absolute scale-100 group-hover/stat:scale-150 z-30 transition-all duration-300 ease-in-out`}
+      >
+        {icon}
+      </div>
+    </article>
+  );
+};
