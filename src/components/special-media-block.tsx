@@ -1,15 +1,19 @@
 ﻿import React, { useEffect, useRef, useState } from "react";
 
 import {
-  IconBed,
+  IconBuildingCircus,
+  IconEyeOff,
   IconFlame,
   IconGhost2,
-  IconRainbow,
+  IconHeart,
+  IconMessage,
+  IconMessages,
   IconStarFilled,
   IconSwords,
   IconUsers,
 } from "@tabler/icons-react";
 import { CircularProgress } from "@mui/material";
+import { Dices } from "lucide-react";
 
 interface SpecialMediaBlockProps {
   myIndex: number;
@@ -176,8 +180,8 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Horror"}
                   value={100}
-                  icon={<IconGhost2 size={14} className={`text-neutral-500`} />}
-                  colour={"#737373"}
+                  icon={<IconGhost2 size={16} className={`text-neutral-300`} />}
+                  colour={"#d6d3d1"}
                 />
 
                 <div
@@ -187,8 +191,21 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Violence"}
                   value={60}
-                  icon={<IconSwords size={14} className={`text-purple-600`} />}
-                  colour={"#7e22ce"}
+                  icon={<IconSwords size={15} className={`text-violet-500`} />}
+                  colour={"#8b5cf6"}
+                />
+
+                <div
+                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+                ></div>
+
+                <StatBlock
+                  title={"Profanity and Language"}
+                  value={25}
+                  icon={
+                    <IconMessages size={18} className={`text-yellow-400`} />
+                  }
+                  colour={"#facc15"}
                 />
 
                 <div
@@ -198,8 +215,8 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Nudity"}
                   value={80}
-                  icon={<IconBed size={15} className={`text-pink-500`} />}
-                  colour={"#ec4899"}
+                  icon={<IconEyeOff size={17} className={`text-orange-500`} />}
+                  colour={"#f97316"}
                 />
 
                 <div
@@ -209,8 +226,19 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Sexual Content"}
                   value={100}
-                  icon={<IconFlame size={16} className={`text-rose-700`} />}
-                  colour={"#be123c"}
+                  icon={<IconHeart size={16} className={`text-rose-600`} />}
+                  colour={"#dc2626"}
+                />
+
+                <div
+                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+                ></div>
+
+                <StatBlock
+                  title={"Gambling Content"}
+                  value={50}
+                  icon={<Dices size={17} className={`text-sky-400`} />}
+                  colour={"#0ea5e9"}
                 />
 
                 <div
@@ -220,15 +248,10 @@ export default function SpecialMediaBlock({
                 <StatBlock
                   title={"Age Rating"}
                   value={50}
-                  icon={<IconUsers size={14} className={`text-sky-400`} />}
-                  colour={"#38bdf8"}
-                />
-
-                <StatBlock
-                  title={"Age Rating"}
-                  value={50}
-                  icon={<IconRainbow size={14} className={``} />}
-                  colour={"#38bdf8"}
+                  icon={
+                    <IconBuildingCircus size={17} className={`text-pink-400`} />
+                  }
+                  colour={"#fb7185"}
                 />
               </div>
             </div>

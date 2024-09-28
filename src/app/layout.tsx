@@ -44,8 +44,8 @@ export default function RootLayout({
               { icon: <IconLayout2 />, label: "Browse", href: "/browse" },
               {
                 icon: <IconChartBar />,
-                label: "Statistics",
-                href: "/statistics",
+                label: "How It Works",
+                href: "/how-it-works",
               },
             ]}
           />

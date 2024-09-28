@@ -34,7 +34,7 @@ export default function MainNavigation({
           <Link
             key={href}
             href={href}
-            className={`flex gap-7 max-w-fit ${
+            className={`flex gap-6 max-w-fit ${
               href === "/"
                 ? pathname === href
                   ? "text-lime-400"
