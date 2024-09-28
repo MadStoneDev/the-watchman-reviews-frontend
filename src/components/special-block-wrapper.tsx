@@ -55,7 +55,7 @@ export default function SpecialBlockWrapper() {
       return Math.min(prevActive, newBlocksToShow - 1);
     });
 
-    setTimerMaster(newBlocksToShow !== 1);
+    setTimerMaster(newBlocksToShow > 1);
     resetTimer(true);
   }, []);
 
@@ -117,6 +117,14 @@ export default function SpecialBlockWrapper() {
   }, [handleResize]);
 
   useEffect(() => {
+    if (blocksToShow < 2) {
+      setActiveBlock(0);
+      setTimerMaster(false);
+      setTimerRunning(false);
+      setTimerProgress(0);
+      return;
+    }
+
     if (!timerMaster) {
       setTimerRunning(false);
       setTimerProgress(0);
@@ -143,7 +151,6 @@ export default function SpecialBlockWrapper() {
       return;
     }
 
-    console.log(activeBlock);
     resetTimer(true);
   }, [activeBlock, blocksToShow, timerMaster, resetTimer]);
 
@@ -157,6 +164,7 @@ export default function SpecialBlockWrapper() {
             activeIndex={activeBlock}
             setActiveBlock={setActiveBlock}
             timerProgress={timerProgress}
+            timerRunning={timerRunning}
             setTimerRunning={setTimerRunning}
           />
         ))}

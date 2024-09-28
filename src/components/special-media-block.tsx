@@ -15,6 +15,7 @@ interface SpecialMediaBlockProps {
   myIndex: number;
   activeIndex: number;
   timerProgress: number;
+  timerRunning: boolean;
   setActiveBlock: React.Dispatch<React.SetStateAction<number>>;
   setTimerRunning: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -23,6 +24,7 @@ export default function SpecialMediaBlock({
   myIndex = 0,
   activeIndex = 0,
   timerProgress,
+  timerRunning,
   setActiveBlock,
   setTimerRunning,
 }: SpecialMediaBlockProps) {
@@ -78,31 +80,34 @@ export default function SpecialMediaBlock({
     <article
       className={`group relative w-full ${
         activateMe
-          ? "min-w-[650px] max-w-[999px]"
+          ? "min-w-auto md:min-w-auto sm:lg:min-w-[650px] max-w-full md:max-w-full sm:lg:max-w-[999px]"
           : "cursor-pointer min-w-[10px] max-w-[40px]"
-      } h-[430px] duration-700 overflow-hidden transition-all ease-in-out`}
+      } h-auto md:h-auto sm:lg:h-[430px] duration-700 overflow-hidden transition-all ease-in-out`}
+      onClick={handleMakeActive}
     >
       {/* Back Row */}
       <div
-        className={`pt-12 ${showInfo ? "" : "absolute hidden"} ${
+        className={`pt-0 md:pt-0 sm:lg:pt-12 ${
+          showInfo ? "" : "absolute hidden"
+        } ${
           activateMe ? "flex " : ""
         } flex-col w-full h-full overflow-hidden z-0 transition-all duration-300 ease-in-out`}
       >
         {/* Main Block */}
         <div
-          className={`flex-grow relative flex w-full bg-neutral-800 rounded-2xl overflow-hidden transition-all duration-300 ease-in-out`}
+          className={`flex-grow relative flex w-full bg-transparent md:bg-transparent sm:lg:bg-neutral-800 rounded-2xl border-[1px] border-transparent md:border-transparent sm:lg:border-neutral-50/30 overflow-hidden transition-all duration-300 ease-in-out`}
           style={{
             backdropFilter: "blur(5px)",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
           }}
-          onClick={handleMakeActive}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
         >
           {/* Timer Indicator */}
           <div
-            className={`absolute bottom-0 h-0.5 bg-lime-400 z-50 transition-all duration-300 ease-in-out`}
+            className={`absolute bottom-0 ${
+              timerRunning ? "h-0.5 bg-lime-400" : "h-1 bg-rose-700"
+            } z-50 transition-all duration-300 ease-in-out`}
             style={{
               width: activateMe ? `${Math.ceil(timerProgress)}%` : "0%",
               transition: `width 0.2s ease`,
@@ -110,13 +115,13 @@ export default function SpecialMediaBlock({
           ></div>
 
           {/* Fake Column */}
-          <div className={`min-w-[324px]`}></div>
+          <div className={`w-[40%] md:w-[40%] sm:lg:min-w-[324px]`}></div>
 
           {/* Information Column */}
           <div
             className={`${showInfo ? "flex" : "hidden"} ${
               displayAnimation ? "opacity-100" : "opacity-0"
-            } pr-8 py-8 flex-col gap-7`}
+            } w-[60%] md:w-[60%] sm:lg:w-auto pl-4 md:pl-4 sm:lg:pl-4 pr-0 md:pr-0 sm:lg:pr-8 py-8 flex-col gap-7`}
             style={{
               transition: `${
                 displayAnimation
@@ -238,27 +243,23 @@ export default function SpecialMediaBlock({
         } top-0 left-0 right-0 h-full z-10 transition-all duration-300 ease-in-out`}
       >
         <div
-          className={`grid ${
-            activateMe ? "grid-cols-2" : ""
-          } h-full z-10 transition-all duration-300 ease-in-out`}
+          className={`flex flex-nowrap w-full h-full z-10 transition-all duration-300 ease-in-out`}
         >
           {/* Image */}
           <div
             className={`${
-              activateMe ? "px-8 pb-8" : "pt-12"
-            } transition-all duration-300 ease-in-out`}
+              activateMe
+                ? "px-0 sm:px-8 md:px-0 lg:px-8 pb-0 md:pb-0 sm:lg:pb-8"
+                : "pt-12"
+            } w-full transition-all duration-300 ease-in-out`}
           >
             <div
-              className={`pointer-events-auto w-full min-w-[40px] max-w-[260px] h-full bg-rose-800 transition-all duration-300 ease-in-out`}
-              onClick={handleMakeActive}
+              className={`pointer-events-auto w-full min-w-[40px] max-w-[40%] md:max-w-[40%] sm:lg:max-w-[260px] h-full bg-rose-800 transition-all duration-300 ease-in-out`}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
               onMouseMove={handleMouseMove}
             ></div>
           </div>
-
-          {/* Fake Column */}
-          <div className={`${activateMe ? "" : "hidden"}`}></div>
         </div>
       </div>
     </article>
