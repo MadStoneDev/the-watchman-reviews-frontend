@@ -20,6 +20,35 @@ body {
   font-family: "Montserrat", sans-serif;
 }
 
+.special-scrollbar::-webkit-scrollbar {
+  height: 4px;
+  
+  transition: opacity 1s ease;
+}
+
+.special-scrollbar::-webkit-scrollbar-track {
+}
+
+.special-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(163, 230, 53, 0);
+  border-radius: 10px;
+  
+  transition: all 1s ease;
+}
+
+.special-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(163, 230, 53, 1);
+}
+
+.special-scrollbar {
+  scrollbar-face-color: rgba(163, 230, 53, 0);
+  transition: all 1s ease;
+}
+
+.special-scrollbar:hover {
+  scrollbar-face-color: rgba(163, 230, 53, 1);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

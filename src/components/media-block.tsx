@@ -51,42 +51,6 @@ export default function MediaBlock({
     if (!data.poster) setLoadingImage(false);
   }, [data.poster]);
 
-  // const breakpoints = {
-  //   sm: 640,
-  //   md: 768,
-  //   lg: 1024,
-  //   xl: 1280,
-  //   "2xl": 1536,
-  // };
-  //
-  // const imageSizes = {
-  //   poster: ["w92", "w154", "w185", "w342", "w500", "w780", "original"],
-  //   backdrop: ["w300", "w780", "w1280", "original"],
-  // };
-
-  // States
-  // const [posterSize, setPosterSize] = useState(imageSizes.poster[4]);
-
-  // Effects
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     const width = window.innerWidth;
-  //     if (width < breakpoints.sm) {
-  //       setPosterSize(imageSizes.poster[3]);
-  //     } else if (width < breakpoints.md) {
-  //       setPosterSize(imageSizes.poster[3]);
-  //     } else if (width < breakpoints.lg) {
-  //       setPosterSize(imageSizes.poster[3]);
-  //     } else {
-  //       setPosterSize(imageSizes.poster[3]);
-  //     }
-  //   };
-  //
-  //   handleResize();
-  //   window.addEventListener("resize", handleResize);
-  //   return () => window.removeEventListener("resize", handleResize);
-  // }, []);
-
   return (
     <article
       className={`pb-5 flex ${
@@ -217,76 +181,76 @@ export default function MediaBlock({
         )}
 
         {/* Statistic Blocks */}
-        <section className={`pt-2 flex flex-col border-t border-neutral-800`}>
-          <div
-            className={`flex flex-row flex-wrap items-center justify-between gap-1 lg:gap-2 text-neutral-300`}
-          >
-            {/* Horror */}
-            {/* Violence */}
-            {/* Nudity */}
-            {/* Sexual Content */}
-            {/* Substance Abuse */}
-            {/* Rainbow Meter */}
+        {/*<section className={`pt-2 flex flex-col border-t border-neutral-800`}>*/}
+        {/*  <div*/}
+        {/*    className={`flex flex-row flex-wrap items-center justify-between gap-1 lg:gap-2 text-neutral-300`}*/}
+        {/*  >*/}
+        {/*    /!* Horror *!/*/}
+        {/*    /!* Violence *!/*/}
+        {/*    /!* Nudity *!/*/}
+        {/*    /!* Sexual Content *!/*/}
+        {/*    /!* Substance Abuse *!/*/}
+        {/*    /!* Rainbow Meter *!/*/}
 
-            <StatBlock
-              title={"Horror"}
-              value={100}
-              icon={<IconGhost2 size={14} className={``} />}
-              colour={"#737373"}
-            />
+        {/*    <StatBlock*/}
+        {/*      title={"Horror"}*/}
+        {/*      value={100}*/}
+        {/*      icon={<IconGhost2 size={14} className={``} />}*/}
+        {/*      colour={"#737373"}*/}
+        {/*    />*/}
 
-            <div
-              className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-            ></div>
+        {/*    <div*/}
+        {/*      className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
+        {/*    ></div>*/}
 
-            <StatBlock
-              title={"Violence"}
-              value={60}
-              icon={<IconSwords size={14} className={``} />}
-              colour={"#7e22ce"}
-            />
+        {/*    <StatBlock*/}
+        {/*      title={"Violence"}*/}
+        {/*      value={60}*/}
+        {/*      icon={<IconSwords size={14} className={``} />}*/}
+        {/*      colour={"#7e22ce"}*/}
+        {/*    />*/}
 
-            <div
-              className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-            ></div>
+        {/*    <div*/}
+        {/*      className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
+        {/*    ></div>*/}
 
-            <StatBlock
-              title={"Nudity"}
-              value={80}
-              icon={<IconBed size={15} className={``} />}
-              colour={"#ec4899"}
-            />
+        {/*    <StatBlock*/}
+        {/*      title={"Nudity"}*/}
+        {/*      value={80}*/}
+        {/*      icon={<IconBed size={15} className={``} />}*/}
+        {/*      colour={"#ec4899"}*/}
+        {/*    />*/}
 
-            <div
-              className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-            ></div>
+        {/*    <div*/}
+        {/*      className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
+        {/*    ></div>*/}
 
-            <StatBlock
-              title={"Sexual Content"}
-              value={100}
-              icon={<IconFlame size={15} className={` `} />}
-              colour={"#be123c"}
-            />
+        {/*    <StatBlock*/}
+        {/*      title={"Sexual Content"}*/}
+        {/*      value={100}*/}
+        {/*      icon={<IconFlame size={15} className={` `} />}*/}
+        {/*      colour={"#be123c"}*/}
+        {/*    />*/}
 
-            <div
-              className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-            ></div>
+        {/*    <div*/}
+        {/*      className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
+        {/*    ></div>*/}
 
-            <StatBlock
-              title={"Age Rating"}
-              value={50}
-              icon={<IconUsers size={14} className={``} />}
-              colour={"#38bdf8"}
-            />
+        {/*    <StatBlock*/}
+        {/*      title={"Age Rating"}*/}
+        {/*      value={50}*/}
+        {/*      icon={<IconUsers size={14} className={``} />}*/}
+        {/*      colour={"#38bdf8"}*/}
+        {/*    />*/}
 
-            <StatBlock
-              title={"Age Rating"}
-              value={50}
-              icon={<IconRainbow size={14} className={``} />}
-              colour={"#38bdf8"}
-            />
-          </div>
-        </section>
+        {/*    <StatBlock*/}
+        {/*      title={"Age Rating"}*/}
+        {/*      value={50}*/}
+        {/*      icon={<IconRainbow size={14} className={``} />}*/}
+        {/*      colour={"#38bdf8"}*/}
+        {/*    />*/}
+        {/*  </div>*/}
+        {/*</section>*/}
       </section>
     </article>
   );

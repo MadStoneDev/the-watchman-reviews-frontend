@@ -52,12 +52,6 @@ export default async function Home() {
           Browse through our reviews on popular movies and TV shows
         </p>
       </section>
-
-      <section
-        className={`flex flex-nowrap items-center justify-between gap-2 transition-all duration-300 ease-in-out`}
-      >
-        <SpecialBlockWrapper />
-      </section>
     </>
   );
 }
