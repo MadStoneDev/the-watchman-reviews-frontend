@@ -76,19 +76,21 @@ export default function SpecialMediaBlock({
 
   return (
     <article
-      className={`group relative ${
-        activateMe ? "w-[650px]" : "cursor-pointer w-[40px]"
+      className={`group relative w-full ${
+        activateMe
+          ? "min-w-[650px] max-w-[999px]"
+          : "cursor-pointer min-w-[10px] max-w-[40px]"
       } h-[430px] duration-700 overflow-hidden transition-all ease-in-out`}
     >
-      {/* Bottom-Most Row */}
+      {/* Back Row */}
       <div
         className={`pt-12 ${showInfo ? "" : "absolute hidden"} ${
           activateMe ? "flex " : ""
         } flex-col w-full h-full overflow-hidden z-0 transition-all duration-300 ease-in-out`}
       >
-        {/* Writing Block */}
+        {/* Main Block */}
         <div
-          className={`flex-grow relative grid grid-cols-2 w-full bg-neutral-800 rounded-2xl overflow-hidden transition-all duration-300 ease-in-out`}
+          className={`flex-grow relative flex w-full bg-neutral-800 rounded-2xl overflow-hidden transition-all duration-300 ease-in-out`}
           style={{
             backdropFilter: "blur(5px)",
             border: "1px solid rgba(255, 255, 255, 0.3)",
@@ -98,6 +100,7 @@ export default function SpecialMediaBlock({
           onMouseLeave={handleMouseLeave}
           onMouseMove={handleMouseMove}
         >
+          {/* Timer Indicator */}
           <div
             className={`absolute bottom-0 h-0.5 bg-lime-400 z-50 transition-all duration-300 ease-in-out`}
             style={{
@@ -107,7 +110,7 @@ export default function SpecialMediaBlock({
           ></div>
 
           {/* Fake Column */}
-          <div></div>
+          <div className={`min-w-[324px]`}></div>
 
           {/* Information Column */}
           <div
@@ -228,7 +231,7 @@ export default function SpecialMediaBlock({
         </div>
       </div>
 
-      {/* Top-Most Row */}
+      {/* Front Row */}
       <div
         className={`pointer-events-none ${
           showInfo ? "absolute" : "relative group-hover:-translate-y-11"

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import SpecialMediaBlock from "@/components/special-media-block";
 
 export default function SpecialBlockWrapper() {
@@ -10,6 +10,7 @@ export default function SpecialBlockWrapper() {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  const [timerMaster, setTimerMaster] = useState(true); // True means on, false means off
   const [timerRunning, setTimerRunning] = useState(true);
   const [timerProgress, setTimerProgress] = useState(0);
 
@@ -30,65 +31,77 @@ export default function SpecialBlockWrapper() {
   };
 
   // Functions
-  const handleResize = () => {
+  const handleResize = useCallback(() => {
+    let newBlocksToShow = 0;
+
     if (window.innerWidth > breakpoints["3xl"]) {
-      setBlocksToShow(20);
-      if (activeBlock > 19) setActiveBlock(19);
+      newBlocksToShow = 20;
     } else if (window.innerWidth > breakpoints["2xl"]) {
-      setBlocksToShow(15);
-      if (activeBlock > 14) setActiveBlock(14);
+      newBlocksToShow = 12;
     } else if (window.innerWidth > breakpoints.xl) {
-      setBlocksToShow(9);
-      if (activeBlock > 8) setActiveBlock(8);
+      newBlocksToShow = 9;
     } else if (window.innerWidth > breakpoints.lg) {
-      setBlocksToShow(5);
-      if (activeBlock > 4) setActiveBlock(4);
+      newBlocksToShow = 3;
     } else if (window.innerWidth > breakpoints.md) {
-      setBlocksToShow(1);
-      if (activeBlock > 0) setActiveBlock(0);
+      newBlocksToShow = 1;
     } else if (window.innerWidth > breakpoints.sm) {
-      setBlocksToShow(2);
-      if (activeBlock > 1) setActiveBlock(1);
+      newBlocksToShow = 2;
     } else {
-      setBlocksToShow(1);
-      if (activeBlock > 0) setActiveBlock(0);
-    }
-  };
-
-  const resetTimer = (shouldReset = true) => {
-    if (blockTimer.current) {
-      clearInterval(blockTimer.current);
+      newBlocksToShow = 1;
     }
 
-    if (shouldReset) {
-      setTimerProgress(0);
-      startTime.current = Date.now();
-      pausedTime.current = null;
-    } else if (pausedTime.current !== null) {
-      // Resume Timer
-      startTime.current = Date.now() - (pausedTime.current || 0);
-      pausedTime.current = null;
-    }
+    setBlocksToShow(newBlocksToShow);
+    setActiveBlock((prevActive) => {
+      return Math.min(prevActive, newBlocksToShow - 1);
+    });
 
-    blockTimer.current = setInterval(() => {
-      const elapsed = Date.now() - (startTime.current || 0);
-      const progress = Math.min((elapsed / TIMER_DURATION) * 100, 100);
-      setTimerProgress(progress);
+    setTimerMaster(newBlocksToShow !== 1);
+    resetTimer(true);
+  }, []);
 
-      if (progress >= 100) {
-        setActiveBlock((prevActive) => (prevActive + 1) % blocksToShow);
-        resetTimer();
+  const resetTimer = useCallback(
+    (shouldReset = true) => {
+      if (!timerMaster) {
+        setTimerRunning(false);
+        setTimerProgress(0);
+        return;
       }
-    }, 50);
-  };
 
-  const pauseTimer = () => {
+      if (blockTimer.current) {
+        clearInterval(blockTimer.current);
+      }
+
+      if (shouldReset) {
+        setTimerProgress(0);
+        startTime.current = Date.now();
+        pausedTime.current = null;
+      } else if (pausedTime.current !== null) {
+        // Resume Timer
+        startTime.current = Date.now() - (pausedTime.current || 0);
+        pausedTime.current = null;
+      }
+
+      blockTimer.current = setInterval(() => {
+        const elapsed = Date.now() - (startTime.current || 0);
+        const progress = Math.min((elapsed / TIMER_DURATION) * 100, 100);
+        setTimerProgress(progress);
+
+        if (progress >= 100) {
+          setActiveBlock((prevActive) => (prevActive + 1) % blocksToShow);
+          resetTimer();
+        }
+      }, 50);
+    },
+    [timerMaster, blocksToShow],
+  );
+
+  const pauseTimer = useCallback(() => {
     if (blockTimer.current) {
       clearInterval(blockTimer.current);
     }
 
     pausedTime.current = Date.now() - (startTime.current || 0);
-  };
+  }, []);
 
   // Effects
   useEffect(() => {
@@ -101,9 +114,15 @@ export default function SpecialBlockWrapper() {
 
     // Remove Event Listener on Resize
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [handleResize]);
 
   useEffect(() => {
+    if (!timerMaster) {
+      setTimerRunning(false);
+      setTimerProgress(0);
+      return;
+    }
+
     if (timerRunning) {
       resetTimer(false);
     } else if (blockTimer.current) {
@@ -115,11 +134,18 @@ export default function SpecialBlockWrapper() {
         clearInterval(blockTimer.current!);
       }
     };
-  }, [timerRunning]);
+  }, [timerRunning, timerMaster, resetTimer, pauseTimer]);
 
   useEffect(() => {
+    if (!timerMaster) {
+      setTimerRunning(false);
+      setTimerProgress(0);
+      return;
+    }
+
+    console.log(activeBlock);
     resetTimer(true);
-  }, [activeBlock, blocksToShow]);
+  }, [activeBlock, blocksToShow, timerMaster, resetTimer]);
 
   return (
     <>

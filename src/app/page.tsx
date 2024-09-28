@@ -2,16 +2,6 @@ import React from "react";
 import type { Metadata } from "next";
 
 import BrowseNavigation from "@/components/browse-navigation";
-import {
-  IconBed,
-  IconFlame,
-  IconGhost2,
-  IconStarFilled,
-  IconSwords,
-  IconUsers,
-} from "@tabler/icons-react";
-import { StatBlock } from "@/components/media-block";
-import SpecialMediaBlock from "@/components/special-media-block";
 import SpecialBlockWrapper from "@/components/special-block-wrapper";
 
 export const metadata: Metadata = {
@@ -64,7 +54,7 @@ export default async function Home() {
       </section>
 
       <section
-        className={`flex flex-nowrap items-center justify-between gap-3 transition-all duration-300 ease-in-out`}
+        className={`flex flex-nowrap items-center justify-between gap-2 transition-all duration-300 ease-in-out`}
       >
         <SpecialBlockWrapper />
       </section>
