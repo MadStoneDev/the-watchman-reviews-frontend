@@ -72,7 +72,7 @@ export default function BrowsePage() {
                     <span className={`text-xs text-neutral-300`}>5.6</span>
                   </div>
                   <div className={`pr-2 flex items-center`}>
-                    <span className={`text-xs text-neutral-300`}>20244</span>
+                    <span className={`text-xs text-neutral-300`}>2024</span>
                   </div>
                 </div>
               </section>
@@ -124,7 +124,7 @@ export default function BrowsePage() {
                     <span className={`text-xs text-neutral-300`}>5.6</span>
                   </div>
                   <div className={`pr-2 flex items-center`}>
-                    <span className={`text-xs text-neutral-300`}>20244</span>
+                    <span className={`text-xs text-neutral-300`}>2024</span>
                   </div>
                 </div>
               </section>
@@ -176,7 +176,7 @@ export default function BrowsePage() {
                     <span className={`text-xs text-neutral-300`}>5.6</span>
                   </div>
                   <div className={`pr-2 flex items-center`}>
-                    <span className={`text-xs text-neutral-300`}>20244</span>
+                    <span className={`text-xs text-neutral-300`}>2024</span>
                   </div>
                 </div>
               </section>
@@ -228,7 +228,7 @@ export default function BrowsePage() {
                     <span className={`text-xs text-neutral-300`}>5.6</span>
                   </div>
                   <div className={`pr-2 flex items-center`}>
-                    <span className={`text-xs text-neutral-300`}>20244</span>
+                    <span className={`text-xs text-neutral-300`}>2024</span>
                   </div>
                 </div>
               </section>
