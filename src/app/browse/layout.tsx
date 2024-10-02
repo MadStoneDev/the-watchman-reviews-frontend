@@ -11,7 +11,7 @@ export default function BrowseLayout({
     <>
       <BrowseNavigation
         items={[
-          { label: "New", href: "/browse/new" },
+          // { label: "New", href: "/browse/new" },
           { label: "Movies", href: "/browse/movies" },
           { label: "Series", href: "/browse/series" },
           { label: "Kids", href: "/browse/kids" },
