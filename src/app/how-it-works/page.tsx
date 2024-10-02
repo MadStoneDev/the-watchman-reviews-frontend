@@ -21,7 +21,7 @@ export default function StatisticsPage() {
           <section
               className={`mt-14 lg:mt-20 transition-all duration-300 ease-in-out`}
           >
-              <p className={`text-sm`}></p>
+              
           </section>
       </>
   );
