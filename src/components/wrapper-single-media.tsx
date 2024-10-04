@@ -11,6 +11,8 @@ interface FullMediaItem {
   backdrop: string;
   poster: string;
   genres: Genre[];
+  numberOfSeasons?: number;
+  seasons?: any[];
   imdb_id: string;
   overview: string;
   date: string;

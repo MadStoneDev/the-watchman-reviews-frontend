@@ -87,6 +87,7 @@ export default function MediaBlock({
               setLoadingImage(false);
               setImageError(true);
             }}
+            onClick={() => console.log(data)}
             className={`${
               loadingImage ? "opacity-0" : "opacity-100"
             } w-full h-full bg-black ${
