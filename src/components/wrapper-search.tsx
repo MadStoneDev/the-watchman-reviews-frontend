@@ -5,9 +5,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Popcorn } from "lucide-react";
 
-import { Genre, MediaItem } from "@/lib/types";
-import SearchForm from "@/components/search-form";
-import MediaBlock from "@/components/media-block";
+import { Genre, MediaItem } from "@/src/types/media";
+import SearchForm from "@/src/components/search-form";
+import MediaBlock from "@/src/components/media-block";
 
 export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
   // States

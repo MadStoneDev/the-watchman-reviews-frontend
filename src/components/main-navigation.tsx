@@ -3,9 +3,15 @@
 import React, { useState } from "react";
 import Link from "next/link";
 
-import Logo from "@/components/logo";
+import Logo from "@/src/components/logo";
 import { usePathname } from "next/navigation";
-import MainFooter from "@/components/main-footer";
+import MainFooter from "@/src/components/main-footer";
+import {
+  IconLogin,
+  IconLogout,
+  IconPower,
+  IconUser,
+} from "@tabler/icons-react";
 
 interface NavigationItem {
   icon: React.JSX.Element;
@@ -25,29 +31,56 @@ export default function MainNavigation({
     <nav
       className={`fixed md:top-0 bottom-0 left-0 right-0 md:right-auto px-10 pb-2 pt-5 md:p-10 min-h-[70px] md:min-h-auto md:min-w-[250px] bg-neutral-800 z-50`}
     >
-      <Logo className={`hidden md:block`} />
+      <section className={`flex flex-col h-full`}>
+        <Logo className={`hidden md:block`} />
 
-      <section
-        className={`md:mt-20 flex md:flex-col justify-between md:gap-14`}
-      >
-        {items.map(({ icon, label, href }) => (
+        <article className={`flex-grow md:mt-20 flex md:flex-col md:gap-14`}>
+          {items.map(({ icon, label, href }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`flex gap-6 max-w-fit ${
+                href === "/"
+                  ? pathname === href
+                    ? "text-lime-400"
+                    : "text-neutral-600 hover:text-neutral-200"
+                  : !pathname.includes("/admin") && pathname.includes(href)
+                    ? "text-lime-400"
+                    : "text-neutral-500 hover:text-neutral-200"
+              } font-bold transition-all duration-300 ease-in-out`}
+            >
+              {icon}
+              <span className={`hidden md:block`}>{label}</span>
+            </Link>
+          ))}
+        </article>
+
+        <article className={`flex items-center w-full`}>
           <Link
-            key={href}
-            href={href}
-            className={`flex gap-6 max-w-fit ${
-              href === "/"
-                ? pathname === href
-                  ? "text-lime-400"
-                  : "text-neutral-600 hover:text-neutral-200"
-                : !pathname.includes("/admin") && pathname.includes(href)
-                  ? "text-lime-400"
-                  : "text-neutral-500 hover:text-neutral-200"
+            href={"/login"}
+            className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg ${
+              pathname === "/login"
+                ? "text-neutral-100"
+                : "text-neutral-900 hover:text-neutral-200"
             } font-bold transition-all duration-300 ease-in-out`}
+            title={`Login`}
           >
-            {icon}
-            <span className={`hidden md:block`}>{label}</span>
+            <IconUser size={26} />
+            <span className={`hidden md:block text-sm`}>Login</span>
           </Link>
-        ))}
+
+          {/* Logout */}
+          {/*<Link*/}
+          {/*  href={"/logout"}*/}
+          {/*  className={`flex-grow grid place-items-center ${*/}
+          {/*    pathname === "/logout"*/}
+          {/*      ? "text-lime-400"*/}
+          {/*      : "text-neutral-600 hover:text-neutral-200"*/}
+          {/*  } font-bold transition-all duration-300 ease-in-out`}*/}
+          {/*>*/}
+          {/*  <IconPower size={26} />*/}
+          {/*</Link>*/}
+        </article>
       </section>
       <MainFooter className={`flex md:hidden`} />
     </nav>

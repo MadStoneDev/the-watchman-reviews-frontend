@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import SpecialMediaBlock from "@/components/special-media-block";
+import SpecialMediaBlock from "@/src/components/special-media-block";
 
 export default function SpecialBlockWrapper() {
   // States

@@ -1,8 +1,8 @@
 import React from "react";
 import type { Metadata } from "next";
 
-import BrowseNavigation from "@/components/browse-navigation";
-import SpecialBlockWrapper from "@/components/special-block-wrapper";
+import BrowseNavigation from "@/src/components/browse-navigation";
+import SpecialBlockWrapper from "@/src/components/special-block-wrapper";
 
 export const metadata: Metadata = {
   title: "The Watchman Reviews | Guarding Your Screen, Guiding Your Choices",

@@ -14,7 +14,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 
-import { Genre } from "@/lib/types";
+import { Genre } from "@/src/lib/types";
 import { CircularProgress } from "@mui/material";
 
 interface MediaItemProps {

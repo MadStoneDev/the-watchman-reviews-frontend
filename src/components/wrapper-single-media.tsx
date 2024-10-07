@@ -1,8 +1,8 @@
 ﻿"use client";
 
-import { Genre } from "@/lib/types";
+import { Genre } from "@/src/lib/types";
 import React, { useEffect, useState } from "react";
-import GoBack from "@/components/go-back";
+import GoBack from "@/src/components/go-back";
 
 interface FullMediaItem {
   id: number;

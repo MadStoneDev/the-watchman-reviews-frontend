@@ -1,10 +1,10 @@
 ﻿import React from "react";
 import type { Metadata } from "next";
-import SpecialBlockWrapper from "@/components/special-block-wrapper";
+import SpecialBlockWrapper from "@/src/components/special-block-wrapper";
 import { Popcorn } from "lucide-react";
 import Image from "next/image";
 import { IconStarFilled } from "@tabler/icons-react";
-import { BrowseMediaRow } from "@/components/browse-media-row";
+import { BrowseMediaRow } from "@/src/components/browse-media-row";
 
 export const metadata: Metadata = {
   title: "Browse - The Watchman Reviews",

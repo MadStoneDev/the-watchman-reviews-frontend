@@ -1,7 +1,7 @@
 ﻿import React, { Suspense } from "react";
 import type { Metadata } from "next";
-import SearchWrapper from "@/components/wrapper-search";
-import SearchSkeletonBoundary from "@/components/search-skeleton-boundary";
+import SearchWrapper from "@/src/components/wrapper-search";
+import SearchSkeletonBoundary from "@/src/components/search-skeleton-boundary";
 
 export const metadata: Metadata = {
   title: "Admin Search - The Watchman Reviews",

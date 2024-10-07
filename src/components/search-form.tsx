@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import axios from "axios";
-import { MediaItem } from "@/lib/types";
+
+import { Input } from "@/src/components/ui/input";
+import { Button } from "@/src/components/ui/button";
+
+import { MediaItem } from "@/src/types/media";
 import { IconSearch } from "@tabler/icons-react";
 
 export default function SearchForm({

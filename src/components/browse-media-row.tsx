@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 
 import { Popcorn } from "lucide-react";
 import { IconStarFilled } from "@tabler/icons-react";
-import { dummyReviewList } from "@/data/dummy-review-list";
+import { dummyReviewList } from "@/src/data/dummy-review-list";
 
 interface BrowseMediaRowProps {
   data?: any[];
