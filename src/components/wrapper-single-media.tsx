@@ -2,7 +2,7 @@
 
 import { Genre } from "@/lib/types";
 import React, { useEffect, useState } from "react";
-import GoBack from "@/components/go-back";
+import GoBack from "@/src/components/go-back";
 
 interface FullMediaItem {
   id: number;

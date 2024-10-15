@@ -10,10 +10,10 @@ import {
   IconChartBar,
 } from "@tabler/icons-react";
 
-import MainNavigation from "@/components/main-navigation";
-import { ThemeProvider } from "@/components/theme-provider";
-import Logo from "@/components/logo";
-import MainFooter from "@/components/main-footer";
+import MainNavigation from "@/src/components/main-navigation";
+import { ThemeProvider } from "@/src/components/theme-provider";
+import Logo from "@/src/components/logo";
+import MainFooter from "@/src/components/main-footer";
 
 const montserrat = localFont({
   src: "./fonts/Montserrat.ttf",

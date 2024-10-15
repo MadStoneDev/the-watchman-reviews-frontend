@@ -6,8 +6,8 @@ import axios from "axios";
 import { Popcorn } from "lucide-react";
 
 import { Genre, MediaItem } from "@/lib/types";
-import SearchForm from "@/components/search-form";
-import MediaBlock from "@/components/media-block";
+import SearchForm from "@/src/components/search-form";
+import MediaBlock from "@/src/components/media-block";
 
 export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
   // States
@@ -57,7 +57,7 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
 
   const handleSearch = (results: MediaItem[]) => {
     const sortedResults = results.sort((a, b) =>
-      a.releaseDate > b.releaseDate ? -1 : 1,
+      a.releaseDate > b.releaseDate ? -1 : 1
     );
 
     setData(sortedResults);

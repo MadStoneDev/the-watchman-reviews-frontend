@@ -1,8 +1,8 @@
 ﻿import type { Metadata } from "next";
-import SearchWrapper from "@/components/wrapper-search";
+import SearchWrapper from "@/src/components/wrapper-search";
 import React, { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import SearchSkeletonBoundary from "@/components/search-skeleton-boundary";
+import { Skeleton } from "@/src/components/ui/skeleton";
+import SearchSkeletonBoundary from "@/src/components/search-skeleton-boundary";
 
 export const metadata: Metadata = {
   title: "Search - The Watchman Reviews",

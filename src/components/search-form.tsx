@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/src/components/ui/input";
+import { Button } from "@/src/components/ui/button";
 import axios from "axios";
 import { MediaItem } from "@/lib/types";
 import { IconSearch } from "@tabler/icons-react";
@@ -65,8 +65,7 @@ export default function SearchForm({
       const response = await axios.request(options);
       const searchResults: MediaItem[] = response.data.results
         .filter(
-          (item: any) =>
-            item.media_type === "movie" || item.media_type === "tv",
+          (item: any) => item.media_type === "movie" || item.media_type === "tv"
         )
         .map((item: any) => ({
           id: item.id,

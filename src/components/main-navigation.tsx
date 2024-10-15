@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 
-import Logo from "@/components/logo";
+import Logo from "@/src/components/logo";
 import { usePathname } from "next/navigation";
-import MainFooter from "@/components/main-footer";
+import MainFooter from "@/src/components/main-footer";
 
 interface NavigationItem {
   icon: React.JSX.Element;
@@ -40,8 +40,8 @@ export default function MainNavigation({
                   ? "text-lime-400"
                   : "text-neutral-600 hover:text-neutral-200"
                 : !pathname.includes("/admin") && pathname.includes(href)
-                  ? "text-lime-400"
-                  : "text-neutral-500 hover:text-neutral-200"
+                ? "text-lime-400"
+                : "text-neutral-500 hover:text-neutral-200"
             } font-bold transition-all duration-300 ease-in-out`}
           >
             {icon}

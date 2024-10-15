@@ -3,7 +3,7 @@
 import axios from "axios";
 
 import { Genre } from "@/lib/types";
-import SingleMediaWrapper from "@/components/wrapper-single-media";
+import SingleMediaWrapper from "@/src/components/wrapper-single-media";
 
 interface SearchParams {
   params: {
