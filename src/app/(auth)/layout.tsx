@@ -42,8 +42,8 @@ export default function AuthLayout({
       position: "object-center",
     },
     {
-      title: "Aladdin",
-      url: "rVqY0Bo4Npf6EIONUROxjYAJfmD.jpg",
+      title: "Special Ops: Lioness",
+      url: "sa9vB0xb3OMU6iSMkig8RBbdESq.jpg",
       position: "object-center",
     },
     {
@@ -55,7 +55,7 @@ export default function AuthLayout({
 
   // Functions
   const getPoster = () => {
-    const max = posters.length - 1;
+    const max = posters.length;
     return Math.floor(Math.random() * max);
   };
 
