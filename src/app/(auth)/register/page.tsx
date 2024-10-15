@@ -6,6 +6,13 @@
   IconMail,
 } from "@tabler/icons-react";
 import React from "react";
+import Link from "next/link";
+
+export const metadata = {
+  title: "Create a New Account - The Watchman Reviews",
+  description:
+    "Register for a new account on The Watchman Reviews to track shows and movies and join the community.",
+};
 
 export default function Register() {
   return (
@@ -51,12 +58,11 @@ export default function Register() {
       </form>
 
       <div className={`relative flex justify-center items-center`}>
-        <div
-          className={`absolute top-1/2 left-0 w-full h-[1px] bg-neutral-200`}
-        ></div>
-        <h4 className={`p-3 bg-neutral-800 text-sm z-10`}>
+        <div className={`w-full h-[1px] bg-neutral-200`}></div>
+        <h4 className={`p-3 min-w-fit text-sm z-10`}>
           or <span className={`font-bold`}>Register</span> with
         </h4>
+        <div className={`w-full h-[1px] bg-neutral-200`}></div>
       </div>
 
       <article className={`mt-4 flex flex-col gap-4`}>
@@ -81,6 +87,16 @@ export default function Register() {
           <span className={``}>Twitch</span>
         </button>
       </article>
+
+      <p className={`mt-8 text-xs`}>
+        Already have an account?{" "}
+        <Link
+          href={`/login`}
+          className={`font-bold hover:text-lime-400 transition-all duration-300 ease-in-out`}
+        >
+          Login
+        </Link>
+      </p>
     </div>
   );
 }

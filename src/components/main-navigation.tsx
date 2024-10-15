@@ -58,11 +58,7 @@ export default function MainNavigation({
         <article className={`flex items-center w-full`}>
           <Link
             href={"/login"}
-            className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg ${
-              pathname === "/login"
-                ? "text-neutral-100"
-                : "text-neutral-900 hover:text-neutral-200"
-            } font-bold transition-all duration-300 ease-in-out`}
+            className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
             title={`Login`}
           >
             <IconUser size={26} />
