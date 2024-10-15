@@ -24,6 +24,7 @@ export const searchMedia = async (searchTerm: string) => {
       (item: any) => item.media_type === "movie" || item.media_type === "tv"
     );
   } catch (error) {
+    // TODO: Sprint#2 - Handle Error Properly
     console.error(error);
   }
 };
@@ -43,13 +44,39 @@ export const getMovieDetails = async (id: string) => {
   };
 
   try {
+    const response = await axios.request(options);
+
+    // TODO: Sprint#1 - Clean Data
+    return response.data;
   } catch (error) {
+    // TODO: Sprint#2 - Handle Error Properly
     console.error(error);
   }
 };
 
 export const getSeriesDetails = async (id: string) => {
   // https://api.themoviedb.org/3/tv/{series_id}
+  const options = {
+    method: "GET",
+    url: `https://api.themoviedb.org/3/tv/${id}`,
+    params: {
+      language: `en-US`,
+    },
+    headers: {
+      accept: "application/json",
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+    },
+  };
+
+  try {
+    const response = await axios.request(options);
+
+    // TODO: Sprint#1 - Clean Data
+    return response.data;
+  } catch (error) {
+    // TODO: Sprint#2 - Handle Error Properly
+    console.error(error);
+  }
 };
 
 export const getSeasonDetails = async (seriesId: string, season: number) => {
@@ -67,7 +94,12 @@ export const getSeasonDetails = async (seriesId: string, season: number) => {
   };
 
   try {
+    const response = await axios.request(options);
+
+    // TODO: Sprint#1 - Clean Data
+    return response.data;
   } catch (error) {
+    // TODO: Sprint#2 - Handle Error Properly
     console.error(error);
   }
 };
@@ -89,4 +121,14 @@ export const getEpisodeDetails = async (
       Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
     },
   };
+
+  try {
+    const response = await axios.request(options);
+
+    // TODO: Sprint#1 - Clean Data
+    return response.data;
+  } catch (error) {
+    // TODO: Sprint#2 - Handle Error Properly
+    console.error(error);
+  }
 };
