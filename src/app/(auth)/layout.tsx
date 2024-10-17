@@ -48,7 +48,12 @@ export default function AuthLayout({
     },
     {
       title: "Sound of Freedom",
-      url: "P3GAbRjzVo9RKU4WxzvtgwlITc.jpg",
+      url: "kSf9svfL2WrKeuK8W08xeR5lTn8.jpg",
+      position: "object-center",
+    },
+    {
+      title: "Cat in the Hat",
+      url: "qgEk63SkI0AgcMHnI54laB1LQjY.jpg",
       position: "object-center",
     },
   ];
@@ -63,7 +68,7 @@ export default function AuthLayout({
 
   return (
     <div
-      className={`grid md:grid-cols-2 md:items-center md:justify-center w-full min-h-dvh bg-neutral-800`}
+      className={`grid md:grid-cols-2 w-full h-dvh bg-neutral-800 overflow-hidden`}
     >
       <section className={`relative hidden md:block h-full max-h-dvh`}>
         <img
@@ -77,19 +82,26 @@ export default function AuthLayout({
           href={`https://themoviedb.org`}
           title={`Go to TMDB`}
           target="_blank"
-          className={`px-2 py-1 absolute bottom-2 left-2 border border-neutral-800 hover:bg-neutral-800 text-neutral-900 hover:text-neutral-100 text-[0.65rem] z-20 transition-all duration-300 ease-in-out`}
+          className={`px-2 py-1 absolute bottom-2 left-2 bg-neutral-200/50 hover:bg-neutral-800 text-neutral-900 hover:text-neutral-100 text-[0.65rem] z-20 transition-all duration-300 ease-in-out`}
+          style={{
+            backdropFilter: "blur(2px)",
+          }}
         >
           Poster from TMDB
         </Link>
       </section>
 
       <main
-        className={`col-span-2 md:col-span-1 p-3 sm:p-6 flex flex-col justify-center items-center w-full h-full bg-neutral-800/80 text-center`}
+        className={`col-span-2 md:col-span-1 p-3 sm:p-6 flex flex-col justify-start items-center w-full min-h-dvh bg-neutral-800/80 text-center overflow-auto`}
         style={{
           backdropFilter: "blur(10px)",
         }}
       >
-        {children}
+        <div
+          className={`flex-grow relative flex flex-col justify-center w-full max-w-sm`}
+        >
+          {children}
+        </div>
       </main>
     </div>
   );

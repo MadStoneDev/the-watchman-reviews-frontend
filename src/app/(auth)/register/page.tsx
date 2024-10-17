@@ -2,11 +2,13 @@
   IconBrandFacebookFilled,
   IconBrandGoogleFilled,
   IconBrandTwitch,
+  IconEye,
   IconLock,
   IconMail,
 } from "@tabler/icons-react";
 import React from "react";
 import Link from "next/link";
+import RegisterForm from "@/src/components/auth/register-form";
 
 export const metadata = {
   title: "Create a New Account - The Watchman Reviews",
@@ -16,46 +18,12 @@ export const metadata = {
 
 export default function Register() {
   return (
-    <div className={`w-full max-w-sm`}>
+    <>
       <h1 className={`sm:xl md:text-xl font-bold text-lime-400`}>
         Create a New Account
       </h1>
       <h2 className={`mt-1 font-light`}>Welcome to The Watchman Reviews!</h2>
-      <form className={`mt-10 mb-4 grid gap-y-4 text-sm text-neutral-900`}>
-        <article className={`relative grid`}>
-          <div
-            className={`absolute px-3 top-0 bottom-0 left-0 grid place-items-center`}
-          >
-            <IconMail />
-          </div>
-
-          <input
-            className={`p-3 pl-12 rounded-lg bg-neutral-200 placeholder:text-neutral-600/80`}
-            type="email"
-            placeholder="Email"
-          />
-        </article>
-
-        <article className={`relative grid`}>
-          <div
-            className={`absolute px-3 top-0 bottom-0 left-0 grid place-items-center`}
-          >
-            <IconLock />
-          </div>
-
-          <input
-            className={`p-3 pl-12 rounded-lg bg-neutral-200 placeholder:text-neutral-600/80`}
-            type="password"
-            placeholder="Password"
-          />
-        </article>
-
-        <button
-          className={`p-3 rounded-lg bg-lime-400 text-neutral-900 font-bold`}
-        >
-          Create
-        </button>
-      </form>
+      <RegisterForm />
 
       <div className={`relative flex justify-center items-center`}>
         <div className={`w-full h-[1px] bg-neutral-200`}></div>
@@ -97,6 +65,6 @@ export default function Register() {
           Login
         </Link>
       </p>
-    </div>
+    </>
   );
 }
