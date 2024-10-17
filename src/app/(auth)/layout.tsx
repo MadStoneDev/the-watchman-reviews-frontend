@@ -1,5 +1,6 @@
 ﻿import React from "react";
 import Link from "next/link";
+import Logo from "@/src/components/logo";
 
 interface Poster {
   title: string;
@@ -100,6 +101,9 @@ export default function AuthLayout({
         <div
           className={`flex-grow relative flex flex-col justify-center w-full max-w-sm`}
         >
+          <Link href={`/`} className={`self-center mb-10`}>
+            <Logo className={`scale-75`} />
+          </Link>
           {children}
         </div>
       </main>
