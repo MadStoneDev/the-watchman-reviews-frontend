@@ -86,7 +86,7 @@ export default function SpecialMediaBlock({
         activateMe
           ? "min-w-auto md:min-w-auto sm:lg:min-w-[650px] max-w-full md:max-w-full sm:lg:max-w-[999px]"
           : "cursor-pointer min-w-[10px] max-w-[40px]"
-      } h-auto md:h-auto sm:lg:h-[430px] duration-700 overflow-hidden transition-all ease-in-out`}
+      } h-auto sm:lg:h-[500px] min-h-[500px] duration-700 overflow-hidden transition-all ease-in-out`}
       onClick={handleMakeActive}
     >
       {/* Back Row */}
@@ -168,7 +168,7 @@ export default function SpecialMediaBlock({
               </h4>
 
               <div
-                className={`px-3 py-2.5 flex flex-row flex-wrap items-center gap-2 lg:gap-2 bg-neutral-900 rounded-xl text-neutral-300 transition-all duration-300 ease-in-out`}
+                className={`px-3 py-2.5 grid grid-cols-2 items-start gap-2 lg:gap-x-2 gap-y-3 bg-neutral-900 rounded-xl text-neutral-300 transition-all duration-300 ease-in-out`}
               >
                 {/* Horror */}
                 {/* Violence */}
@@ -184,20 +184,12 @@ export default function SpecialMediaBlock({
                   colour={"#d6d3d1"}
                 />
 
-                <div
-                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-                ></div>
-
                 <StatBlock
                   title={"Violence"}
                   value={60}
                   icon={<IconSwords size={15} className={`text-violet-500`} />}
                   colour={"#8b5cf6"}
                 />
-
-                <div
-                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-                ></div>
 
                 <StatBlock
                   title={"Profanity and Language"}
@@ -208,20 +200,12 @@ export default function SpecialMediaBlock({
                   colour={"#facc15"}
                 />
 
-                <div
-                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-                ></div>
-
                 <StatBlock
                   title={"Nudity"}
                   value={80}
                   icon={<IconEyeOff size={17} className={`text-orange-500`} />}
                   colour={"#f97316"}
                 />
-
-                <div
-                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-                ></div>
 
                 <StatBlock
                   title={"Sexual Content"}
@@ -230,10 +214,6 @@ export default function SpecialMediaBlock({
                   colour={"#dc2626"}
                 />
 
-                <div
-                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-                ></div>
-
                 <StatBlock
                   title={"Gambling Content"}
                   value={50}
@@ -241,18 +221,14 @@ export default function SpecialMediaBlock({
                   colour={"#0ea5e9"}
                 />
 
-                <div
-                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
-                ></div>
-
-                <StatBlock
-                  title={"Age Rating"}
-                  value={50}
-                  icon={
-                    <IconBuildingCircus size={17} className={`text-pink-400`} />
-                  }
-                  colour={"#fb7185"}
-                />
+                {/*<StatBlock*/}
+                {/*  title={"Age Rating"}*/}
+                {/*  value={50}*/}
+                {/*  icon={*/}
+                {/*    <IconBuildingCircus size={17} className={`text-pink-400`} />*/}
+                {/*  }*/}
+                {/*  colour={"#fb7185"}*/}
+                {/*/>*/}
               </div>
             </div>
           </div>
@@ -302,23 +278,41 @@ export const StatBlock = ({
 }) => {
   return (
     <article
-      className={`group/stat relative flex items-center justify-center transition-all duration-300 ease-in-out`}
+      className={`group/stat flex items-center justify-start gap-2 transition-all duration-300 ease-in-out`}
       title={`${title}: ${value}%`}
     >
-      <CircularProgress
-        variant="determinate"
-        value={value}
-        size={30}
-        className={`rounded-full opacity-100 group-hover/stat:opacity-20 transition-all duration-300 ease-in-out`}
+      <div className={`relative flex items-center justify-center`}>
+        <CircularProgress
+          variant="determinate"
+          value={value}
+          size={30}
+          className={`rounded-full opacity-100 group-hover/stat:opacity-20 transition-all duration-300 ease-in-out`}
+          style={{
+            color: colour,
+          }}
+        />
+        <div
+          className={`absolute scale-100 group-hover/stat:scale-150 z-30 transition-all duration-300 ease-in-out`}
+        >
+          {icon}
+        </div>
+      </div>
+      <p
+        className={`text-xs text-neutral-400`}
         style={{
           color: colour,
         }}
-      />
-      <div
-        className={`absolute scale-100 group-hover/stat:scale-150 z-30 transition-all duration-300 ease-in-out`}
       >
-        {icon}
-      </div>
+        {/*Value to 2 decimal places*/}
+        {(Math.round(value * 2) / 20).toFixed(1)}{" "}
+        <span
+          style={{
+            color: colour,
+          }}
+        >
+          / 10
+        </span>
+      </p>
     </article>
   );
 };
