@@ -43,7 +43,7 @@ export default function MainNavigation({
                 href === "/"
                   ? pathname === href
                     ? "text-lime-400"
-                    : "text-neutral-600 hover:text-neutral-200"
+                    : "text-neutral-500 hover:text-neutral-200"
                   : !pathname.includes("/admin") && pathname.includes(href)
                     ? "text-lime-400"
                     : "text-neutral-500 hover:text-neutral-200"

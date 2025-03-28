@@ -23,36 +23,36 @@ export default function Login() {
 
       <LoginForm />
 
-      <div className={`relative flex justify-center items-center`}>
-        <div className={`w-full h-[1px] bg-neutral-200`}></div>
-        <h4 className={`p-3 min-w-fit text-sm z-10`}>
-          or <span className={`font-bold`}>Login</span> with
-        </h4>
-        <div className={`w-full h-[1px] bg-neutral-200`}></div>
-      </div>
+      {/*<div className={`relative flex justify-center items-center`}>*/}
+      {/*  <div className={`w-full h-[1px] bg-neutral-200`}></div>*/}
+      {/*  <h4 className={`p-3 min-w-fit text-sm z-10`}>*/}
+      {/*    or <span className={`font-bold`}>Login</span> with*/}
+      {/*  </h4>*/}
+      {/*  <div className={`w-full h-[1px] bg-neutral-200`}></div>*/}
+      {/*</div>*/}
 
-      <article className={`mt-4 flex flex-col gap-4`}>
-        <button
-          className={`p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-200 rounded-lg border border-neutral-200 hover:text-neutral-900 transition-all duration-300 ease-in-out`}
-        >
-          <IconBrandGoogleFilled />
-          <span className={``}>Google</span>
-        </button>
+      {/*<article className={`mt-4 flex flex-col gap-4`}>*/}
+      {/*  <button*/}
+      {/*    className={`p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-200 rounded-lg border border-neutral-200 hover:text-neutral-900 transition-all duration-300 ease-in-out`}*/}
+      {/*  >*/}
+      {/*    <IconBrandGoogleFilled />*/}
+      {/*    <span className={``}>Google</span>*/}
+      {/*  </button>*/}
 
-        <button
-          className={`p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-200 rounded-lg border border-neutral-200 hover:text-neutral-900 transition-all duration-300 ease-in-out`}
-        >
-          <IconBrandFacebookFilled />
-          <span className={``}>Facebook</span>
-        </button>
+      {/*  <button*/}
+      {/*    className={`p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-200 rounded-lg border border-neutral-200 hover:text-neutral-900 transition-all duration-300 ease-in-out`}*/}
+      {/*  >*/}
+      {/*    <IconBrandFacebookFilled />*/}
+      {/*    <span className={``}>Facebook</span>*/}
+      {/*  </button>*/}
 
-        <button
-          className={`p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-200 rounded-lg border border-neutral-200 hover:text-neutral-900 transition-all duration-300 ease-in-out`}
-        >
-          <IconBrandTwitch />
-          <span className={``}>Twitch</span>
-        </button>
-      </article>
+      {/*  <button*/}
+      {/*    className={`p-2 flex items-center justify-center gap-2 w-full hover:bg-neutral-200 rounded-lg border border-neutral-200 hover:text-neutral-900 transition-all duration-300 ease-in-out`}*/}
+      {/*  >*/}
+      {/*    <IconBrandTwitch />*/}
+      {/*    <span className={``}>Twitch</span>*/}
+      {/*  </button>*/}
+      {/*</article>*/}
 
       <p className={`mt-8 text-xs`}>
         Don't have an account?{" "}

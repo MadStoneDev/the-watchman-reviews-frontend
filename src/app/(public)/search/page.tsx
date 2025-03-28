@@ -1,7 +1,7 @@
 ﻿import type { Metadata } from "next";
-import SearchWrapper from "@/src/components/wrapper-search";
 import React, { Suspense } from "react";
-import { Skeleton } from "@/src/components/ui/skeleton";
+
+import SearchWrapper from "@/src/components/wrapper-search";
 import SearchSkeletonBoundary from "@/src/components/search-skeleton-boundary";
 
 export const metadata: Metadata = {

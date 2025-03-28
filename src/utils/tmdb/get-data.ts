@@ -21,7 +21,7 @@ export const searchMedia = async (searchTerm: string) => {
 
     // Return only movies and series
     return response.data.results.filter(
-      (item: any) => item.media_type === "movie" || item.media_type === "tv"
+      (item: any) => item.media_type === "movie" || item.media_type === "tv",
     );
   } catch (error) {
     // TODO: Sprint#2 - Handle Error Properly
@@ -107,7 +107,7 @@ export const getSeasonDetails = async (seriesId: string, season: number) => {
 export const getEpisodeDetails = async (
   seriesId: string,
   season: number,
-  episode: number
+  episode: number,
 ) => {
   // https://api.themoviedb.org/3/tv/{series_id}/season/{season_number}/episode/{episode_number}
   const options = {

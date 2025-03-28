@@ -3,12 +3,10 @@
 import React, { useState } from "react";
 import {
   IconCheck,
-  IconCircleXFilled,
   IconEye,
   IconEyeOff,
   IconLock,
   IconMail,
-  IconXboxXFilled,
 } from "@tabler/icons-react";
 
 export default function RegisterForm() {
@@ -92,6 +90,7 @@ export default function RegisterForm() {
 
   return (
     <form
+      action={`/actions.ts`}
       className={`mt-10 mb-4 grid gap-y-4 text-sm placeholder:text-sm text-neutral-900`}
     >
       <section className={`relative grid`}>
