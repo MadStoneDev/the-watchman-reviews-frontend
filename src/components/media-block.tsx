@@ -35,8 +35,13 @@ export default function MediaBlock({
   seriesGenres = [],
   admin = false,
 }: MediaItemProps) {
+  // Debug logs - uncomment to see what data is coming in
+  // console.log("Media data received:", data);
+
+  // Guard for empty data
   if (!data.title && !data.name) return null;
 
+  // Extract data properly - Keep the properties matching the source data exactly
   const title = data.title || data.name || "";
   const releaseDate = data.release_date || data.first_air_date || "";
   const posterPath = data.poster_path || "";
@@ -44,8 +49,14 @@ export default function MediaBlock({
   const mediaId = data.id || "";
   const rating = data.vote_average || 0;
 
+  // Debug release date and year
+  // console.log("Release date:", releaseDate, "Type:", typeof releaseDate);
+
   const cleanRating = Math.floor(rating / 2);
   const releaseYear = getYearFromDate(releaseDate);
+
+  // Debug year extraction
+  // console.log("Year extracted:", releaseYear);
 
   const randomDelay = useMemo(() => Math.floor(Math.random() * 1000), []);
 
@@ -86,9 +97,17 @@ export default function MediaBlock({
 
   // Functions
   function getYearFromDate(date: string) {
-    const timestamp = Date.parse(date);
-    if (isNaN(timestamp)) return "";
-    return new Date(timestamp).getFullYear().toString();
+    // Safety check for empty dates
+    if (!date) return "";
+
+    try {
+      const timestamp = Date.parse(date);
+      if (isNaN(timestamp)) return "";
+      return new Date(timestamp).getFullYear().toString();
+    } catch (error) {
+      console.error("Date parsing error:", error);
+      return "";
+    }
   }
 
   const handleAddToCollection = async () => {
@@ -237,6 +256,8 @@ export default function MediaBlock({
             onError={() => {
               setLoadingImage(false);
               setImageError(true);
+              // Debug image errors
+              // console.error(`Failed to load image for: ${title}`);
             }}
             className={`${
               loadingImage ? "opacity-0" : "opacity-100"
@@ -246,7 +267,7 @@ export default function MediaBlock({
             style={{
               objectPosition: "top center",
             }}
-          ></Image>
+          />
         ) : (
           <div
             className={`flex flex-col items-center justify-center gap-2 text-neutral-400`}
@@ -310,11 +331,13 @@ export default function MediaBlock({
             >
               <IconStarFilled size={15} className={`text-lime-400`} />
               <span className={`text-xs text-neutral-300`}>
-                {rating.toFixed(1)}
+                {rating ? rating.toFixed(1) : "N/A"}
               </span>
             </div>
             <div className={`pr-2 flex items-center`}>
-              <span className={`text-xs text-neutral-300`}>{releaseYear}</span>
+              <span className={`text-xs text-neutral-300`}>
+                {releaseYear || "N/A"}
+              </span>
             </div>
           </div>
         )}
