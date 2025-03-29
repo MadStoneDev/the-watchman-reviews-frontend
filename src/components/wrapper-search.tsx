@@ -20,41 +20,6 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
   const [seriesGenres, setSeriesGenres] = useState<Genre[]>([]);
 
   // Functions
-  // useEffect(() => {
-  //   const options = {
-  //     method: "GET",
-  //     url: `https://api.themoviedb.org/3/genre/movie/list?language-en`,
-  //     headers: {
-  //       accept: "application/json",
-  //       Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-  //     },
-  //   };
-  //
-  //   axios
-  //     .request(options)
-  //     .then(function (response) {
-  //       const genres = [];
-  //       genres.push(...response.data.genres);
-  //       setMovieGenres(genres);
-  //     })
-  //     .catch(function (error) {
-  //       console.error(error);
-  //     });
-  //
-  //   options.url = `https://api.themoviedb.org/3/genre/tv/list?language-en`;
-  //
-  //   axios
-  //     .request(options)
-  //     .then(function (response) {
-  //       const genres = [];
-  //       genres.push(...response.data.genres);
-  //       setSeriesGenres(genres);
-  //     })
-  //     .catch(function (error) {
-  //       console.error(error);
-  //     });
-  // }, []);
-
   const handleSearch = (results: MediaItem[]) => {
     const sortedResults = results.sort((a, b) =>
       a.releaseDate > b.releaseDate ? -1 : 1,

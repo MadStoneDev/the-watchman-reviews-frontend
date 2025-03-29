@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import React, { useMemo, useEffect, useState } from "react";
+import { createClient } from "@/src/utils/supabase/client";
 
 import { Popcorn } from "lucide-react";
 import {
@@ -17,7 +18,8 @@ import { CircularProgress } from "@mui/material";
 type Collection = {
   id: string;
   title: string;
-  isOwner?: boolean;
+  user_id: string;
+  is_owner: boolean;
 };
 
 interface MediaItemProps {
@@ -33,8 +35,17 @@ export default function MediaBlock({
   seriesGenres = [],
   admin = false,
 }: MediaItemProps) {
-  if (!data.title || !data.releaseDate) return null;
-  const cleanRating = Math.floor(data.rating / 2);
+  if (!data.title && !data.name) return null;
+
+  const title = data.title || data.name || "";
+  const releaseDate = data.release_date || data.first_air_date || "";
+  const posterPath = data.poster_path || "";
+  const mediaType = data.media_type || "";
+  const mediaId = data.id || "";
+  const rating = data.vote_average || 0;
+
+  const cleanRating = Math.floor(rating / 2);
+  const releaseYear = getYearFromDate(releaseDate);
 
   const randomDelay = useMemo(() => Math.floor(Math.random() * 1000), []);
 
@@ -43,38 +54,81 @@ export default function MediaBlock({
   const [imageError, setImageError] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [showCollectionSelector, setShowCollectionSelector] = useState(false);
-
-  // Mock collections - in a real implementation, you would fetch this from your backend
-  const [collections, setCollections] = useState<Collection[]>([
-    { id: "1", title: "My Favorites", isOwner: true },
-    { id: "2", title: "Watch Later", isOwner: true },
-    { id: "3", title: "Horror Classics", isOwner: true },
-    { id: "4", title: "Friend's Recommendations", isOwner: false },
-  ]);
-
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [addSuccess, setAddSuccess] = useState(false);
+
+  const supabase = createClient();
+
+  // Load user's collections
+  useEffect(() => {
+    const fetchCollections = async () => {
+      const { data: userCollections, error } = await supabase
+        .from("collections")
+        .select("*");
+
+      if (!error && userCollections) {
+        // Map collections to include is_owner flag
+        const mappedCollections = userCollections.map((collection) => ({
+          ...collection,
+          is_owner: true, // For now, we're only showing collections the user owns
+        }));
+
+        setCollections(mappedCollections);
+      } else {
+        console.error("Error fetching collections:", error);
+      }
+    };
+
+    fetchCollections();
+  }, []);
 
   // Functions
-  const getYearFromDate = (date: string) => {
+  function getYearFromDate(date: string) {
     const timestamp = Date.parse(date);
     if (isNaN(timestamp)) return "";
-    return new Date(timestamp).getFullYear();
-  };
+    return new Date(timestamp).getFullYear().toString();
+  }
 
-  const handleAddToCollection = () => {
+  const handleAddToCollection = async () => {
     if (!selectedCollection) return;
 
-    // Here you would implement the actual logic to add the media to the collection
-    console.log(`Adding ${data.title} to collection: ${selectedCollection}`);
+    setLoading(true);
 
-    // Close the selector after adding
-    setShowCollectionSelector(false);
-    setSelectedCollection("");
+    try {
+      // Create the media_collection entry
+      const { error } = await supabase.from("media_collection").insert({
+        collection_id: selectedCollection,
+        media_id: mediaId.toString(),
+        media_type: mediaType,
+        title: title,
+        poster_path: posterPath,
+        release_year: releaseYear,
+      });
+
+      if (error) {
+        console.error("Error adding to collection:", error);
+      } else {
+        setAddSuccess(true);
+
+        // Reset success message after a delay
+        setTimeout(() => {
+          setAddSuccess(false);
+          setShowCollectionSelector(false);
+          setSelectedCollection("");
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("Failed to add to collection:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    if (!data.poster) setLoadingImage(false);
-  }, [data.poster]);
+    if (!posterPath) setLoadingImage(false);
+  }, [posterPath]);
 
   return (
     <article
@@ -96,13 +150,14 @@ export default function MediaBlock({
         <div
           className={`absolute inset-0 z-20 bg-neutral-800/60 flex items-center justify-center backdrop-blur-sm text-sm`}
         >
-          <div className={`bg-neutral-900 py-3 px-2 w-full max-w-xs`}>
+          <div className={`bg-neutral-900 py-3 px-4 w-full max-w-xs`}>
             <div className={`flex justify-between items-start mb-4`}>
               <h4 className={`text-white font-semibold`}>Add to collection</h4>
               <button
                 onClick={() => {
                   setShowCollectionSelector(false);
                   setSelectedCollection("");
+                  setAddSuccess(false);
                 }}
                 className={`text-neutral-400 hover:text-white`}
               >
@@ -110,31 +165,44 @@ export default function MediaBlock({
               </button>
             </div>
 
-            <select
-              value={selectedCollection}
-              onChange={(e) => setSelectedCollection(e.target.value)}
-              className="w-full p-2 mb-4 bg-neutral-800 text-white border border-neutral-700 rounded focus:outline-none focus:border-lime-400"
-            >
-              <option value="">Select a collection</option>
-              {collections
-                .filter((col) => col.isOwner)
-                .map((collection) => (
-                  <option key={collection.id} value={collection.id}>
-                    {collection.title}
-                  </option>
-                ))}
-            </select>
+            {addSuccess ? (
+              <div className="py-2 px-3 bg-lime-500/20 text-lime-400 rounded mb-4">
+                Added to collection successfully!
+              </div>
+            ) : collections.length === 0 ? (
+              <div className="py-2 mb-4 text-neutral-400">
+                No collections found. Create a collection first.
+              </div>
+            ) : (
+              <select
+                value={selectedCollection}
+                onChange={(e) => setSelectedCollection(e.target.value)}
+                disabled={loading}
+                className="w-full p-2 mb-4 bg-neutral-800 text-white border border-neutral-700 rounded focus:outline-none focus:border-lime-400"
+              >
+                <option value="">Select a collection</option>
+                {collections
+                  .filter((col) => col.is_owner)
+                  .map((collection) => (
+                    <option key={collection.id} value={collection.id}>
+                      {collection.title}
+                    </option>
+                  ))}
+              </select>
+            )}
 
             <button
               onClick={handleAddToCollection}
-              disabled={!selectedCollection}
+              disabled={
+                !selectedCollection || loading || collections.length === 0
+              }
               className={`w-full p-2 rounded ${
-                !selectedCollection
+                !selectedCollection || loading || collections.length === 0
                   ? "bg-neutral-700 text-neutral-400 cursor-not-allowed"
                   : "bg-lime-500 text-black hover:bg-lime-400"
               } transition-colors duration-300`}
             >
-              Add to collection
+              {loading ? "Adding..." : "Add to collection"}
             </button>
           </div>
         </div>
@@ -157,12 +225,12 @@ export default function MediaBlock({
           />
         )}
 
-        {data.poster ? (
+        {posterPath ? (
           <Image
-            src={`https://image.tmdb.org/t/p/${admin ? "w500" : "w342"}${
-              data.poster
-            }`}
-            alt={`${data.title} Poster`}
+            src={`https://image.tmdb.org/t/p/${
+              admin ? "w500" : "w342"
+            }${posterPath}`}
+            alt={`${title} Poster`}
             width={admin ? 500 : 342}
             height={admin ? 190 : 430}
             onLoad={() => setLoadingImage(false)}
@@ -170,7 +238,6 @@ export default function MediaBlock({
               setLoadingImage(false);
               setImageError(true);
             }}
-            onClick={() => console.log(data)}
             className={`${
               loadingImage ? "opacity-0" : "opacity-100"
             } w-full h-full bg-black ${
@@ -197,7 +264,7 @@ export default function MediaBlock({
               admin ? "" : "whitespace-nowrap truncate"
             } text-sm font-semibold`}
           >
-            {data.title}
+            {title}
           </h3>
         </div>
 
@@ -210,7 +277,7 @@ export default function MediaBlock({
               <span
                 className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal lowercase text-neutral-950`}
               >
-                {getYearFromDate(data.releaseDate)}
+                {releaseYear}
               </span>
             </p>
 
@@ -221,7 +288,7 @@ export default function MediaBlock({
               <span
                 className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal text-neutral-950`}
               >
-                {data.id}
+                {mediaId}
               </span>
             </p>
 
@@ -232,7 +299,7 @@ export default function MediaBlock({
               <span
                 className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal lowercase text-neutral-950`}
               >
-                {data.type}
+                {mediaType}
               </span>
             </p>
           </div>
@@ -243,88 +310,14 @@ export default function MediaBlock({
             >
               <IconStarFilled size={15} className={`text-lime-400`} />
               <span className={`text-xs text-neutral-300`}>
-                {data.rating.toFixed(1)}
+                {rating.toFixed(1)}
               </span>
             </div>
             <div className={`pr-2 flex items-center`}>
-              <span className={`text-xs text-neutral-300`}>
-                {getYearFromDate(data.releaseDate)}
-              </span>
+              <span className={`text-xs text-neutral-300`}>{releaseYear}</span>
             </div>
           </div>
         )}
-
-        {/* Statistic Blocks */}
-        {/*<section className={`pt-2 flex flex-col border-t border-neutral-800`}>*/}
-        {/*  <div*/}
-        {/*    className={`flex flex-row flex-wrap items-center justify-between gap-1 lg:gap-2 text-neutral-300`}*/}
-        {/*  >*/}
-        {/*    /!* Horror *!/*/}
-        {/*    /!* Violence *!/*/}
-        {/*    /!* Nudity *!/*/}
-        {/*    /!* Sexual Content *!/*/}
-        {/*    /!* Substance Abuse *!/*/}
-        {/*    /!* Rainbow Meter *!/*/}
-
-        {/*    <StatBlock*/}
-        {/*      title={"Horror"}*/}
-        {/*      value={100}*/}
-        {/*      icon={<IconGhost2 size={14} className={``} />}*/}
-        {/*      colour={"#737373"}*/}
-        {/*    />*/}
-
-        {/*    <div*/}
-        {/*      className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-        {/*    ></div>*/}
-
-        {/*    <StatBlock*/}
-        {/*      title={"Violence"}*/}
-        {/*      value={60}*/}
-        {/*      icon={<IconSwords size={14} className={``} />}*/}
-        {/*      colour={"#7e22ce"}*/}
-        {/*    />*/}
-
-        {/*    <div*/}
-        {/*      className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-        {/*    ></div>*/}
-
-        {/*    <StatBlock*/}
-        {/*      title={"Nudity"}*/}
-        {/*      value={80}*/}
-        {/*      icon={<IconBed size={15} className={``} />}*/}
-        {/*      colour={"#ec4899"}*/}
-        {/*    />*/}
-
-        {/*    <div*/}
-        {/*      className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-        {/*    ></div>*/}
-
-        {/*    <StatBlock*/}
-        {/*      title={"Sexual Content"}*/}
-        {/*      value={100}*/}
-        {/*      icon={<IconFlame size={15} className={` `} />}*/}
-        {/*      colour={"#be123c"}*/}
-        {/*    />*/}
-
-        {/*    <div*/}
-        {/*      className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-        {/*    ></div>*/}
-
-        {/*    <StatBlock*/}
-        {/*      title={"Age Rating"}*/}
-        {/*      value={50}*/}
-        {/*      icon={<IconUsers size={14} className={``} />}*/}
-        {/*      colour={"#38bdf8"}*/}
-        {/*    />*/}
-
-        {/*    <StatBlock*/}
-        {/*      title={"Age Rating"}*/}
-        {/*      value={50}*/}
-        {/*      icon={<IconRainbow size={14} className={``} />}*/}
-        {/*      colour={"#38bdf8"}*/}
-        {/*    />*/}
-        {/*  </div>*/}
-        {/*</section>*/}
       </section>
     </article>
   );

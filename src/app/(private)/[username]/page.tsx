@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import { redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 
@@ -10,11 +10,25 @@ export default async function PrivatePage({
 }) {
   const { username } = await params;
   const supabase = await createClient();
+
+  // Check if user is authenticated
   const { data: user, error } = await supabase.auth.getUser();
 
   // If no user is found, redirect to auth portal
   if (error || !user || !user.user) {
     redirect("/auth/portal");
+  }
+
+  // Check if the username exists in public.profiles
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("username", username)
+    .single();
+
+  // If username doesn't exist in profiles, show 404 page
+  if (profileError || !profileData) {
+    notFound();
   }
 
   return (
