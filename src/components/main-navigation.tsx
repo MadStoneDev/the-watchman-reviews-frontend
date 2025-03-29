@@ -7,7 +7,10 @@ import { usePathname } from "next/navigation";
 import Logo from "@/src/components/logo";
 import MainFooter from "@/src/components/main-footer";
 
-import { IconUser } from "@tabler/icons-react";
+import { IconPower, IconUser } from "@tabler/icons-react";
+import { User } from "@supabase/supabase-js";
+
+import { createClient } from "@/src/utils/supabase/client";
 
 interface NavigationItem {
   icon: React.JSX.Element;
@@ -15,11 +18,25 @@ interface NavigationItem {
   href: string;
 }
 
+// Define a proper user type based on your database schema
+interface Profile {
+  id: string;
+  username: string;
+  created_at: string;
+  settings: any | null;
+}
+
+interface MainNavigationProps {
+  items?: NavigationItem[];
+  user?: User | null;
+  profile?: Profile | null;
+}
+
 export default function MainNavigation({
   items = [],
-}: {
-  items?: NavigationItem[];
-}) {
+  user = null,
+  profile = null,
+}: MainNavigationProps) {
   // Hooks
   const pathname = usePathname();
 
@@ -54,27 +71,45 @@ export default function MainNavigation({
         </article>
 
         <article
-          className={`fixed top-5 right-5 md:relative flex items-center md:w-full`}
+          className={`fixed top-5 right-5 md:right-auto md:relative flex items-center gap-2 md:w-full`}
         >
-          <Link
-            href={"/auth/portal"}
-            className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
-            title={`Login`}
-          >
-            <IconUser size={26} />
-            <span className={`hidden md:block text-sm`}>Login</span>
-          </Link>
-          {/* Logout */}
-          {/*<Link*/}
-          {/*  href={"/logout"}*/}
-          {/*  className={`flex-grow grid place-items-center ${*/}
-          {/*    pathname === "/logout"*/}
-          {/*      ? "text-lime-400"*/}
-          {/*      : "text-neutral-600 hover:text-neutral-200"*/}
-          {/*  } font-bold transition-all duration-300 ease-in-out`}*/}
-          {/*>*/}
-          {/*  <IconPower size={26} />*/}
-          {/*</Link>*/}
+          {user ? (
+            <div
+              className={`flex-grow flex flex-row-reverse md:flex-row items-center gap-2`}
+            >
+              <Link
+                href={"/me"}
+                className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
+                title={`Profile`}
+              >
+                <IconUser size={26} />
+              </Link>
+
+              <button
+                onClick={async () => {
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                }}
+                className={`p-2 flex items-center justify-center ${
+                  pathname === "/logout"
+                    ? "text-lime-400"
+                    : "text-neutral-600 hover:text-lime-400"
+                } font-bold transition-all duration-300 ease-in-out`}
+                title="Logout"
+              >
+                <IconPower size={26} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              href={"/auth/portal"}
+              className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
+              title={`Login`}
+            >
+              <IconUser size={26} />
+              <span className={`hidden md:block text-sm`}>Login</span>
+            </Link>
+          )}
         </article>
       </section>
       <MainFooter className={`flex md:hidden`} />

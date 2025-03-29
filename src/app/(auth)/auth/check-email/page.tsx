@@ -1,5 +1,11 @@
 ﻿import React from "react";
 
+export const metadata = {
+  title: "Check Email - The Watchman Reviews",
+  description:
+    "Welcome Back! Login to your account on The Watchman Reviews to track shows and movies and join the community.",
+};
+
 export default function CheckEmailPage() {
   return (
     <>

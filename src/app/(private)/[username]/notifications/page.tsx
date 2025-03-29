@@ -13,7 +13,7 @@ export default async function NotificationsPage({
       <BrowseNavigation
         items={[
           { label: "Account", href: `/${username}` },
-          { label: "Lists", href: `/${username}/lists` },
+          { label: "Collections", href: `/${username}/collections` },
         ]}
       />
       <section

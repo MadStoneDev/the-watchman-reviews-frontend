@@ -1,5 +1,9 @@
 ﻿"use client";
 
+import Link from "next/link";
+import React, { useState, useEffect } from "react";
+import { createClient } from "@/src/utils/supabase/client";
+
 import {
   IconMovie,
   IconPencil,
@@ -9,41 +13,50 @@ import {
   IconTrash,
   IconCloud,
 } from "@tabler/icons-react";
-import React, { useState } from "react";
-import Link from "next/link";
+
+type Profile = {
+  id: string;
+  username: string;
+  created_at: string;
+  settings: any | null;
+};
 
 type MediaCollection = {
-  id?: string;
+  id: string;
   title: string;
-  isOwner?: boolean;
+  isOwner: boolean;
+  is_public: boolean;
+  shared?: boolean;
 };
 
 const CollectionItem = ({
   collection,
   onUpdate,
   onDelete,
+  isCurrentUser,
 }: {
   collection: MediaCollection;
-  onUpdate: (id: string | undefined, newTitle: string) => void;
-  onDelete: (id: string | undefined) => void;
+  onUpdate: (id: string, newTitle: string) => void;
+  onDelete: (id: string) => void;
+  isCurrentUser: boolean;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(collection.title);
   const [error, setError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Default to true if isOwner is undefined
-  const isOwner = collection.isOwner !== false;
+  // Only allow editing if the user is the owner AND the current user
+  const canEdit = collection.isOwner && isCurrentUser;
 
   const handleEdit = () => {
-    if (!isOwner) return;
+    if (!canEdit) return;
     setEditTitle(collection.title);
     setIsEditing(true);
     setError("");
   };
 
   const handleDelete = () => {
-    if (!isOwner) return;
+    if (!canEdit) return;
     setShowDeleteConfirm(true);
   };
 
@@ -116,14 +129,14 @@ const CollectionItem = ({
         </>
       ) : (
         <>
-          {isOwner ? (
+          {collection.shared ? (
+            <IconCloud className="text-neutral-300 transition-all duration-300 ease-in-out" />
+          ) : (
             <IconMovie
               className={`${
                 isEditing ? "text-neutral-600" : "text-neutral-300"
               } transition-all duration-300 ease-in-out`}
             />
-          ) : (
-            <IconCloud className="text-neutral-300 transition-all duration-300 ease-in-out" />
           )}
 
           {isEditing ? (
@@ -168,7 +181,7 @@ const CollectionItem = ({
               >
                 {collection.title}
               </Link>
-              {isOwner && (
+              {canEdit && (
                 <>
                   <button
                     onClick={handleEdit}
@@ -192,55 +205,244 @@ const CollectionItem = ({
   );
 };
 
-export default function UserCollectionsBlock() {
-  // States
-  const [collections, setCollections] = useState<MediaCollection[]>([
-    { id: "1", title: "My Favorites", isOwner: true },
-    { id: "2", title: "Watch Later", isOwner: true },
-    { id: "3", title: "Friend's Recommendations", isOwner: false },
-  ]);
+interface UserCollectionsBlockProps {
+  urlProfile: Profile;
+  currentUserProfile: Profile | null;
+  isCurrentUser: boolean;
+}
 
-  const updateCollection = (id: string | undefined, newTitle: string) => {
-    setCollections(
-      collections.map((col) =>
-        col.id === id ? { ...col, title: newTitle } : col,
-      ),
-    );
+export default function UserCollectionsBlock({
+  urlProfile,
+  currentUserProfile,
+  isCurrentUser,
+}: UserCollectionsBlockProps) {
+  const [collections, setCollections] = useState<MediaCollection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const supabase = createClient();
+
+  // Fetch collections when component mounts
+  useEffect(() => {
+    async function fetchCollections() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 1. Fetch owned collections based on user criteria
+        let ownedCollectionsQuery = supabase.from("collections").select("*");
+
+        if (isCurrentUser) {
+          // If current user, get all their collections
+          ownedCollectionsQuery = ownedCollectionsQuery.eq(
+            "owner",
+            urlProfile.id,
+          );
+        } else {
+          // If not current user, only get their public collections
+          ownedCollectionsQuery = ownedCollectionsQuery
+            .eq("owner", urlProfile.id)
+            .eq("is_public", true);
+        }
+
+        const { data: ownedCollections, error: ownedError } =
+          await ownedCollectionsQuery;
+
+        if (ownedError) {
+          throw new Error(ownedError.message);
+        }
+
+        // Transform owned collections
+        const formattedOwnedCollections = (ownedCollections || []).map(
+          (collection) => ({
+            id: collection.id,
+            title: collection.title || "Untitled Collection",
+            isOwner: true,
+            is_public: collection.is_public,
+            shared: false,
+          }),
+        );
+
+        let allCollections = [...formattedOwnedCollections];
+
+        // 2. Fetch shared collections if this is the current user
+        if (isCurrentUser && currentUserProfile) {
+          // First get the shared collection IDs for this user
+          const { data: sharedData, error: sharedError } = await supabase
+            .from("shared_collection")
+            .select("collection_id")
+            .eq("user_id", currentUserProfile.id);
+
+          if (sharedError) {
+            throw new Error(sharedError.message);
+          }
+
+          // Extract the collection IDs
+          const sharedCollectionIds =
+            sharedData?.map((item) => item.collection_id) || [];
+
+          // If there are any shared collections
+          if (sharedCollectionIds.length > 0) {
+            // Fetch the actual collection data
+            const { data: sharedCollections, error: collectionsError } =
+              await supabase
+                .from("collections")
+                .select("*")
+                .in("id", sharedCollectionIds);
+
+            if (collectionsError) {
+              throw new Error(collectionsError.message);
+            }
+
+            // Transform shared collections data
+            const formattedSharedCollections = (sharedCollections || []).map(
+              (collection) => ({
+                id: collection.id,
+                title: collection.title || "Untitled Shared Collection",
+                isOwner: false,
+                is_public: collection.is_public,
+                shared: true,
+              }),
+            );
+
+            allCollections = [...allCollections, ...formattedSharedCollections];
+          }
+        }
+
+        setCollections(allCollections);
+      } catch (err) {
+        console.error("Error fetching collections:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load collections",
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCollections();
+  }, [urlProfile.id, isCurrentUser, currentUserProfile]);
+
+  const updateCollection = async (id: string, newTitle: string) => {
+    try {
+      const { error } = await supabase
+        .from("collections")
+        .update({ title: newTitle })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // Update local state if successful
+      setCollections(
+        collections.map((col) =>
+          col.id === id ? { ...col, title: newTitle } : col,
+        ),
+      );
+    } catch (err) {
+      console.error("Error updating collection:", err);
+      // You could add a toast notification here
+    }
   };
 
-  const deleteCollection = (id: string | undefined) => {
-    setCollections(collections.filter((col) => col.id !== id));
+  const deleteCollection = async (id: string) => {
+    try {
+      // First, delete any shared_collection references
+      await supabase.from("shared_collection").delete().eq("collection_id", id);
+
+      // Then delete any media_collection entries
+      await supabase.from("media_collection").delete().eq("collection_id", id);
+
+      // Finally delete the collection itself
+      const { error } = await supabase
+        .from("collections")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // Update local state if successful
+      setCollections(collections.filter((col) => col.id !== id));
+    } catch (err) {
+      console.error("Error deleting collection:", err);
+      // You could add a toast notification here
+    }
   };
 
-  const createNewCollection = () => {
-    const newCollection = {
-      id: Date.now().toString(), // Simple ID generation for example
-      title: "New Collection",
-      isOwner: true,
-    };
-    setCollections([...collections, newCollection]);
+  const createNewCollection = async () => {
+    try {
+      if (!currentUserProfile) return;
+
+      const newCollection = {
+        title: "New Collection",
+        owner: currentUserProfile.id,
+        is_public: false,
+      };
+
+      const { data, error } = await supabase
+        .from("collections")
+        .insert([newCollection])
+        .select();
+
+      if (error) throw error;
+
+      if (data && data[0]) {
+        // Add new collection to state
+        setCollections([
+          ...collections,
+          {
+            id: data[0].id,
+            title: data[0].title || "New Collection",
+            isOwner: true,
+            is_public: data[0].is_public,
+            shared: false,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error("Error creating collection:", err);
+      // You could add a toast notification here
+    }
   };
+
+  if (loading) {
+    return <div className="my-4">Loading collections...</div>;
+  }
+
+  if (error) {
+    return <div className="my-4 text-red-500">Error: {error}</div>;
+  }
 
   return (
     <div className="my-4">
-      <button
-        onClick={createNewCollection}
-        className="p-2 flex justify-center items-center gap-1 w-full border hover:border-lime-400 hover:text-lime-400 opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out rounded"
-      >
-        <IconSquarePlus size={32} />
-        <span>Create a new collection</span>
-      </button>
+      {isCurrentUser && (
+        <button
+          onClick={createNewCollection}
+          className="p-2 flex justify-center items-center gap-1 w-full border hover:border-lime-400 hover:text-lime-400 opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out rounded"
+        >
+          <IconSquarePlus size={32} />
+          <span>Create a new collection</span>
+        </button>
+      )}
 
-      <section className="my-4 space-y-2">
-        {collections.map((collection) => (
-          <CollectionItem
-            key={collection.id}
-            collection={collection}
-            onUpdate={updateCollection}
-            onDelete={deleteCollection}
-          />
-        ))}
-      </section>
+      {collections.length === 0 ? (
+        <div className="mt-8 text-center text-neutral-500">
+          {isCurrentUser
+            ? "You don't have any collections yet. Create one to get started!"
+            : "This user doesn't have any public collections."}
+        </div>
+      ) : (
+        <section className="my-4 space-y-2">
+          {collections.map((collection) => (
+            <CollectionItem
+              key={collection.id}
+              collection={collection}
+              onUpdate={updateCollection}
+              onDelete={deleteCollection}
+              isCurrentUser={isCurrentUser}
+            />
+          ))}
+        </section>
+      )}
     </div>
   );
 }
