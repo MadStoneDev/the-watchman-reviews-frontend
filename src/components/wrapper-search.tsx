@@ -1,15 +1,11 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-import axios from "axios";
 import { Popcorn } from "lucide-react";
 
-<<<<<<< HEAD
-import { Genre, MediaItem } from "@/lib/types";
-=======
 import { Genre, MediaItem } from "@/src/types/media";
->>>>>>> supabase
+
 import SearchForm from "@/src/components/search-form";
 import MediaBlock from "@/src/components/media-block";
 
@@ -61,7 +57,7 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
 
   const handleSearch = (results: MediaItem[]) => {
     const sortedResults = results.sort((a, b) =>
-      a.releaseDate > b.releaseDate ? -1 : 1
+      a.releaseDate > b.releaseDate ? -1 : 1,
     );
 
     setData(sortedResults);

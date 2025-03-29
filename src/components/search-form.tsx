@@ -3,11 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-<<<<<<< HEAD
-import { Input } from "@/src/components/ui/input";
-import { Button } from "@/src/components/ui/button";
-=======
->>>>>>> supabase
 import axios from "axios";
 
 import { Input } from "@/src/components/ui/input";
@@ -72,7 +67,8 @@ export default function SearchForm({
       const response = await axios.request(options);
       const searchResults: MediaItem[] = response.data.results
         .filter(
-          (item: any) => item.media_type === "movie" || item.media_type === "tv"
+          (item: any) =>
+            item.media_type === "movie" || item.media_type === "tv",
         )
         .map((item: any) => ({
           id: item.id,

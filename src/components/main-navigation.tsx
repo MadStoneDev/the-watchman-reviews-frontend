@@ -1,20 +1,13 @@
 ﻿"use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import Logo from "@/src/components/logo";
-import { usePathname } from "next/navigation";
 import MainFooter from "@/src/components/main-footer";
-<<<<<<< HEAD
-=======
-import {
-  IconLogin,
-  IconLogout,
-  IconPower,
-  IconUser,
-} from "@tabler/icons-react";
->>>>>>> supabase
+
+import { IconUser } from "@tabler/icons-react";
 
 interface NavigationItem {
   icon: React.JSX.Element;
@@ -64,23 +57,9 @@ export default function MainNavigation({
           className={`fixed top-5 right-5 md:relative flex items-center md:w-full`}
         >
           <Link
-<<<<<<< HEAD
-            key={href}
-            href={href}
-            className={`flex gap-6 max-w-fit ${
-              href === "/"
-                ? pathname === href
-                  ? "text-lime-400"
-                  : "text-neutral-600 hover:text-neutral-200"
-                : !pathname.includes("/admin") && pathname.includes(href)
-                ? "text-lime-400"
-                : "text-neutral-500 hover:text-neutral-200"
-            } font-bold transition-all duration-300 ease-in-out`}
-=======
             href={"/auth/portal"}
             className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
             title={`Login`}
->>>>>>> supabase
           >
             <IconUser size={26} />
             <span className={`hidden md:block text-sm`}>Login</span>

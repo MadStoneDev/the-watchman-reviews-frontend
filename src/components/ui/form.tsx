@@ -12,11 +12,7 @@ import {
   useFormContext,
 } from "react-hook-form";
 
-<<<<<<< HEAD
-import { cn } from "@/lib/utils";
-=======
 import { cn } from "@/src/lib/utils";
->>>>>>> supabase
 import { Label } from "@/src/components/ui/label";
 
 const Form = FormProvider;
@@ -29,11 +25,7 @@ type FormFieldContextValue<
 };
 
 const FormFieldContext = React.createContext<FormFieldContextValue>(
-<<<<<<< HEAD
-  {} as FormFieldContextValue
-=======
   {} as FormFieldContextValue,
->>>>>>> supabase
 );
 
 const FormField = <
@@ -77,11 +69,7 @@ type FormItemContextValue = {
 };
 
 const FormItemContext = React.createContext<FormItemContextValue>(
-<<<<<<< HEAD
-  {} as FormItemContextValue
-=======
   {} as FormItemContextValue,
->>>>>>> supabase
 );
 
 const FormItem = React.forwardRef<

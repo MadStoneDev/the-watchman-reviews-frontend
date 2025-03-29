@@ -1,10 +1,6 @@
 ﻿"use client";
 
 import React, { useEffect, useState } from "react";
-<<<<<<< HEAD
-import GoBack from "@/src/components/go-back";
-=======
->>>>>>> supabase
 
 import { Genre } from "@/src/types/media";
 import { Database } from "@/src/types/supabase";

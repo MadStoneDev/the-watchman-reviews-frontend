@@ -1,13 +1,7 @@
 ﻿import type { Metadata } from "next";
-<<<<<<< HEAD:src/app/search/page.tsx
-import SearchWrapper from "@/src/components/wrapper-search";
-import React, { Suspense } from "react";
-import { Skeleton } from "@/src/components/ui/skeleton";
-=======
 import React, { Suspense } from "react";
 
 import SearchWrapper from "@/src/components/wrapper-search";
->>>>>>> supabase:src/app/(public)/search/page.tsx
 import SearchSkeletonBoundary from "@/src/components/search-skeleton-boundary";
 
 export const metadata: Metadata = {

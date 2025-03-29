@@ -12,11 +12,7 @@
   },
   "aliases": {
     "components": "@/src/components",
-<<<<<<< HEAD
-    "utils": "@/lib/utils",
-=======
     "utils": "@/src/lib/utils",
->>>>>>> supabase
     "ui": "@/src/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"

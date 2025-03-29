@@ -3,21 +3,7 @@ import "./globals.css";
 import React from "react";
 import localFont from "next/font/local";
 
-<<<<<<< HEAD
-import {
-  IconSearch,
-  IconHome,
-  IconLayout2,
-  IconChartBar,
-} from "@tabler/icons-react";
-
-import MainNavigation from "@/src/components/main-navigation";
 import { ThemeProvider } from "@/src/components/theme-provider";
-import Logo from "@/src/components/logo";
-import MainFooter from "@/src/components/main-footer";
-=======
-import { ThemeProvider } from "@/src/components/theme-provider";
->>>>>>> supabase
 
 const montserrat = localFont({
   src: "./fonts/Montserrat.ttf",
