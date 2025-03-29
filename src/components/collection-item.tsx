@@ -1,9 +1,15 @@
 ﻿"use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import Image from "next/image";
 import React, { useState } from "react";
-import { IconTrash, IconPopcorn, IconDeviceTv } from "@tabler/icons-react";
+
+import {
+  IconTrash,
+  IconDeviceTv,
+  IconChairDirector,
+} from "@tabler/icons-react";
+import { Popcorn } from "lucide-react";
 
 type CollectionItemProps = {
   id: string;
@@ -27,7 +33,7 @@ export default function CollectionItem({
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const MediaIcon = mediaType === "movie" ? IconPopcorn : IconDeviceTv;
+  const MediaIcon = mediaType === "movie" ? IconChairDirector : IconDeviceTv;
 
   return (
     <div
