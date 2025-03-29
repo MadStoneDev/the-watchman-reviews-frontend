@@ -1,4 +1,5 @@
 ﻿import React from "react";
+import Link from "next/link";
 
 import Logo from "@/src/components/logo";
 import MainFooter from "@/src/components/main-footer";
@@ -10,7 +11,19 @@ import {
   IconLayout2,
   IconSearch,
 } from "@tabler/icons-react";
-import Link from "next/link";
+
+type Props = {
+  params: Promise<{ username: string }>;
+};
+
+export async function generateMetadata({ params }: Props) {
+  const { username } = await params;
+
+  return {
+    title: `${username} | The Watchman Reviews`,
+    description: `Follow ${username} on The Watchman Reviews`,
+  };
+}
 
 export default function PublicLayout({
   children,

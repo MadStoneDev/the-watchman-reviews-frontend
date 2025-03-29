@@ -8,7 +8,7 @@
 } from "@tabler/icons-react";
 import React from "react";
 import Link from "next/link";
-import RegisterForm from "@/src/components/auth/register-form";
+import CreateOrLoginForm from "@/src/components/auth/create-or-login-form";
 
 export const metadata = {
   title: "Create a New Account - The Watchman Reviews",
@@ -26,13 +26,13 @@ export default function Register() {
         Welcome to The Watchman Reviews!
       </h2>
 
-      <RegisterForm />
-
       <p className={`mt-4 text-sm text-neutral-400`}>
         We will send a magic link to your email to verify your account. If
         there's an account associated with your email, you will be logged in
         automatically.
       </p>
+
+      <CreateOrLoginForm />
 
       {/*<div className={`relative flex justify-center items-center`}>*/}
       {/*  <div className={`w-full h-[1px] bg-neutral-200`}></div>*/}
@@ -65,15 +65,15 @@ export default function Register() {
       {/*  </button>*/}
       {/*</article>*/}
 
-      <p className={`mt-8 text-xs`}>
-        Already have an account?{" "}
-        <Link
-          href={`/login`}
-          className={`font-bold hover:text-lime-400 transition-all duration-300 ease-in-out`}
-        >
-          Login
-        </Link>
-      </p>
+      {/*<p className={`mt-8 text-xs`}>*/}
+      {/*  Already have an account?{" "}*/}
+      {/*  <Link*/}
+      {/*    href={`/login`}*/}
+      {/*    className={`font-bold hover:text-lime-400 transition-all duration-300 ease-in-out`}*/}
+      {/*  >*/}
+      {/*    Login*/}
+      {/*  </Link>*/}
+      {/*</p>*/}
     </>
   );
 }

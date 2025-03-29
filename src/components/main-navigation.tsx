@@ -34,7 +34,9 @@ export default function MainNavigation({
       <section className={`flex flex-col h-full`}>
         <Logo className={`hidden md:block`} />
 
-        <article className={`flex-grow md:mt-20 flex md:flex-col md:gap-14`}>
+        <article
+          className={`flex-grow md:mt-20 flex md:flex-col justify-between md:justify-start items-center md:items-start md:gap-14`}
+        >
           {items.map(({ icon, label, href }) => (
             <Link
               key={href}
@@ -55,9 +57,11 @@ export default function MainNavigation({
           ))}
         </article>
 
-        <article className={`flex items-center w-full`}>
+        <article
+          className={`fixed top-5 right-5 md:relative flex items-center md:w-full`}
+        >
           <Link
-            href={"/login"}
+            href={"/auth/portal"}
             className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
             title={`Login`}
           >
@@ -68,7 +72,8 @@ export default function MainNavigation({
           {/*<Link*/}
           {/*  href={"/logout"}*/}
           {/*  className={`flex-grow grid place-items-center ${*/}
-          {/*    pathname === "/logout"*/}P{/*      ? "text-lime-400"*/}
+          {/*    pathname === "/logout"*/}
+          {/*      ? "text-lime-400"*/}
           {/*      : "text-neutral-600 hover:text-neutral-200"*/}
           {/*  } font-bold transition-all duration-300 ease-in-out`}*/}
           {/*>*/}
