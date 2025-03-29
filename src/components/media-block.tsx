@@ -10,6 +10,7 @@ import {
   IconUsers,
   IconSquarePlus,
   IconX,
+  IconShare,
 } from "@tabler/icons-react";
 
 import { Genre } from "@/src/types/media";
@@ -18,7 +19,6 @@ import { CircularProgress } from "@mui/material";
 type Collection = {
   id: string;
   title: string;
-  user_id: string;
   is_owner: boolean;
 };
 
@@ -53,23 +53,78 @@ export default function MediaBlock({
 
   const supabase = createClient();
 
-  // Load user's collections
+  // Load user's collections - both owned and shared with them
   useEffect(() => {
     const fetchCollections = async () => {
-      const { data: userCollections, error } = await supabase
-        .from("collections")
-        .select("*");
+      try {
+        // Get user's ID first
+        const { data: userData, error: userError } =
+          await supabase.auth.getUser();
+        if (userError || !userData?.user) {
+          console.error("Error fetching user:", userError);
+          return;
+        }
 
-      if (!error && userCollections) {
-        // Map collections to include is_owner flag
-        const mappedCollections = userCollections.map((collection) => ({
-          ...collection,
-          is_owner: true, // For now, we're only showing collections the user owns
-        }));
+        const userId = userData.user.id;
 
-        setCollections(mappedCollections);
-      } else {
-        console.error("Error fetching collections:", error);
+        // Fetch owned collections
+        const { data: ownedCollections, error: ownedError } = await supabase
+          .from("collections")
+          .select("id, title")
+          .eq("user_id", userId);
+
+        if (ownedError) {
+          console.error("Error fetching owned collections:", ownedError);
+        }
+
+        // Fetch shared collections
+        const { data: sharedCollectionsIds, error: sharedError } =
+          await supabase
+            .from("shared_collection")
+            .select("collection_id")
+            .eq("user_id", userId);
+
+        if (sharedError) {
+          console.error("Error fetching shared collection IDs:", sharedError);
+        }
+
+        // Extract collection IDs from shared collections
+        const sharedIds =
+          sharedCollectionsIds?.map((item) => item.collection_id) || [];
+
+        if (sharedIds.length > 0) {
+          // Fetch the actual collection details for shared collections
+          const { data: sharedCollections, error: sharedDetailsError } =
+            await supabase
+              .from("collections")
+              .select("id, title")
+              .in("id", sharedIds);
+
+          if (sharedDetailsError) {
+            console.error(
+              "Error fetching shared collection details:",
+              sharedDetailsError,
+            );
+          }
+
+          // Combine owned and shared collections
+          const combinedCollections = [
+            ...(ownedCollections || []).map((c) => ({ ...c, is_owner: true })),
+            ...(sharedCollections || []).map((c) => ({
+              ...c,
+              is_owner: false,
+            })),
+          ];
+
+          setCollections(combinedCollections);
+        } else {
+          // Just use owned collections if no shared ones
+          setCollections(
+            (ownedCollections || []).map((c) => ({ ...c, is_owner: true })),
+          );
+        }
+      } catch (error) {
+        console.error("Error in fetchCollections:", error);
       }
     };
 
@@ -173,13 +228,29 @@ export default function MediaBlock({
                 className="w-full p-2 mb-4 bg-neutral-800 text-white border border-neutral-700 rounded focus:outline-none focus:border-lime-400"
               >
                 <option value="">Select a collection</option>
-                {collections
-                  .filter((col) => col.is_owner)
-                  .map((collection) => (
-                    <option key={collection.id} value={collection.id}>
-                      {collection.title}
-                    </option>
-                  ))}
+                {/* Group owned collections */}
+                <optgroup label="Your Collections">
+                  {collections
+                    .filter((col) => col.is_owner)
+                    .map((collection) => (
+                      <option key={collection.id} value={collection.id}>
+                        {collection.title}
+                      </option>
+                    ))}
+                </optgroup>
+
+                {/* Group shared collections */}
+                {collections.some((col) => !col.is_owner) && (
+                  <optgroup label="Shared With You">
+                    {collections
+                      .filter((col) => !col.is_owner)
+                      .map((collection) => (
+                        <option key={collection.id} value={collection.id}>
+                          {collection.title}
+                        </option>
+                      ))}
+                  </optgroup>
+                )}
               </select>
             )}
 

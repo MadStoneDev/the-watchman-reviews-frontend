@@ -42,7 +42,9 @@ export default async function CollectionPage({ params }: Props) {
     redirect("/auth/portal");
   }
 
-  // Check if collection exists and user has access
+  const userId = user.user.id;
+
+  // Check if collection exists
   const { data: collection, error: collectionError } = await supabase
     .from("collections")
     .select("*")
@@ -51,6 +53,23 @@ export default async function CollectionPage({ params }: Props) {
 
   if (collectionError || !collection) {
     notFound();
+  }
+
+  // Check if user has access (owner or shared)
+  const isOwner = collection.user_id === userId;
+
+  if (!isOwner) {
+    // Check if collection is shared with user
+    const { data: sharedAccess, error: sharedError } = await supabase
+      .from("shared_collection")
+      .select("*")
+      .eq("collection_id", id)
+      .eq("user_id", userId)
+      .single();
+
+    if (sharedError || !sharedAccess) {
+      notFound(); // User doesn't have access
+    }
   }
 
   // Get all media items in this collection
@@ -68,15 +87,26 @@ export default async function CollectionPage({ params }: Props) {
     <section
       className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
     >
-      <h1 className={`max-w-64 text-2xl sm:3xl md:text-4xl font-bold`}>
-        {collection.title}
-      </h1>
-
-      <div className="mt-4 text-sm text-neutral-400">
-        <p>{mediaItems?.length || 0} items in collection</p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <h1 className={`max-w-64 text-2xl sm:3xl md:text-4xl font-bold`}>
+          {collection.title}
+        </h1>
       </div>
 
-      <CollectionBlock initialItems={mediaItems || []} collectionId={id} />
+      <div className="mt-4 text-sm text-neutral-400 flex items-center gap-2">
+        <p>{mediaItems?.length || 0} items in collection</p>
+        {!isOwner && (
+          <span className="px-2 py-0.5 bg-neutral-700 text-xs rounded-full">
+            Shared with you
+          </span>
+        )}
+      </div>
+
+      <CollectionBlock
+        initialItems={mediaItems || []}
+        collectionId={id}
+        isOwner={isOwner}
+      />
     </section>
   );
 }

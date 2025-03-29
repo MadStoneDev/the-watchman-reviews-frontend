@@ -12,6 +12,8 @@ import {
   IconSearch,
 } from "@tabler/icons-react";
 
+import { createClient } from "@/src/utils/supabase/server";
+
 type Props = {
   params: Promise<{ username: string }>;
 };
@@ -25,11 +27,26 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default function PublicLayout({
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Supabase
+  const supabase = await createClient();
+  const { data: user } = await supabase.auth.getUser();
+
+  let profile = null;
+  if (user && user.user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.user.id)
+      .single();
+
+    profile = data;
+  }
+
   return (
     <>
       <MainNavigation
@@ -43,6 +60,8 @@ export default function PublicLayout({
             href: "/how-it-works",
           },
         ]}
+        user={user.user}
+        profile={profile}
       />
 
       {/* Spacing */}
