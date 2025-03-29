@@ -52,23 +52,51 @@ export default async function CollectionPage({ params }: Props) {
     .single();
 
   if (collectionError || !collection) {
+    console.error("Collection not found:", collectionError);
     notFound();
   }
 
   // Check if user has access (owner or shared)
   const isOwner = collection.user_id === userId;
 
+  // Temporarily bypass the shared access check - remove this line later
+  let hasAccess = true;
+
   if (!isOwner) {
     // Check if collection is shared with user
-    const { data: sharedAccess, error: sharedError } = await supabase
-      .from("shared_collection")
-      .select("*")
-      .eq("collection_id", id)
-      .eq("user_id", userId)
-      .single();
+    try {
+      const { data: sharedAccess, error: sharedError } = await supabase
+        .from("shared_collection")
+        .select("*")
+        .eq("collection_id", id)
+        .eq("user_id", userId);
 
-    if (sharedError || !sharedAccess) {
-      notFound(); // User doesn't have access
+      // Note: Changed from .single() to allow no results without error
+
+      if (sharedError) {
+        console.error("Shared access check error:", sharedError);
+      }
+
+      // Check if we got any results
+      hasAccess = sharedAccess && sharedAccess.length > 0;
+
+      if (!hasAccess) {
+        console.log(
+          "No shared access found for user",
+          userId,
+          "on collection",
+          id,
+        );
+      }
+    } catch (err) {
+      console.error("Error checking shared access:", err);
+      // Default to no access if there was an error
+      hasAccess = false;
+    }
+
+    // If you don't have shared access and you're not the owner, return not found
+    if (!hasAccess) {
+      notFound();
     }
   }
 
@@ -79,7 +107,6 @@ export default async function CollectionPage({ params }: Props) {
     .eq("collection_id", id);
 
   if (mediaError) {
-    // Handle error gracefully
     console.error("Error fetching media items:", mediaError);
   }
 
@@ -95,7 +122,7 @@ export default async function CollectionPage({ params }: Props) {
 
       <div className="mt-4 text-sm text-neutral-400 flex items-center gap-2">
         <p>{mediaItems?.length || 0} items in collection</p>
-        {!isOwner && (
+        {!isOwner && hasAccess && (
           <span className="px-2 py-0.5 bg-neutral-700 text-xs rounded-full">
             Shared with you
           </span>
