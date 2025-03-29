@@ -33,7 +33,7 @@ type MediaItem = Database["public"]["Tables"]["medias"]["Row"];
 type ReviewItem = Database["public"]["Tables"]["reviews"]["Row"];
 
 async function getMediaData(slug: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("medias")
     .select("*")
@@ -49,7 +49,7 @@ async function getMediaData(slug: string) {
 }
 
 async function getReviewData(mediaId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("reviews")
     .select("*")

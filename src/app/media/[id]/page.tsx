@@ -2,7 +2,7 @@
 
 import axios from "axios";
 
-import { Genre } from "@/lib/types";
+import { Genre } from "@/src/types/media";
 import SingleMediaWrapper from "@/src/components/wrapper-single-media";
 
 interface SearchParams {
@@ -94,5 +94,5 @@ export default async function MediaPage(searchParams: SearchParams) {
     });
 
   console.log(mediaData);
-  return mediaData && <SingleMediaWrapper data={mediaData} />;
+  return mediaData && <SingleMediaWrapper mediaData={mediaData} />;
 }

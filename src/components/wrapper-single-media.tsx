@@ -31,9 +31,9 @@ export default function SingleMediaWrapper({
   reviewData,
   TMDBData,
 }: {
-  mediaData: MediaItem | null;
-  reviewData: ReviewItem | null;
-  TMDBData: TMDBItem | null;
+  mediaData?: MediaItem | null;
+  reviewData?: ReviewItem | null;
+  TMDBData?: TMDBItem | null;
 }) {
   const breakpoints = {
     sm: 640,
