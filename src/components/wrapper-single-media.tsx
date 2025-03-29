@@ -1,10 +1,17 @@
 ﻿"use client";
 
-import { Genre } from "@/lib/types";
 import React, { useEffect, useState } from "react";
+<<<<<<< HEAD
+import GoBack from "@/src/components/go-back";
+=======
+>>>>>>> supabase
+
+import { Genre } from "@/src/types/media";
+import { Database } from "@/src/types/supabase";
+
 import GoBack from "@/src/components/go-back";
 
-interface FullMediaItem {
+interface TMDBItem {
   id: number;
   title: string;
   tagline: string;
@@ -20,7 +27,18 @@ interface FullMediaItem {
   adult: boolean;
 }
 
-export default function SingleMediaWrapper({ data }: { data: FullMediaItem }) {
+type MediaItem = Database["public"]["Tables"]["medias"]["Row"];
+type ReviewItem = Database["public"]["Tables"]["reviews"]["Row"];
+
+export default function SingleMediaWrapper({
+  mediaData,
+  reviewData,
+  TMDBData,
+}: {
+  mediaData: MediaItem | null;
+  reviewData: ReviewItem | null;
+  TMDBData: TMDBItem | null;
+}) {
   const breakpoints = {
     sm: 640,
     md: 768,
@@ -64,34 +82,34 @@ export default function SingleMediaWrapper({ data }: { data: FullMediaItem }) {
       {/* Spacing */}
       <div className={`block md:hidden h-[40dvh]`}></div>
 
-      {data && (
-        <div
-          className={`absolute top-0 md:top-auto left-0 md:left-auto right-0 md:right-auto md:relative`}
+      <div
+        className={`absolute top-0 md:top-auto left-0 md:left-auto right-0 md:right-auto md:relative`}
+      >
+        <section
+          className={`relative md:mt-5 h-[50dvh] md:h-[500px] md:rounded-3xl transition-all duration-300 ease-in-out overflow-hidden`}
         >
-          <section
-            className={`relative md:mt-5 h-[50dvh] md:h-[500px] md:rounded-3xl transition-all duration-300 ease-in-out overflow-hidden`}
-          >
+          {TMDBData && mediaData && (
             <img
               className={`bg-neutral-800 w-full h-full object-cover`}
-              src={`https://image.tmdb.org/t/p/original${data.backdrop}`}
-              alt={`${data.title} Poster`}
+              src={`https://image.tmdb.org/t/p/original${TMDBData.backdrop}`}
+              alt={`${mediaData.title} Poster`}
             />
+          )}
 
-            <div className="md:hidden absolute inset-0 bg-gradient-to-b from-black via-transparent to-black opacity-100"></div>
-          </section>
+          <div className="md:hidden absolute inset-0 bg-gradient-to-b from-black via-transparent to-black opacity-100"></div>
+        </section>
 
-          <section
-            className={`absolute md:relative bottom-0 left-0 right-0 mt-12 p-5 md:p-0 transition-all duration-300 ease-in-out z-10`}
-          >
-            <h1 className={`text-2xl sm:3xl md:text-4xl font-bold`}>
-              {data.title}
-            </h1>
-            <h3 className={`text-lg text-neutral-500`}>
-              {data.genres.map(({ id, name }) => name).join(", ")}
-            </h3>
-          </section>
-        </div>
-      )}
+        <section
+          className={`absolute md:relative bottom-0 left-0 right-0 mt-12 p-5 md:p-0 transition-all duration-300 ease-in-out z-10`}
+        >
+          <h1 className={`text-2xl sm:3xl md:text-4xl font-bold`}>
+            {mediaData?.title}
+          </h1>
+          <h3 className={`text-lg text-neutral-500`}>
+            {TMDBData?.genres.map(({ id, name }) => name).join(", ")}
+          </h3>
+        </section>
+      </div>
 
       <section
         className={`mt-6 sm:mt-12 grid lg:grid-cols-2 gap-16 text-sm text-neutral-500 transition-all duration-300 ease-in-out`}

@@ -5,17 +5,20 @@ import React, { useMemo, useEffect, useState } from "react";
 
 import { Popcorn } from "lucide-react";
 import {
-  IconBed,
-  IconFlame,
-  IconGhost2,
-  IconRainbow,
   IconStarFilled,
-  IconSwords,
   IconUsers,
+  IconSquarePlus,
+  IconX,
 } from "@tabler/icons-react";
 
-import { Genre } from "@/lib/types";
+import { Genre } from "@/src/types/media";
 import { CircularProgress } from "@mui/material";
+
+type Collection = {
+  id: string;
+  title: string;
+  isOwner?: boolean;
+};
 
 interface MediaItemProps {
   data: any;
@@ -39,6 +42,17 @@ export default function MediaBlock({
   const [loadingImage, setLoadingImage] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [showCollectionSelector, setShowCollectionSelector] = useState(false);
+
+  // Mock collections - in a real implementation, you would fetch this from your backend
+  const [collections, setCollections] = useState<Collection[]>([
+    { id: "1", title: "My Favorites", isOwner: true },
+    { id: "2", title: "Watch Later", isOwner: true },
+    { id: "3", title: "Horror Classics", isOwner: true },
+    { id: "4", title: "Friend's Recommendations", isOwner: false },
+  ]);
+
+  const [selectedCollection, setSelectedCollection] = useState<string>("");
 
   // Functions
   const getYearFromDate = (date: string) => {
@@ -47,22 +61,91 @@ export default function MediaBlock({
     return new Date(timestamp).getFullYear();
   };
 
+  const handleAddToCollection = () => {
+    if (!selectedCollection) return;
+
+    // Here you would implement the actual logic to add the media to the collection
+    console.log(`Adding ${data.title} to collection: ${selectedCollection}`);
+
+    // Close the selector after adding
+    setShowCollectionSelector(false);
+    setSelectedCollection("");
+  };
+
   useEffect(() => {
     if (!data.poster) setLoadingImage(false);
   }, [data.poster]);
 
   return (
     <article
-      className={`pb-5 flex ${
+      className={`pb-5 relative flex ${
         admin ? "flex-row" : "flex-col"
-      } justify-between gap-4 rounded-3xl transition-all duration-300 ease-in-out`}
+      } justify-between gap-4 rounded-xl md:rounded-3xl transition-all duration-300 ease-in-out overflow-hidden`}
     >
+      {/* Collection Add Button */}
+      <button
+        onClick={() => setShowCollectionSelector(true)}
+        className="absolute top-2 right-2 z-10 p-1 bg-neutral-800/80 hover:bg-lime-500/80 text-white rounded-md transition-all duration-300 ease-in-out"
+        title="Add to collection"
+      >
+        <IconSquarePlus size={20} />
+      </button>
+
+      {/* Collection Selector Overlay */}
+      {showCollectionSelector && (
+        <div
+          className={`absolute inset-0 z-20 bg-neutral-800/60 flex items-center justify-center backdrop-blur-sm text-sm`}
+        >
+          <div className={`bg-neutral-900 py-3 px-2 w-full max-w-xs`}>
+            <div className={`flex justify-between items-start mb-4`}>
+              <h4 className={`text-white font-semibold`}>Add to collection</h4>
+              <button
+                onClick={() => {
+                  setShowCollectionSelector(false);
+                  setSelectedCollection("");
+                }}
+                className={`text-neutral-400 hover:text-white`}
+              >
+                <IconX size={18} />
+              </button>
+            </div>
+
+            <select
+              value={selectedCollection}
+              onChange={(e) => setSelectedCollection(e.target.value)}
+              className="w-full p-2 mb-4 bg-neutral-800 text-white border border-neutral-700 rounded focus:outline-none focus:border-lime-400"
+            >
+              <option value="">Select a collection</option>
+              {collections
+                .filter((col) => col.isOwner)
+                .map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.title}
+                  </option>
+                ))}
+            </select>
+
+            <button
+              onClick={handleAddToCollection}
+              disabled={!selectedCollection}
+              className={`w-full p-2 rounded ${
+                !selectedCollection
+                  ? "bg-neutral-700 text-neutral-400 cursor-not-allowed"
+                  : "bg-lime-500 text-black hover:bg-lime-400"
+              } transition-colors duration-300`}
+            >
+              Add to collection
+            </button>
+          </div>
+        </div>
+      )}
+
       <div
         className={`group grid place-items-center ${
           admin
             ? "w-[125px] min-w-[125px] hover:w-1/2 hover:min-w-1/2 h-[190px]"
             : "w-full"
-        } bg-neutral-800 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out`}
+        } bg-neutral-800 rounded-xl md:rounded-3xl overflow-hidden transition-all duration-300 ease-in-out`}
         style={{ aspectRatio: "1/1.25" }}
       >
         {loadingImage && (
@@ -116,16 +199,6 @@ export default function MediaBlock({
           >
             {data.title}
           </h3>
-          {/*<h4 className={`text-xs text-neutral-500`}>*/}
-          {/*  {data.genres &&*/}
-          {/*    data.genres*/}
-          {/*      .map((genre: number) => {*/}
-          {/*        if (data.type === "movie")*/}
-          {/*          return movieGenres.find((g) => g.id === genre)?.name;*/}
-          {/*        else return seriesGenres.find((g) => g.id === genre)?.name;*/}
-          {/*      })*/}
-          {/*      .join(", ")}*/}
-          {/*</h4>*/}
         </div>
 
         {admin ? (

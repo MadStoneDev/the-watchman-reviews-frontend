@@ -5,7 +5,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Popcorn } from "lucide-react";
 
+<<<<<<< HEAD
 import { Genre, MediaItem } from "@/lib/types";
+=======
+import { Genre, MediaItem } from "@/src/types/media";
+>>>>>>> supabase
 import SearchForm from "@/src/components/search-form";
 import MediaBlock from "@/src/components/media-block";
 
@@ -20,40 +24,40 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
   const [seriesGenres, setSeriesGenres] = useState<Genre[]>([]);
 
   // Functions
-  useEffect(() => {
-    const options = {
-      method: "GET",
-      url: `https://api.themoviedb.org/3/genre/movie/list?language-en`,
-      headers: {
-        accept: "application/json",
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-      },
-    };
-
-    axios
-      .request(options)
-      .then(function (response) {
-        const genres = [];
-        genres.push(...response.data.genres);
-        setMovieGenres(genres);
-      })
-      .catch(function (error) {
-        console.error(error);
-      });
-
-    options.url = `https://api.themoviedb.org/3/genre/tv/list?language-en`;
-
-    axios
-      .request(options)
-      .then(function (response) {
-        const genres = [];
-        genres.push(...response.data.genres);
-        setSeriesGenres(genres);
-      })
-      .catch(function (error) {
-        console.error(error);
-      });
-  }, []);
+  // useEffect(() => {
+  //   const options = {
+  //     method: "GET",
+  //     url: `https://api.themoviedb.org/3/genre/movie/list?language-en`,
+  //     headers: {
+  //       accept: "application/json",
+  //       Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+  //     },
+  //   };
+  //
+  //   axios
+  //     .request(options)
+  //     .then(function (response) {
+  //       const genres = [];
+  //       genres.push(...response.data.genres);
+  //       setMovieGenres(genres);
+  //     })
+  //     .catch(function (error) {
+  //       console.error(error);
+  //     });
+  //
+  //   options.url = `https://api.themoviedb.org/3/genre/tv/list?language-en`;
+  //
+  //   axios
+  //     .request(options)
+  //     .then(function (response) {
+  //       const genres = [];
+  //       genres.push(...response.data.genres);
+  //       setSeriesGenres(genres);
+  //     })
+  //     .catch(function (error) {
+  //       console.error(error);
+  //     });
+  // }, []);
 
   const handleSearch = (results: MediaItem[]) => {
     const sortedResults = results.sort((a, b) =>
@@ -85,12 +89,6 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
 
       {!loading && data.length > 0 && (
         <section
-          // className={`grid ${
-          //   admin
-          //     ? "grid-cols-1"
-          //     : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" +
-          //       " 2xl:grid-cols-6"
-          // } gap-5`}
           className={`grid ${
             admin
               ? "grid-cols-1"
