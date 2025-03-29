@@ -64,13 +64,11 @@ export default function MainNavigation({
             <IconUser size={26} />
             <span className={`hidden md:block text-sm`}>Login</span>
           </Link>
-
           {/* Logout */}
           {/*<Link*/}
           {/*  href={"/logout"}*/}
           {/*  className={`flex-grow grid place-items-center ${*/}
-          {/*    pathname === "/logout"*/}
-          {/*      ? "text-lime-400"*/}
+          {/*    pathname === "/logout"*/}P{/*      ? "text-lime-400"*/}
           {/*      : "text-neutral-600 hover:text-neutral-200"*/}
           {/*  } font-bold transition-all duration-300 ease-in-out`}*/}
           {/*>*/}

@@ -162,99 +162,99 @@ export default function SpecialMediaBlock({
             </div>
 
             {/* Statistics */}
-            {/*<div className={`flex flex-col gap-1`}>*/}
-            {/*  <h4 className={`text-sm font-bold text-neutral-200`}>*/}
-            {/*    Statistics:*/}
-            {/*  </h4>*/}
+            <div className={`flex flex-col gap-1`}>
+              <h4 className={`text-sm font-bold text-neutral-200`}>
+                Statistics:
+              </h4>
 
-            {/*  <div*/}
-            {/*    className={`px-3 py-2.5 flex flex-row flex-wrap items-center gap-2 lg:gap-2 bg-neutral-900 rounded-xl text-neutral-300 transition-all duration-300 ease-in-out`}*/}
-            {/*  >*/}
-            {/* Horror */}
-            {/* Violence */}
-            {/* Nudity */}
-            {/* Sexual Content */}
-            {/* Substance Abuse */}
-            {/* Rainbow Meter */}
+              <div
+                className={`px-3 py-2.5 flex flex-row flex-wrap items-center gap-2 lg:gap-2 bg-neutral-900 rounded-xl text-neutral-300 transition-all duration-300 ease-in-out`}
+              >
+                {/* Horror */}
+                {/* Violence */}
+                {/* Nudity */}
+                {/* Sexual Content */}
+                {/* Substance Abuse */}
+                {/* Rainbow Meter */}
 
-            {/*  <StatBlock*/}
-            {/*    title={"Horror"}*/}
-            {/*    value={100}*/}
-            {/*    icon={<IconGhost2 size={16} className={`text-neutral-300`} />}*/}
-            {/*    colour={"#d6d3d1"}*/}
-            {/*  />*/}
+                <StatBlock
+                  title={"Horror"}
+                  value={100}
+                  icon={<IconGhost2 size={16} className={`text-neutral-300`} />}
+                  colour={"#d6d3d1"}
+                />
 
-            {/*  <div*/}
-            {/*    className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-            {/*  ></div>*/}
+                <div
+                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+                ></div>
 
-            {/*  <StatBlock*/}
-            {/*    title={"Violence"}*/}
-            {/*    value={60}*/}
-            {/*    icon={<IconSwords size={15} className={`text-violet-500`} />}*/}
-            {/*    colour={"#8b5cf6"}*/}
-            {/*  />*/}
+                <StatBlock
+                  title={"Violence"}
+                  value={60}
+                  icon={<IconSwords size={15} className={`text-violet-500`} />}
+                  colour={"#8b5cf6"}
+                />
 
-            {/*  <div*/}
-            {/*    className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-            {/*  ></div>*/}
+                <div
+                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+                ></div>
 
-            {/*  <StatBlock*/}
-            {/*    title={"Profanity and Language"}*/}
-            {/*    value={25}*/}
-            {/*    icon={*/}
-            {/*      <IconMessages size={18} className={`text-yellow-400`} />*/}
-            {/*    }*/}
-            {/*    colour={"#facc15"}*/}
-            {/*  />*/}
+                <StatBlock
+                  title={"Profanity and Language"}
+                  value={25}
+                  icon={
+                    <IconMessages size={18} className={`text-yellow-400`} />
+                  }
+                  colour={"#facc15"}
+                />
 
-            {/*  <div*/}
-            {/*    className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-            {/*  ></div>*/}
+                <div
+                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+                ></div>
 
-            {/*  <StatBlock*/}
-            {/*    title={"Nudity"}*/}
-            {/*    value={80}*/}
-            {/*    icon={<IconEyeOff size={17} className={`text-orange-500`} />}*/}
-            {/*    colour={"#f97316"}*/}
-            {/*  />*/}
+                <StatBlock
+                  title={"Nudity"}
+                  value={80}
+                  icon={<IconEyeOff size={17} className={`text-orange-500`} />}
+                  colour={"#f97316"}
+                />
 
-            {/*  <div*/}
-            {/*    className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-            {/*  ></div>*/}
+                <div
+                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+                ></div>
 
-            {/*  <StatBlock*/}
-            {/*    title={"Sexual Content"}*/}
-            {/*    value={100}*/}
-            {/*    icon={<IconHeart size={16} className={`text-rose-600`} />}*/}
-            {/*    colour={"#dc2626"}*/}
-            {/*  />*/}
+                <StatBlock
+                  title={"Sexual Content"}
+                  value={100}
+                  icon={<IconHeart size={16} className={`text-rose-600`} />}
+                  colour={"#dc2626"}
+                />
 
-            {/*  <div*/}
-            {/*    className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-            {/*  ></div>*/}
+                <div
+                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+                ></div>
 
-            {/*  <StatBlock*/}
-            {/*    title={"Gambling Content"}*/}
-            {/*    value={50}*/}
-            {/*    icon={<Dices size={17} className={`text-sky-400`} />}*/}
-            {/*    colour={"#0ea5e9"}*/}
-            {/*  />*/}
+                <StatBlock
+                  title={"Gambling Content"}
+                  value={50}
+                  icon={<Dices size={17} className={`text-sky-400`} />}
+                  colour={"#0ea5e9"}
+                />
 
-            {/*  <div*/}
-            {/*    className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}*/}
-            {/*  ></div>*/}
+                <div
+                  className={`hidden lg:block w-[1px] h-1/2 bg-neutral-700`}
+                ></div>
 
-            {/*  <StatBlock*/}
-            {/*    title={"Age Rating"}*/}
-            {/*    value={50}*/}
-            {/*    icon={*/}
-            {/*      <IconBuildingCircus size={17} className={`text-pink-400`} />*/}
-            {/*    }*/}
-            {/*    colour={"#fb7185"}*/}
-            {/*  />*/}
-            {/*</div>*/}
-            {/*</div>*/}
+                <StatBlock
+                  title={"Age Rating"}
+                  value={50}
+                  icon={
+                    <IconBuildingCircus size={17} className={`text-pink-400`} />
+                  }
+                  colour={"#fb7185"}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

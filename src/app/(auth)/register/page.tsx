@@ -20,10 +20,19 @@ export default function Register() {
   return (
     <>
       <h1 className={`sm:xl md:text-xl font-bold text-lime-400`}>
-        Create a New Account
+        Create an Account or Login
       </h1>
-      <h2 className={`mt-1 font-light`}>Welcome to The Watchman Reviews!</h2>
+      <h2 className={`mt-1 text-lg font-light`}>
+        Welcome to The Watchman Reviews!
+      </h2>
+
       <RegisterForm />
+
+      <p className={`mt-4 text-sm text-neutral-400`}>
+        We will send a magic link to your email to verify your account. If
+        there's an account associated with your email, you will be logged in
+        automatically.
+      </p>
 
       {/*<div className={`relative flex justify-center items-center`}>*/}
       {/*  <div className={`w-full h-[1px] bg-neutral-200`}></div>*/}

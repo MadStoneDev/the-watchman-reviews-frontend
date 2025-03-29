@@ -39,7 +39,7 @@ export default function SpecialBlockWrapper() {
     } else if (window.innerWidth > breakpoints["2xl"]) {
       newBlocksToShow = 12;
     } else if (window.innerWidth > breakpoints.xl) {
-      newBlocksToShow = 9;
+      newBlocksToShow = 6;
     } else if (window.innerWidth > breakpoints.lg) {
       newBlocksToShow = 3;
     } else if (window.innerWidth > breakpoints.md) {
@@ -92,7 +92,7 @@ export default function SpecialBlockWrapper() {
         }
       }, 50);
     },
-    [timerMaster, blocksToShow],
+    [timerMaster, blocksToShow]
   );
 
   const pauseTimer = useCallback(() => {
