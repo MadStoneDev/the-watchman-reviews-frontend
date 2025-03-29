@@ -52,44 +52,45 @@ export default async function CollectionPage({ params }: Props) {
     .single();
 
   if (collectionError || !collection) {
-    console.error("Collection not found:", collectionError);
     notFound();
   }
 
-  // Check if user has access (owner or shared)
+  // Check access conditions
   const isOwner = collection.user_id === userId;
 
-  // For quick testing, comment out this block to allow access to all collections
-  // regardless of ownership status
+  // If not the owner, check other access conditions
   if (!isOwner) {
-    // Check if collection is shared with user
-    try {
-      const { data: sharedAccess, error: sharedError } = await supabase
+    // Check if collection is public
+    const isPublic = collection.is_public === true;
+
+    if (!isPublic) {
+      // Check if collection is shared with user
+      const { data: sharedWithUser, error: sharedError } = await supabase
         .from("shared_collection")
-        .select("*")
+        .select("id")
         .eq("collection_id", id)
         .eq("user_id", userId);
 
-      if (sharedError) {
-        console.error("Shared access check error:", sharedError);
-      }
-
-      // Properly handle null case and check array length
-      const hasAccess = !!sharedAccess && sharedAccess.length > 0;
-
-      if (!hasAccess) {
-        console.log(
-          "No shared access found for user",
-          userId,
-          "on collection",
-          id,
-        );
+      // If not public and not shared, show 404
+      if (sharedError || !sharedWithUser || sharedWithUser.length === 0) {
         notFound();
       }
-    } catch (err) {
-      console.error("Error checking shared access:", err);
-      notFound();
     }
+  }
+
+  // Determine access type for UI
+  let accessType: "owner" | "shared" | "public" = "owner";
+
+  if (!isOwner) {
+    // Check if it's shared specifically with this user
+    const { data: sharedWithUser } = await supabase
+      .from("shared_collection")
+      .select("id")
+      .eq("collection_id", id)
+      .eq("user_id", userId);
+
+    accessType =
+      sharedWithUser && sharedWithUser.length > 0 ? "shared" : "public";
   }
 
   // Get all media items in this collection
@@ -114,9 +115,16 @@ export default async function CollectionPage({ params }: Props) {
 
       <div className="mt-4 text-sm text-neutral-400 flex items-center gap-2">
         <p>{mediaItems?.length || 0} items in collection</p>
-        {!isOwner && (
+
+        {/* Show appropriate badge based on access type */}
+        {accessType === "shared" && (
           <span className="px-2 py-0.5 bg-neutral-700 text-xs rounded-full">
             Shared with you
+          </span>
+        )}
+        {accessType === "public" && (
+          <span className="px-2 py-0.5 bg-blue-800/50 text-blue-400 text-xs rounded-full">
+            Public collection
           </span>
         )}
       </div>
