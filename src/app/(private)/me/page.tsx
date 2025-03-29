@@ -14,7 +14,11 @@ export default async function MeRedirectPage() {
 
   console.log(user);
 
-  return <div>Test</div>;
+  return (
+    <div>
+      <p>{user.user?.id}</p>
+    </div>
+  );
 
   // Get the username from user metadata or profile
   // Adjust this based on where you store the username in your Supabase schema
