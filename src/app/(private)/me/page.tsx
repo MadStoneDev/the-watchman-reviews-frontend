@@ -18,16 +18,16 @@ export default async function MeRedirectPage() {
 
   // Get the username from user metadata or profile
   // Adjust this based on where you store the username in your Supabase schema
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", user.user.id)
-    .single();
-
-  if (!profile) {
-    redirect("/auth/portal");
-  }
-
-  // Redirect to the user's personal page
-  redirect(`/${profile.username}`);
+  // const { data: profile } = await supabase
+  //   .from("profiles")
+  //   .select("username")
+  //   .eq("id", user.user.id)
+  //   .single();
+  //
+  // if (!profile) {
+  //   redirect("/auth/portal");
+  // }
+  //
+  // // Redirect to the user's personal page
+  // redirect(`/${profile.username}`);
 }
