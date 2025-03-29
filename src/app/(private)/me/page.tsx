@@ -5,10 +5,16 @@ export default async function MeRedirectPage() {
   const supabase = await createClient();
   const { data: user, error } = await supabase.auth.getUser();
 
+  console.log("hello");
+
   // If no user is found, redirect to auth portal
-  if (error || !user || !user.user) {
-    redirect("/auth/portal");
-  }
+  // if (error || !user || !user.user) {
+  //   redirect("/auth/portal");
+  // }
+
+  console.log(user);
+
+  return <div>Test</div>;
 
   // Get the username from user metadata or profile
   // Adjust this based on where you store the username in your Supabase schema
