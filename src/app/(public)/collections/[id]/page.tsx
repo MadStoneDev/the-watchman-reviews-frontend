@@ -59,9 +59,8 @@ export default async function CollectionPage({ params }: Props) {
   // Check if user has access (owner or shared)
   const isOwner = collection.user_id === userId;
 
-  // Temporarily bypass the shared access check - remove this line later
-  let hasAccess = true;
-
+  // For quick testing, comment out this block to allow access to all collections
+  // regardless of ownership status
   if (!isOwner) {
     // Check if collection is shared with user
     try {
@@ -71,14 +70,12 @@ export default async function CollectionPage({ params }: Props) {
         .eq("collection_id", id)
         .eq("user_id", userId);
 
-      // Note: Changed from .single() to allow no results without error
-
       if (sharedError) {
         console.error("Shared access check error:", sharedError);
       }
 
-      // Check if we got any results
-      hasAccess = sharedAccess && sharedAccess.length > 0;
+      // Properly handle null case and check array length
+      const hasAccess = !!sharedAccess && sharedAccess.length > 0;
 
       if (!hasAccess) {
         console.log(
@@ -87,15 +84,10 @@ export default async function CollectionPage({ params }: Props) {
           "on collection",
           id,
         );
+        notFound();
       }
     } catch (err) {
       console.error("Error checking shared access:", err);
-      // Default to no access if there was an error
-      hasAccess = false;
-    }
-
-    // If you don't have shared access and you're not the owner, return not found
-    if (!hasAccess) {
       notFound();
     }
   }
@@ -122,7 +114,7 @@ export default async function CollectionPage({ params }: Props) {
 
       <div className="mt-4 text-sm text-neutral-400 flex items-center gap-2">
         <p>{mediaItems?.length || 0} items in collection</p>
-        {!isOwner && hasAccess && (
+        {!isOwner && (
           <span className="px-2 py-0.5 bg-neutral-700 text-xs rounded-full">
             Shared with you
           </span>
