@@ -35,28 +35,9 @@ export default function MediaBlock({
   seriesGenres = [],
   admin = false,
 }: MediaItemProps) {
-  // Debug logs - uncomment to see what data is coming in
-  // console.log("Media data received:", data);
-
-  // Guard for empty data
-  if (!data.title && !data.name) return null;
-
-  // Extract data properly - Keep the properties matching the source data exactly
-  const title = data.title || data.name || "";
-  const releaseDate = data.release_date || data.first_air_date || "";
-  const posterPath = data.poster_path || "";
-  const mediaType = data.media_type || "";
-  const mediaId = data.id || "";
-  const rating = data.vote_average || 0;
-
-  // Debug release date and year
-  // console.log("Release date:", releaseDate, "Type:", typeof releaseDate);
-
-  const cleanRating = Math.floor(rating / 2);
-  const releaseYear = getYearFromDate(releaseDate);
-
-  // Debug year extraction
-  // console.log("Year extracted:", releaseYear);
+  // Using the ORIGINAL property names from your working code
+  if (!data.title || !data.releaseDate) return null;
+  const cleanRating = Math.floor(data.rating / 2);
 
   const randomDelay = useMemo(() => Math.floor(Math.random() * 1000), []);
 
@@ -96,19 +77,11 @@ export default function MediaBlock({
   }, []);
 
   // Functions
-  function getYearFromDate(date: string) {
-    // Safety check for empty dates
-    if (!date) return "";
-
-    try {
-      const timestamp = Date.parse(date);
-      if (isNaN(timestamp)) return "";
-      return new Date(timestamp).getFullYear().toString();
-    } catch (error) {
-      console.error("Date parsing error:", error);
-      return "";
-    }
-  }
+  const getYearFromDate = (date: string) => {
+    const timestamp = Date.parse(date);
+    if (isNaN(timestamp)) return "";
+    return new Date(timestamp).getFullYear();
+  };
 
   const handleAddToCollection = async () => {
     if (!selectedCollection) return;
@@ -119,11 +92,11 @@ export default function MediaBlock({
       // Create the media_collection entry
       const { error } = await supabase.from("media_collection").insert({
         collection_id: selectedCollection,
-        media_id: mediaId.toString(),
-        media_type: mediaType,
-        title: title,
-        poster_path: posterPath,
-        release_year: releaseYear,
+        media_id: data.id.toString(),
+        media_type: data.type,
+        title: data.title,
+        poster_path: data.poster,
+        release_year: getYearFromDate(data.releaseDate).toString(),
       });
 
       if (error) {
@@ -146,8 +119,8 @@ export default function MediaBlock({
   };
 
   useEffect(() => {
-    if (!posterPath) setLoadingImage(false);
-  }, [posterPath]);
+    if (!data.poster) setLoadingImage(false);
+  }, [data.poster]);
 
   return (
     <article
@@ -244,20 +217,18 @@ export default function MediaBlock({
           />
         )}
 
-        {posterPath ? (
+        {data.poster ? (
           <Image
-            src={`https://image.tmdb.org/t/p/${
-              admin ? "w500" : "w342"
-            }${posterPath}`}
-            alt={`${title} Poster`}
+            src={`https://image.tmdb.org/t/p/${admin ? "w500" : "w342"}${
+              data.poster
+            }`}
+            alt={`${data.title} Poster`}
             width={admin ? 500 : 342}
             height={admin ? 190 : 430}
             onLoad={() => setLoadingImage(false)}
             onError={() => {
               setLoadingImage(false);
               setImageError(true);
-              // Debug image errors
-              // console.error(`Failed to load image for: ${title}`);
             }}
             className={`${
               loadingImage ? "opacity-0" : "opacity-100"
@@ -285,7 +256,7 @@ export default function MediaBlock({
               admin ? "" : "whitespace-nowrap truncate"
             } text-sm font-semibold`}
           >
-            {title}
+            {data.title}
           </h3>
         </div>
 
@@ -298,7 +269,7 @@ export default function MediaBlock({
               <span
                 className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal lowercase text-neutral-950`}
               >
-                {releaseYear}
+                {getYearFromDate(data.releaseDate)}
               </span>
             </p>
 
@@ -309,7 +280,7 @@ export default function MediaBlock({
               <span
                 className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal text-neutral-950`}
               >
-                {mediaId}
+                {data.id}
               </span>
             </p>
 
@@ -320,7 +291,7 @@ export default function MediaBlock({
               <span
                 className={`px-2 py-1 min-w-20 bg-neutral-300 font-normal lowercase text-neutral-950`}
               >
-                {mediaType}
+                {data.type}
               </span>
             </p>
           </div>
@@ -331,12 +302,12 @@ export default function MediaBlock({
             >
               <IconStarFilled size={15} className={`text-lime-400`} />
               <span className={`text-xs text-neutral-300`}>
-                {rating ? rating.toFixed(1) : "N/A"}
+                {data.rating.toFixed(1)}
               </span>
             </div>
             <div className={`pr-2 flex items-center`}>
               <span className={`text-xs text-neutral-300`}>
-                {releaseYear || "N/A"}
+                {getYearFromDate(data.releaseDate)}
               </span>
             </div>
           </div>
