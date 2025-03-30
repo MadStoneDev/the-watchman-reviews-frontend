@@ -159,7 +159,7 @@ export default function CreateOrLoginForm() {
         }`}
         disabled={!isValidEmail || isSubmitting}
       >
-        {isSubmitting ? "Sending..." : "Create"}
+        {isSubmitting ? "Sending..." : "Get Access"}
       </button>
     </form>
   );
