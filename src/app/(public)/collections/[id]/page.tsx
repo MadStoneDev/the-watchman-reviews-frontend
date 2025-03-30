@@ -108,9 +108,7 @@ export default async function CollectionPage({ params }: Props) {
   }
 
   return (
-    <section
-      className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
-    >
+    <>
       {user && profile && (
         <BrowseNavigation
           items={[
@@ -119,8 +117,10 @@ export default async function CollectionPage({ params }: Props) {
           ]}
         />
       )}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className={`max-w-64 text-2xl sm:3xl md:text-4xl font-bold`}>
+      <div
+        className={`mt-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4`}
+      >
+        <h1 className={`text-2xl sm:3xl md:text-4xl font-bold`}>
           {collection.title}
         </h1>
       </div>
@@ -146,6 +146,6 @@ export default async function CollectionPage({ params }: Props) {
         collectionId={id}
         isOwner={isOwner}
       />
-    </section>
+    </>
   );
 }
