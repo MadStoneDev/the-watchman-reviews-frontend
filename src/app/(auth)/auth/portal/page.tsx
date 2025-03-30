@@ -1,13 +1,4 @@
-﻿import {
-  IconBrandFacebookFilled,
-  IconBrandGoogleFilled,
-  IconBrandTwitch,
-  IconEye,
-  IconLock,
-  IconMail,
-} from "@tabler/icons-react";
-import React from "react";
-import Link from "next/link";
+﻿import React from "react";
 import CreateOrLoginForm from "@/src/components/auth/create-or-login-form";
 
 export const metadata = {
@@ -27,53 +18,12 @@ export default function Register() {
       </h2>
 
       <p className={`mt-4 text-sm text-neutral-400`}>
-        We will send a magic link to your email to verify your account. If
-        there's an account associated with your email, you will be logged in
-        automatically.
+        We'll send a 6-digit verification code to your email. Simply enter the
+        code on the next screen to sign in. If there's no account associated
+        with your email, we'll create one for you automatically.
       </p>
 
       <CreateOrLoginForm />
-
-      {/*<div className={`relative flex justify-center items-center`}>*/}
-      {/*  <div className={`w-full h-[1px] bg-neutral-200`}></div>*/}
-      {/*  <h4 className={`p-3 min-w-fit text-sm z-10`}>*/}
-      {/*    or <span className={`font-bold`}>Register</span> with*/}
-      {/*  </h4>*/}
-      {/*  <div className={`w-full h-[1px] bg-neutral-200`}></div>*/}
-      {/*</div>*/}
-
-      {/*<article className={`mt-4 flex flex-col gap-4`}>*/}
-      {/*  <button*/}
-      {/*    className={`p-2 flex items-center justify-center gap-2 w-full rounded-lg border`}*/}
-      {/*  >*/}
-      {/*    <IconBrandGoogleFilled />*/}
-      {/*    <span className={``}>Google</span>*/}
-      {/*  </button>*/}
-
-      {/*  <button*/}
-      {/*    className={`p-2 flex items-center justify-center gap-2 w-full rounded-lg border`}*/}
-      {/*  >*/}
-      {/*    <IconBrandFacebookFilled />*/}
-      {/*    <span className={``}>Facebook</span>*/}
-      {/*  </button>*/}
-
-      {/*  <button*/}
-      {/*    className={`p-2 flex items-center justify-center gap-2 w-full rounded-lg border`}*/}
-      {/*  >*/}
-      {/*    <IconBrandTwitch />*/}
-      {/*    <span className={``}>Twitch</span>*/}
-      {/*  </button>*/}
-      {/*</article>*/}
-
-      {/*<p className={`mt-8 text-xs`}>*/}
-      {/*  Already have an account?{" "}*/}
-      {/*  <Link*/}
-      {/*    href={`/login`}*/}
-      {/*    className={`font-bold hover:text-lime-400 transition-all duration-300 ease-in-out`}*/}
-      {/*  >*/}
-      {/*    Login*/}
-      {/*  </Link>*/}
-      {/*</p>*/}
     </>
   );
 }
