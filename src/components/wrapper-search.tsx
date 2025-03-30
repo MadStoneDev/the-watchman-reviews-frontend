@@ -8,8 +8,26 @@ import { Genre, MediaItem } from "@/src/types/media";
 
 import SearchForm from "@/src/components/search-form";
 import MediaBlock from "@/src/components/media-block";
+import { User } from "@supabase/supabase-js";
 
-export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
+type Profile = {
+  id: string;
+  username: string;
+  created_at: string;
+  settings: any | null;
+};
+
+export default function SearchWrapper({
+  admin = false,
+  user,
+  profile,
+  collections = [],
+}: {
+  admin?: boolean;
+  user?: User | null;
+  profile?: Profile | null;
+  collections?: string[];
+}) {
   // States
   const [data, setData] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -63,6 +81,8 @@ export default function SearchWrapper({ admin = false }: { admin?: boolean }) {
               movieGenres={movieGenres}
               seriesGenres={seriesGenres}
               admin={admin}
+              user={user}
+              collections={collections}
             />
           ))}
         </section>

@@ -27,6 +27,8 @@ interface MediaItemProps {
   movieGenres: Genre[];
   seriesGenres: Genre[];
   admin?: boolean;
+  user?: any;
+  collections?: string[];
 }
 
 export default function MediaBlock({
@@ -34,8 +36,9 @@ export default function MediaBlock({
   movieGenres = [],
   seriesGenres = [],
   admin = false,
+  user = null,
+  collections = [],
 }: MediaItemProps) {
-  // Using the ORIGINAL property names from your working code
   if (!data.title || !data.releaseDate) return null;
   const cleanRating = Math.floor(data.rating / 2);
 
@@ -46,7 +49,7 @@ export default function MediaBlock({
   const [imageError, setImageError] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [showCollectionSelector, setShowCollectionSelector] = useState(false);
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const [userCollections, setUserCollections] = useState<Collection[]>([]);
   const [selectedCollection, setSelectedCollection] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [addSuccess, setAddSuccess] = useState(false);
@@ -56,22 +59,14 @@ export default function MediaBlock({
   // Load user's collections - both owned and shared with them
   useEffect(() => {
     const fetchCollections = async () => {
+      if (!user) return;
+
       try {
-        // Get user's ID first
-        const { data: userData, error: userError } =
-          await supabase.auth.getUser();
-        if (userError || !userData?.user) {
-          console.error("Error fetching user:", userError);
-          return;
-        }
-
-        const userId = userData.user.id;
-
         // Fetch owned collections
         const { data: ownedCollections, error: ownedError } = await supabase
           .from("collections")
           .select("id, title")
-          .eq("user_id", userId);
+          .eq("owner", user.id);
 
         if (ownedError) {
           console.error("Error fetching owned collections:", ownedError);
@@ -82,7 +77,7 @@ export default function MediaBlock({
           await supabase
             .from("shared_collection")
             .select("collection_id")
-            .eq("user_id", userId);
+            .eq("user_id", user.id);
 
         if (sharedError) {
           console.error("Error fetching shared collection IDs:", sharedError);
@@ -116,10 +111,10 @@ export default function MediaBlock({
             })),
           ];
 
-          setCollections(combinedCollections);
+          setUserCollections(combinedCollections);
         } else {
           // Just use owned collections if no shared ones
-          setCollections(
+          setUserCollections(
             (ownedCollections || []).map((c) => ({ ...c, is_owner: true })),
           );
         }
@@ -129,7 +124,7 @@ export default function MediaBlock({
     };
 
     fetchCollections();
-  }, []);
+  }, [user]);
 
   // Functions
   const getYearFromDate = (date: string) => {
@@ -183,17 +178,19 @@ export default function MediaBlock({
         admin ? "flex-row" : "flex-col"
       } justify-between gap-4 rounded-xl md:rounded-3xl transition-all duration-300 ease-in-out overflow-hidden`}
     >
-      {/* Collection Add Button */}
-      <button
-        onClick={() => setShowCollectionSelector(true)}
-        className="absolute top-2 right-2 z-10 p-1 bg-neutral-800/80 hover:bg-lime-500/80 text-white rounded-md transition-all duration-300 ease-in-out"
-        title="Add to collection"
-      >
-        <IconSquarePlus size={20} />
-      </button>
+      {/* Collection Add Button - Only show if user is logged in */}
+      {user && (
+        <button
+          onClick={() => setShowCollectionSelector(true)}
+          className="absolute top-2 right-2 z-10 p-1 bg-neutral-800/80 hover:bg-lime-500/80 text-white rounded-md transition-all duration-300 ease-in-out"
+          title="Add to collection"
+        >
+          <IconSquarePlus size={24} />
+        </button>
+      )}
 
       {/* Collection Selector Overlay */}
-      {showCollectionSelector && (
+      {showCollectionSelector && user && (
         <div
           className={`absolute inset-0 z-20 bg-neutral-800/60 flex items-center justify-center backdrop-blur-sm text-sm`}
         >
@@ -216,7 +213,7 @@ export default function MediaBlock({
               <div className="py-2 px-3 bg-lime-500/20 text-lime-400 rounded mb-4">
                 Added to collection successfully!
               </div>
-            ) : collections.length === 0 ? (
+            ) : userCollections.length === 0 ? (
               <div className="py-2 mb-4 text-neutral-400">
                 No collections found. Create a collection first.
               </div>
@@ -230,7 +227,7 @@ export default function MediaBlock({
                 <option value="">Select a collection</option>
                 {/* Group owned collections */}
                 <optgroup label="Your Collections">
-                  {collections
+                  {userCollections
                     .filter((col) => col.is_owner)
                     .map((collection) => (
                       <option key={collection.id} value={collection.id}>
@@ -240,9 +237,9 @@ export default function MediaBlock({
                 </optgroup>
 
                 {/* Group shared collections */}
-                {collections.some((col) => !col.is_owner) && (
+                {userCollections.some((col) => !col.is_owner) && (
                   <optgroup label="Shared With You">
-                    {collections
+                    {userCollections
                       .filter((col) => !col.is_owner)
                       .map((collection) => (
                         <option key={collection.id} value={collection.id}>
@@ -257,10 +254,10 @@ export default function MediaBlock({
             <button
               onClick={handleAddToCollection}
               disabled={
-                !selectedCollection || loading || collections.length === 0
+                !selectedCollection || loading || userCollections.length === 0
               }
               className={`w-full p-2 rounded ${
-                !selectedCollection || loading || collections.length === 0
+                !selectedCollection || loading || userCollections.length === 0
                   ? "bg-neutral-700 text-neutral-400 cursor-not-allowed"
                   : "bg-lime-500 text-black hover:bg-lime-400"
               } transition-colors duration-300`}

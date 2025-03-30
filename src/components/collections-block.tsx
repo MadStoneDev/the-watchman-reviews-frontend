@@ -261,16 +261,19 @@ export default function CollectionBlock({
                 mediaType={item.media_type}
                 releaseYear={item.release_year || undefined}
                 onDelete={() => handleDeleteItem(item.id)}
+                isOwner={isOwner}
               />
             ))}
 
-            <Link
-              href={`/search`}
-              className="p-2 flex justify-center items-center gap-1 w-full border hover:border-lime-400 hover:text-lime-400 opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out rounded"
-            >
-              <IconSquarePlus size={20} />
-              <span>Add more</span>
-            </Link>
+            {isOwner && (
+              <Link
+                href={`/search`}
+                className="p-2 flex justify-center items-center gap-1 w-full border hover:border-lime-400 hover:text-lime-400 opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out rounded"
+              >
+                <IconSquarePlus size={20} />
+                <span>Add more</span>
+              </Link>
+            )}
           </>
         )}
       </section>
