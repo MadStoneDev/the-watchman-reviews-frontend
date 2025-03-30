@@ -2,6 +2,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import CollectionBlock from "@/src/components/collections-block";
+import BrowseNavigation from "@/src/components/browse-navigation";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -55,6 +56,16 @@ export default async function CollectionPage({ params }: Props) {
     notFound();
   }
 
+  let profile = null;
+  if (user && user.user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.user.id)
+      .single();
+    profile = data;
+  }
+
   const isOwner = collection.owner === userId;
   // Determine access type for UI
   let accessType: "owner" | "shared" | "public" = "owner";
@@ -100,6 +111,14 @@ export default async function CollectionPage({ params }: Props) {
     <section
       className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
     >
+      {user && profile && (
+        <BrowseNavigation
+          items={[
+            { label: "Account", href: `/${profile.username}` },
+            { label: "Collections", href: `/${profile.username}/collections` },
+          ]}
+        />
+      )}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h1 className={`max-w-64 text-2xl sm:3xl md:text-4xl font-bold`}>
           {collection.title}

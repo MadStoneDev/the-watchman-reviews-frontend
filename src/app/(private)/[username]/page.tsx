@@ -44,7 +44,7 @@ export default async function PrivatePage({
         className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
       >
         <h1 className={`max-w-64 text-2xl sm:3xl md:text-4xl font-bold`}>
-          What's cooking, good lookin'?
+          Hi {username}!
         </h1>
         <p className={`mt-6 text-sm text-neutral-400 italic`}>
           Lots!! I'm working on it, I promise!
