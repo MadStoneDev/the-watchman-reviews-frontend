@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { IconCheck, IconMail, IconKey } from "@tabler/icons-react";
+import { IconCheck, IconMail } from "@tabler/icons-react";
 import { handleAuth, verifyOtp } from "@/src/app/(auth)/auth/portal/actions";
+import OTPInput from "@/src/components/otp-input";
 
 export default function CreateOrLoginForm() {
   const router = useRouter();
@@ -34,9 +35,6 @@ export default function CreateOrLoginForm() {
 
       if (!isEmailDirty) setIsEmailDirty(true);
       validateEmail(noSpacesValue);
-    } else if (e.target.name === "otp") {
-      const numericValue = e.target.value.replace(/[^0-9]/g, "");
-      setOtp(numericValue);
     } else {
       setFormData({
         ...formData,
@@ -94,7 +92,7 @@ export default function CreateOrLoginForm() {
     e.preventDefault();
 
     if (otp.length < 6) {
-      setServerError("Please enter a valid 6-digit code");
+      setServerError("Please enter all 6 digits of the verification code");
       return;
     }
 
@@ -124,6 +122,11 @@ export default function CreateOrLoginForm() {
     }
   };
 
+  // Handle OTP input change
+  const handleOtpChange = (value: string) => {
+    setOtp(value);
+  };
+
   // Show feedback after user has typed something and when email is invalid
   useEffect(() => {
     setShowEmailFeedback(
@@ -141,26 +144,16 @@ export default function CreateOrLoginForm() {
           Enter the 6-digit code sent to your email
         </h3>
 
-        <section className={`relative grid`}>
-          <div
-            className={`absolute px-3 top-0 bottom-0 left-0 grid place-items-center`}
-          >
-            <IconKey />
-          </div>
-
-          <input
-            className={`pr-3 pl-12 h-12 rounded-lg bg-neutral-200 placeholder:text-neutral-600/80 placeholder:text-sm
-            focus:outline-none text-center tracking-widest font-mono text-lg`}
-            name="otp"
-            type="text"
-            placeholder="000000"
+        <div className="mt-2">
+          <OTPInput
             value={otp}
-            onChange={handleChange}
-            maxLength={6}
-            disabled={isSubmitting}
+            onChange={handleOtpChange}
+            length={6}
+            className={`flex justify-center w-full`}
+            inputClassName={`h-12 w-12 bg-transparent text-xl text-neutral-100 border-neutral-500 focus:border-lime-400`}
             autoFocus
           />
-        </section>
+        </div>
 
         {/* Server error message */}
         {serverError && (
@@ -201,75 +194,82 @@ export default function CreateOrLoginForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className={`mt-10 mb-4 grid gap-y-4 text-sm placeholder:text-sm text-neutral-900`}
-    >
-      <section className={`relative grid`}>
-        <div
-          className={`absolute px-3 top-0 bottom-0 left-0 grid place-items-center`}
-        >
-          <IconMail />
-        </div>
-
-        <input
-          className={`pr-3 pl-12 h-12 rounded-lg bg-neutral-200 placeholder:text-neutral-600/80 placeholder:text-sm ${
-            showEmailFeedback ? "border-2 border-red-500" : ""
-          } focus:outline-none`}
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          onBlur={() => setIsEmailDirty(true)}
-          onKeyDown={(e) => {
-            // Prevent space key from being entered
-            if (e.key === " ") {
-              e.preventDefault();
-            }
-          }}
-          disabled={isSubmitting}
-        />
-
-        {isValidEmail && formData.email.length > 0 && (
-          <div className="absolute right-3 top-0 bottom-0 grid place-items-center text-green-600">
-            <IconCheck size={20} />
+    <>
+      <p className={`my-4 text-sm text-neutral-400`}>
+        We'll send a 6-digit verification code to your email. Simply enter the
+        code on the next screen to sign in. If there's no account associated
+        with your email, we'll create one for you automatically.
+      </p>
+      <form
+        onSubmit={handleSubmit}
+        className={`mt-10 mb-4 grid gap-y-4 text-sm placeholder:text-sm text-neutral-900`}
+      >
+        <section className={`relative grid`}>
+          <div
+            className={`absolute px-3 top-0 bottom-0 left-0 grid place-items-center`}
+          >
+            <IconMail />
           </div>
-        )}
-      </section>
 
-      {/* Email format error */}
-      <section
-        className={`px-3 ${
-          showEmailFeedback ? "mb-4 py-3 max-h-52" : "py-0 max-h-0"
-        } bg-red-100 text-red-700
-         rounded-lg text-left text-xs h-max transition-all duration-300 ease-in-out overflow-hidden`}
-      >
-        Please enter a valid email address
-        <br />
-        <span className={`opacity-50`}>
-          (example: bruce@wayneenterprises.com)
-        </span>
-      </section>
+          <input
+            className={`pr-3 pl-12 h-12 rounded-lg bg-neutral-200 placeholder:text-neutral-600/80 placeholder:text-sm ${
+              showEmailFeedback ? "border-2 border-red-500" : ""
+            } focus:outline-none`}
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            onBlur={() => setIsEmailDirty(true)}
+            onKeyDown={(e) => {
+              // Prevent space key from being entered
+              if (e.key === " ") {
+                e.preventDefault();
+              }
+            }}
+            disabled={isSubmitting}
+          />
 
-      {/* Server error message */}
-      {serverError && (
-        <section
-          className={`px-3 py-3 bg-red-100 text-red-700 rounded-lg text-left text-xs`}
-        >
-          {serverError}
+          {isValidEmail && formData.email.length > 0 && (
+            <div className="absolute right-3 top-0 bottom-0 grid place-items-center text-green-600">
+              <IconCheck size={20} />
+            </div>
+          )}
         </section>
-      )}
 
-      <button
-        type="submit"
-        className={`p-3 rounded-lg bg-lime-400 text-neutral-900 font-bold ${
-          isSubmitting ? "opacity-70" : ""
-        }`}
-        disabled={!isValidEmail || isSubmitting}
-      >
-        {isSubmitting ? "Sending..." : "Get Access"}
-      </button>
-    </form>
+        {/* Email format error */}
+        <section
+          className={`px-3 ${
+            showEmailFeedback ? "mb-4 py-3 max-h-52" : "py-0 max-h-0"
+          } bg-red-100 text-red-700
+         rounded-lg text-left text-xs h-max transition-all duration-300 ease-in-out overflow-hidden`}
+        >
+          Please enter a valid email address
+          <br />
+          <span className={`opacity-50`}>
+            (example: bruce@wayneenterprises.com)
+          </span>
+        </section>
+
+        {/* Server error message */}
+        {serverError && (
+          <section
+            className={`px-3 py-3 bg-red-100 text-red-700 rounded-lg text-left text-xs`}
+          >
+            {serverError}
+          </section>
+        )}
+
+        <button
+          type="submit"
+          className={`p-3 rounded-lg bg-lime-400 text-neutral-900 font-bold ${
+            isSubmitting ? "opacity-70" : ""
+          }`}
+          disabled={!isValidEmail || isSubmitting}
+        >
+          {isSubmitting ? "Sending..." : "Get Access"}
+        </button>
+      </form>
+    </>
   );
 }

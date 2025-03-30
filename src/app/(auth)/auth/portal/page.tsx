@@ -17,12 +17,6 @@ export default function Register() {
         Welcome to The Watchman Reviews!
       </h2>
 
-      <p className={`mt-4 text-sm text-neutral-400`}>
-        We'll send a 6-digit verification code to your email. Simply enter the
-        code on the next screen to sign in. If there's no account associated
-        with your email, we'll create one for you automatically.
-      </p>
-
       <CreateOrLoginForm />
     </>
   );
