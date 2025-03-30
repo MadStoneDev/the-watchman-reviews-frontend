@@ -36,13 +36,13 @@ export default async function CollectionPage({ params }: Props) {
   const { id } = await params;
   const supabase = await createClient();
 
-  // Check if user is authenticated
   const { data: user, error: userError } = await supabase.auth.getUser();
-  if (userError || !user || !user.user) {
-    redirect("/auth/portal");
-  }
 
-  const userId = user.user.id;
+  let userId = null;
+
+  if (user && user.user) {
+    userId = user.user.id;
+  }
 
   // Check if collection exists
   const { data: collection, error: collectionError } = await supabase
@@ -55,34 +55,13 @@ export default async function CollectionPage({ params }: Props) {
     notFound();
   }
 
-  // Check access conditions
-  const isOwner = collection.user_id === userId;
-
-  // If not the owner, check other access conditions
-  if (!isOwner) {
-    // Check if collection is public
-    const isPublic = collection.is_public === true;
-
-    if (!isPublic) {
-      // Check if collection is shared with user
-      const { data: sharedWithUser, error: sharedError } = await supabase
-        .from("shared_collection")
-        .select("id")
-        .eq("collection_id", id)
-        .eq("user_id", userId);
-
-      // If not public and not shared, show 404
-      if (sharedError || !sharedWithUser || sharedWithUser.length === 0) {
-        notFound();
-      }
-    }
-  }
-
+  const isOwner = collection.owner === userId;
   // Determine access type for UI
   let accessType: "owner" | "shared" | "public" = "owner";
 
   if (!isOwner) {
-    // Check if it's shared specifically with this user
+    const isPublic = collection.is_public;
+
     const { data: sharedWithUser } = await supabase
       .from("shared_collection")
       .select("id")
@@ -91,6 +70,20 @@ export default async function CollectionPage({ params }: Props) {
 
     accessType =
       sharedWithUser && sharedWithUser.length > 0 ? "shared" : "public";
+
+    if (!isPublic && (!sharedWithUser || sharedWithUser.length === 0)) {
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center px-4 text-center">
+          <h1 className="text-4xl font-bold mb-4">Thou Shalt Not Pass!</h1>
+          <p className="text-2xl font-semibold mb-2">
+            Did someone send you here?
+          </p>
+          <p className="text-neutral-400 mb-8">
+            If they did, they didn't give you a key.
+          </p>
+        </div>
+      );
+    }
   }
 
   // Get all media items in this collection
