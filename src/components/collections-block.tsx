@@ -79,10 +79,11 @@ export default function CollectionBlock({
           .from("medias_collections")
           .select(
             `
-            id,
-            media_type,
-            movies!inner(id, title, poster_path, release_year, tmdb_id)
-          `,
+    id,
+    media_type,
+    media_id,
+    movies(id, title, poster_path, release_year, tmdb_id)
+  `,
           )
           .eq("collection_id", collectionId)
           .eq("media_type", "movie");
@@ -106,24 +107,30 @@ export default function CollectionBlock({
         // Format movie items - assuming each item has at least one movie in the movies array
         // If the array could be empty, you'd need additional checks
         const formattedMovies = (movieItems || [])
-          .map((item: MovieResponse) => {
-            // Make sure there's at least one movie in the array
-            if (item.movies && item.movies.length > 0) {
-              const movie = item.movies[0]; // Get the first movie in the array
-              return {
-                id: movie.id,
-                collectionEntryId: item.id,
-                title: movie.title,
-                posterPath: movie.poster_path,
-                releaseYear: movie.release_year,
-                mediaId: movie.tmdb_id,
-                mediaType: "movie",
-              };
+          .map((item) => {
+            // Check if the structure exists
+            if (!item.movies) {
+              console.log("Item has no movies property:", item);
+              return null;
             }
-            // Skip this item if no movies are found
-            return null;
+
+            const movie = item.movies[0]; // Get the first movie in the array
+            if (!movie) {
+              console.log("Item has empty movies array:", item);
+              return null;
+            }
+
+            return {
+              id: movie.id,
+              collectionEntryId: item.id,
+              title: movie.title,
+              posterPath: movie.poster_path,
+              releaseYear: movie.release_year,
+              mediaId: movie.tmdb_id,
+              mediaType: "movie",
+            };
           })
-          .filter((item): item is MediaItem => item !== null); // Filter out null values and tell TypeScript the result is MediaItem
+          .filter((item) => item !== null);
 
         // Format TV items - assuming each item has at least one series in the series array
         const formattedTvShows = (tvItems || [])
