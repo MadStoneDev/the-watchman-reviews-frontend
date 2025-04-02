@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
+import { createClient } from "@/src/utils/supabase/client";
 import { Popcorn } from "lucide-react";
 
 import { Genre, MediaItem } from "@/src/types/media";
@@ -37,14 +37,27 @@ export default function SearchWrapper({
   const [movieGenres, setMovieGenres] = useState<Genre[]>([]);
   const [seriesGenres, setSeriesGenres] = useState<Genre[]>([]);
 
+  // Sort search results by release year
+  const sortSearchResults = (results: MediaItem[]) => {
+    if (!results.length) return results;
+
+    // Sort the results by release year
+    return [...results].sort((a, b) =>
+      a.releaseYear > b.releaseYear ? -1 : 1,
+    );
+  };
+
   // Functions
   const handleSearch = (results: MediaItem[]) => {
-    const sortedResults = results.sort((a, b) =>
-      a.releaseDate > b.releaseDate ? -1 : 1,
-    );
-
+    const sortedResults = sortSearchResults(results);
     setData(sortedResults);
   };
+
+  // Fetch genres when component mounts
+  useEffect(() => {
+    // You might want to add logic here to populate the genres
+    // from your local database instead of TMDB API if you're caching them
+  }, []);
 
   return (
     <>
@@ -74,7 +87,7 @@ export default function SearchWrapper({
               : "grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
           } gap-x-5 gap-y-5 transition-all duration-300 ease-in-out`}
         >
-          {data.map((item: any) => (
+          {data.map((item) => (
             <MediaBlock
               key={item.id}
               data={item}

@@ -321,7 +321,7 @@ export default function UserCollectionsBlock({
     }
 
     fetchCollections();
-  }, [urlProfile.id, isCurrentUser, currentUserProfile]);
+  }, [urlProfile.id, isCurrentUser, currentUserProfile, supabase]);
 
   const updateCollection = async (id: string, newTitle: string) => {
     try {
@@ -349,8 +349,11 @@ export default function UserCollectionsBlock({
       // First, delete any shared_collection references
       await supabase.from("shared_collection").delete().eq("collection_id", id);
 
-      // Then delete any media_collection entries
-      await supabase.from("media_collection").delete().eq("collection_id", id);
+      // Then delete any medias_collections entries (using new table)
+      await supabase
+        .from("medias_collections")
+        .delete()
+        .eq("collection_id", id);
 
       // Finally delete the collection itself
       const { error } = await supabase

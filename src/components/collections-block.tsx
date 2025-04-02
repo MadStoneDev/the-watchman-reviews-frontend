@@ -12,28 +12,54 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
+// These are the types for our component state
 type MediaItem = {
   id: string;
-  collection_id: string;
-  media_id: string;
-  media_type: string;
+  collectionEntryId: string;
   title: string;
-  poster_path: string | null;
-  release_year: string | null;
+  posterPath: string | null;
+  releaseYear: string | null;
+  mediaId: number; // TMDB ID
+  mediaType: string;
+};
+
+// These are the raw types that will come from Supabase
+// Updated to match the actual structure of the response
+type MovieResponse = {
+  id: string;
+  media_type: string;
+  movies: {
+    id: string;
+    title: string;
+    poster_path: string | null;
+    release_year: string | null;
+    tmdb_id: number;
+  }[]; // Note: This is an array, not a single object
+};
+
+type SeriesResponse = {
+  id: string;
+  media_type: string;
+  series: {
+    id: string;
+    title: string;
+    poster_path: string | null;
+    release_year: string | null;
+    tmdb_id: number;
+  }[]; // Note: This is an array, not a single object
 };
 
 type CollectionBlockProps = {
-  initialItems?: MediaItem[];
   collectionId: string;
   isOwner?: boolean;
 };
 
 export default function CollectionBlock({
-  initialItems = [],
   collectionId,
   isOwner = false,
 }: CollectionBlockProps) {
-  const [items, setItems] = useState<MediaItem[]>(initialItems);
+  const [items, setItems] = useState<MediaItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showShareForm, setShowShareForm] = useState(false);
   const [username, setUsername] = useState("");
   const [status, setStatus] = useState<
@@ -42,13 +68,101 @@ export default function CollectionBlock({
   const [message, setMessage] = useState("");
   const supabase = createClient();
 
-  const handleDeleteItem = async (id: string) => {
+  // Fetch collection items when component mounts
+  useEffect(() => {
+    async function fetchCollectionItems() {
+      setLoading(true);
+
+      try {
+        // Get all media in this collection with proper joins for movie/tv data
+        const { data: movieItems, error: movieError } = await supabase
+          .from("medias_collections")
+          .select(
+            `
+            id,
+            media_type,
+            movies!inner(id, title, poster_path, release_year, tmdb_id)
+          `,
+          )
+          .eq("collection_id", collectionId)
+          .eq("media_type", "movie");
+
+        if (movieError) throw movieError;
+
+        const { data: tvItems, error: tvError } = await supabase
+          .from("medias_collections")
+          .select(
+            `
+            id,
+            media_type,
+            series!inner(id, title, poster_path, release_year, tmdb_id)
+          `,
+          )
+          .eq("collection_id", collectionId)
+          .eq("media_type", "tv");
+
+        if (tvError) throw tvError;
+
+        // Format movie items - assuming each item has at least one movie in the movies array
+        // If the array could be empty, you'd need additional checks
+        const formattedMovies = (movieItems || [])
+          .map((item: MovieResponse) => {
+            // Make sure there's at least one movie in the array
+            if (item.movies && item.movies.length > 0) {
+              const movie = item.movies[0]; // Get the first movie in the array
+              return {
+                id: movie.id,
+                collectionEntryId: item.id,
+                title: movie.title,
+                posterPath: movie.poster_path,
+                releaseYear: movie.release_year,
+                mediaId: movie.tmdb_id,
+                mediaType: "movie",
+              };
+            }
+            // Skip this item if no movies are found
+            return null;
+          })
+          .filter((item): item is MediaItem => item !== null); // Filter out null values and tell TypeScript the result is MediaItem
+
+        // Format TV items - assuming each item has at least one series in the series array
+        const formattedTvShows = (tvItems || [])
+          .map((item: SeriesResponse) => {
+            if (item.series && item.series.length > 0) {
+              const series = item.series[0]; // Get the first series in the array
+              return {
+                id: series.id,
+                collectionEntryId: item.id,
+                title: series.title,
+                posterPath: series.poster_path,
+                releaseYear: series.release_year,
+                mediaId: series.tmdb_id,
+                mediaType: "tv",
+              };
+            }
+            return null;
+          })
+          .filter((item): item is MediaItem => item !== null); // Filter out null values
+
+        // Combine and set items
+        setItems([...formattedMovies, ...formattedTvShows]);
+      } catch (error) {
+        console.error("Error fetching collection items:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCollectionItems();
+  }, [collectionId, supabase]);
+
+  const handleDeleteItem = async (collectionEntryId: string) => {
     try {
-      // Delete from database
+      // Delete from medias_collections table
       const { error } = await supabase
-        .from("media_collection")
+        .from("medias_collections")
         .delete()
-        .eq("id", id);
+        .eq("id", collectionEntryId);
 
       if (error) {
         console.error("Error deleting item:", error);
@@ -56,7 +170,9 @@ export default function CollectionBlock({
       }
 
       // Update UI
-      setItems(items.filter((item) => item.id !== id));
+      setItems(
+        items.filter((item) => item.collectionEntryId !== collectionEntryId),
+      );
     } catch (err) {
       console.error("Failed to delete item:", err);
     }
@@ -238,29 +354,38 @@ export default function CollectionBlock({
 
       {/* Collection Items */}
       <section className={`flex flex-col gap-2`}>
-        {items.length === 0 ? (
+        {loading ? (
+          // Loading state
+          <div className="flex flex-col items-center justify-center p-8 text-neutral-400">
+            <p>Loading collection items...</p>
+          </div>
+        ) : items.length === 0 ? (
+          // Empty state
           <div className="flex flex-col items-center justify-center p-8 text-neutral-400 border border-dashed border-neutral-700 rounded">
             <p className="mb-4">This collection is empty</p>
-            <Link
-              href={`/search`}
-              className="p-2 flex justify-center items-center gap-1 border hover:border-lime-400 hover:text-lime-400 opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out rounded"
-            >
-              <IconSquarePlus size={20} />
-              <span>Add media</span>
-            </Link>
+            {isOwner && (
+              <Link
+                href={`/search`}
+                className="p-2 flex justify-center items-center gap-1 border hover:border-lime-400 hover:text-lime-400 opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out rounded"
+              >
+                <IconSquarePlus size={20} />
+                <span>Add media</span>
+              </Link>
+            )}
           </div>
         ) : (
+          // Collection items
           <>
             {items.map((item) => (
               <CollectionItem
-                key={item.id}
+                key={item.collectionEntryId}
                 id={item.id}
                 title={item.title}
-                imageUrl={item.poster_path ? item.poster_path : undefined}
-                mediaId={item.media_id}
-                mediaType={item.media_type}
-                releaseYear={item.release_year || undefined}
-                onDelete={() => handleDeleteItem(item.id)}
+                imageUrl={item.posterPath || undefined}
+                mediaId={item.mediaId.toString()}
+                mediaType={item.mediaType}
+                releaseYear={item.releaseYear || undefined}
+                onDelete={() => handleDeleteItem(item.collectionEntryId)}
                 isOwner={isOwner}
               />
             ))}

@@ -97,15 +97,14 @@ export default async function CollectionPage({ params }: Props) {
     }
   }
 
-  // Get all media items in this collection
-  const { data: mediaItems, error: mediaError } = await supabase
-    .from("media_collection")
-    .select("*")
+  // Count media items in this collection
+  // Using the new medias_collections table
+  const { count: mediaCount, error: countError } = await supabase
+    .from("medias_collections")
+    .select("*", { count: "exact", head: true })
     .eq("collection_id", id);
 
-  if (mediaError) {
-    console.error("Error fetching media items:", mediaError);
-  }
+  const itemCount = mediaCount || 0;
 
   return (
     <>
@@ -126,7 +125,7 @@ export default async function CollectionPage({ params }: Props) {
       </div>
 
       <div className="mt-4 text-sm text-neutral-400 flex items-center gap-2">
-        <p>{mediaItems?.length || 0} items in collection</p>
+        <p>{itemCount} items in collection</p>
 
         {/* Show appropriate badge based on access type */}
         {accessType === "shared" && (
@@ -141,11 +140,7 @@ export default async function CollectionPage({ params }: Props) {
         )}
       </div>
 
-      <CollectionBlock
-        initialItems={mediaItems || []}
-        collectionId={id}
-        isOwner={isOwner}
-      />
+      <CollectionBlock collectionId={id} isOwner={isOwner} />
     </>
   );
 }

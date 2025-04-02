@@ -9,7 +9,6 @@ import {
   IconDeviceTv,
   IconChairDirector,
 } from "@tabler/icons-react";
-import { Popcorn } from "lucide-react";
 
 type CollectionItemProps = {
   id: string;
@@ -35,8 +34,6 @@ export default function CollectionItem({
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const MediaIcon = mediaType === "movie" ? IconChairDirector : IconDeviceTv;
-
   return (
     <div
       className={`flex items-center p-3 border border-neutral-800 hover:border-neutral-600 rounded transition-all duration-300 ease-in-out`}
@@ -57,8 +54,10 @@ export default function CollectionItem({
             className={`object-cover object-center w-full h-full`}
             onError={() => setImageError(true)}
           />
+        ) : mediaType === "movie" ? (
+          <IconChairDirector size={20} className="text-neutral-500" />
         ) : (
-          <MediaIcon size={20} className="text-neutral-500" />
+          <IconDeviceTv size={20} className="text-neutral-500" />
         )}
       </div>
 

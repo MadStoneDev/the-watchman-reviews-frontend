@@ -1,17 +1,15 @@
 ﻿export interface Genre {
-    id: number;
-    name: string;
+  id: number;
+  name: string;
 }
 
 export interface MediaItem {
-    id: number;
-    type: string;
-    title: string;
-    summary: string;
-    poster: string;
-    backdrop: string;
-    genres: number[];
-    rating: number;
-    adult: boolean;
-    releaseDate: string;
+  id: number;
+  title: string;
+  overview: string;
+  posterPath: string;
+  tmdbId: number;
+  mediaType: string;
+  releaseYear: string;
+  existsInDb?: boolean;
 }

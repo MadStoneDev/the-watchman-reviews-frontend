@@ -33,6 +33,57 @@ export type Database = {
         }
         Relationships: []
       }
+      episodes: {
+        Row: {
+          created_at: string | null
+          episode_number: number
+          id: string
+          overview: string | null
+          poster_path: string | null
+          release_year: string | null
+          season_id: string
+          series_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          episode_number: number
+          id?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_year?: string | null
+          season_id: string
+          series_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          episode_number?: number
+          id?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_year?: string | null
+          season_id?: string
+          series_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episodes_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "episodes_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_collection: {
         Row: {
           collection_id: string | null
@@ -71,6 +122,68 @@ export type Database = {
           },
         ]
       }
+      medias_collections: {
+        Row: {
+          collection_id: string
+          created_at: string | null
+          id: string
+          media_id: string
+          media_type: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string | null
+          id?: string
+          media_id: string
+          media_type: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string | null
+          id?: string
+          media_id?: string
+          media_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medias_collections_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movies: {
+        Row: {
+          created_at: string | null
+          id: string
+          overview: string | null
+          poster_path: string | null
+          release_year: string | null
+          title: string
+          tmdb_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_year?: string | null
+          title: string
+          tmdb_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_year?: string | null
+          title?: string
+          tmdb_id?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -89,6 +202,77 @@ export type Database = {
           id?: string
           settings?: Json | null
           username?: string
+        }
+        Relationships: []
+      }
+      seasons: {
+        Row: {
+          created_at: string | null
+          id: string
+          overview: string | null
+          poster_path: string | null
+          release_year: string | null
+          season_number: number
+          series_id: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_year?: string | null
+          season_number: number
+          series_id: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_year?: string | null
+          season_number?: number
+          series_id?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seasons_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      series: {
+        Row: {
+          created_at: string | null
+          id: string
+          overview: string | null
+          poster_path: string | null
+          release_year: string | null
+          title: string
+          tmdb_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_year?: string | null
+          title: string
+          tmdb_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          overview?: string | null
+          poster_path?: string | null
+          release_year?: string | null
+          title?: string
+          tmdb_id?: number
         }
         Relationships: []
       }
