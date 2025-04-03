@@ -176,6 +176,8 @@ export default function MediasCollection({
                     (e) => e.media_id === series.id && e.media_type === "tv",
                   );
 
+                  console.log(entry);
+
                   return {
                     id: series.id,
                     title: series.title,

@@ -56,6 +56,8 @@ const fetchInitialMedia = async (id: string) => {
             (e) => e.media_id === movie.id && e.media_type === "movie",
           );
 
+          console.log(entry);
+
           return {
             id: movie.id,
             title: movie.title,
@@ -65,7 +67,7 @@ const fetchInitialMedia = async (id: string) => {
             tmdbId: movie.tmdb_id,
             mediaType: "movie",
             releaseYear: movie.release_year,
-            collectionEntryId: entry?.id, // Add this for deletion reference
+            collectionEntryId: entry?.id,
             mediaId: movie.id,
           };
         });
@@ -85,6 +87,8 @@ const fetchInitialMedia = async (id: string) => {
           const entry = mediaEntries.find(
             (e) => e.media_id === series.id && e.media_type === "tv",
           );
+
+          console.log(entry);
 
           return {
             id: series.id,
