@@ -72,12 +72,22 @@ export default function MediasCollection({
   }, [itemCount]);
 
   useEffect(() => {
+    if (initialMedias.length > 0 && items.length === 0) {
+      setItems(
+        initialMedias.map((item) => ({
+          ...item,
+          isWatched: false,
+        })),
+      );
+    }
+  }, [initialMedias, items.length]);
+
+  useEffect(() => {
     const fetchMediaItems = async () => {
-      if (initialMedias.length > 0 && items.length > 0) {
-        return; // Already loaded
-      }
+      if (items.length > 0) return; // Already loaded
 
       setLoading(true);
+
       try {
         // Get current user
         const { data: userData } = await supabase.auth.getUser();
@@ -212,7 +222,7 @@ export default function MediasCollection({
     };
 
     fetchMediaItems();
-  }, [collection.id, initialMedias.length, items.length, supabase]);
+  }, [collection.id, supabase]);
 
   useEffect(() => {
     const fetchSharedUsers = async () => {
