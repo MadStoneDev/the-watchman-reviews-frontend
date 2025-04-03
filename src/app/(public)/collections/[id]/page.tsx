@@ -83,7 +83,7 @@ const fetchInitialMedia = async (id: string) => {
       if (series) {
         const seriesItems: MediaItem[] = series.map((series) => {
           const entry = mediaEntries.find(
-            (e) => e.media_id === series.id && e.media_type === "series",
+            (e) => e.media_id === series.id && e.media_type === "tv",
           );
 
           return {
@@ -93,7 +93,7 @@ const fetchInitialMedia = async (id: string) => {
             posterPath: series.poster_path,
             backdropPath: series.backdrop_path,
             tmdbId: series.tmdb_id,
-            mediaType: "series",
+            mediaType: "tv",
             releaseYear: series.release_year,
             collectionEntryId: entry?.id, // Add this for deletion reference
             mediaId: series.id,
