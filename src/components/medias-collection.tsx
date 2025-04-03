@@ -45,7 +45,9 @@ export default function MediasCollection({
   isOwner = false,
   itemCount = 0,
 }: MediasCollectionProps) {
+  const [currentItemCount, setCurrentItemCount] = useState(itemCount);
   const [items, setItems] = useState<CollectionMediaItem[]>([]);
+
   const [loading, setLoading] = useState(!initialMedias.length);
   const [isShareExpanded, setIsShareExpanded] = useState(false);
   const [showShareForm, setShowShareForm] = useState(false);
@@ -64,7 +66,11 @@ export default function MediasCollection({
   // Supabase
   const supabase = createClient();
 
-  // Fetch media items and watched status
+  // Effects
+  useEffect(() => {
+    setCurrentItemCount(itemCount);
+  }, [itemCount]);
+
   useEffect(() => {
     const fetchMediaItems = async () => {
       if (initialMedias.length > 0 && items.length > 0) {
@@ -208,7 +214,6 @@ export default function MediasCollection({
     fetchMediaItems();
   }, [collection.id, initialMedias.length, items.length, supabase]);
 
-  // Fetch shared users when share panel is expanded
   useEffect(() => {
     const fetchSharedUsers = async () => {
       if (!isShareExpanded || !isOwner) return;
@@ -261,6 +266,7 @@ export default function MediasCollection({
     fetchSharedUsers();
   }, [isShareExpanded, isOwner, collection.id, supabase]);
 
+  // Functions
   const handleDeleteItem = async (item: CollectionMediaItem) => {
     if (!item.collectionEntryId) {
       console.error("Collection entry ID is missing, cannot delete item");
@@ -283,6 +289,7 @@ export default function MediasCollection({
       setItems(
         items.filter((i) => i.collectionEntryId !== item.collectionEntryId),
       );
+      setCurrentItemCount((prev) => prev - 1);
     } catch (err) {
       console.error("Failed to delete item:", err);
     }
@@ -693,7 +700,7 @@ export default function MediasCollection({
 
       {/* Item Count - moved below sharing block */}
       <div className="mb-4 text-sm text-neutral-400 flex items-center justify-between">
-        <p>{itemCount} items in collection</p>
+        <p>{currentItemCount} items in collection</p>
 
         {isSavingOrder && (
           <p className="text-neutral-400 animate-pulse flex items-center gap-1">

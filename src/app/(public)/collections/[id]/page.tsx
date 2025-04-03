@@ -226,8 +226,6 @@ export default async function CollectionPage({
       </div>
 
       <div className="mt-4 text-sm text-neutral-400 flex items-center gap-2">
-        <p>{itemCount} items in collection</p>
-
         {accessType === "shared" && (
           <span className="px-2 py-0.5 bg-neutral-700 text-xs rounded-full">
             Shared with you
@@ -243,7 +241,8 @@ export default async function CollectionPage({
 
       <MediasCollection
         collection={collection}
-        initialMedias={initialMedias} // Pass as initialMedias instead of medias
+        initialMedias={initialMedias}
+        itemCount={itemCount}
         isOwner={isOwner}
       />
     </>
