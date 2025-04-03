@@ -14,6 +14,7 @@ import {
   IconEyeCheck,
   IconEyeCancel,
   IconLineHeight,
+  IconUsersGroup,
 } from "@tabler/icons-react";
 
 import { MediaItem } from "@/src/lib/types";
@@ -220,7 +221,7 @@ export default function CollectionItem({
     <div
       className={`flex items-center p-3 border ${
         isWatched
-          ? "border-neutral-800 bg-neutral-900/50"
+          ? "bg-lime-400 border-lime-400 hover:border-lime-500"
           : "border-neutral-800 hover:border-neutral-600"
       } rounded transition-all duration-300 ease-in-out`}
       onMouseEnter={() => setIsHovered(true)}
@@ -272,7 +273,11 @@ export default function CollectionItem({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2">
+      <div
+        className={`flex items-center gap-2 ${
+          isHovered ? "opacity-100" : "md:opacity-0"
+        }`}
+      >
         {/* Watch Toggle Button */}
         <button
           onClick={handleWatchToggle}
@@ -281,12 +286,12 @@ export default function CollectionItem({
             isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""
           } ${
             isWatched
-              ? "text-blue-400 hover:text-blue-300"
-              : "text-neutral-400 hover:text-blue-400"
+              ? "text-neutral-50 hover:text-lime-600"
+              : "text-neutral-50 hover:text-lime-400"
           }`}
           title={isWatched ? "Mark as unwatched" : "Mark as watched"}
         >
-          {isWatched ? <IconEyeCheck size={18} /> : <IconEye size={18} />}
+          <IconEye size={20} />
         </button>
 
         {/* Watch All Toggle Button (for owners only) */}
@@ -298,8 +303,8 @@ export default function CollectionItem({
               isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""
             } ${
               isWatchedByAll
-                ? "text-blue-400 hover:text-blue-300"
-                : "text-neutral-400 hover:text-blue-400"
+                ? "text-neutral-50 hover:text-lime-600"
+                : "text-neutral-50 hover:text-lime-400"
             }`}
             title={
               isWatchedByAll
@@ -307,11 +312,7 @@ export default function CollectionItem({
                 : "Mark as watched by all"
             }
           >
-            {isWatchedByAll ? (
-              <IconEyeCancel size={18} />
-            ) : (
-              <IconEyeOff size={18} />
-            )}
+            <IconUsersGroup size={20} />
           </button>
         )}
 
@@ -319,9 +320,7 @@ export default function CollectionItem({
         {isOwner && (
           <button
             onClick={onDelete}
-            className={`p-2 text-neutral-400 hover:text-red-500 transition-colors ${
-              isHovered ? "opacity-100" : "opacity-0"
-            }`}
+            className={`p-2 text-neutral-50 hover:text-red-600 transition-all duration-300 ease-in-out`}
             title="Remove from collection"
           >
             <IconTrash size={18} />
