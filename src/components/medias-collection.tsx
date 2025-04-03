@@ -591,7 +591,7 @@ export default function MediasCollection({
                       >
                         <span className="font-medium">{user.username}</span>
                         <div
-                          className={"flex justify-between items-center gap-2"}
+                          className={`flex justify-between items-center gap-2 w-full md:w-fit`}
                         >
                           <select
                             value={user.accessLevel}
