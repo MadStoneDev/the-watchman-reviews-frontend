@@ -761,7 +761,6 @@ export default function MediasCollection({
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          {...provided.dragHandleProps}
                           className={snapshot.isDragging ? "opacity-70" : ""}
                         >
                           <CollectionItem
@@ -770,6 +769,7 @@ export default function MediasCollection({
                             onDelete={() => handleDeleteItem(item)}
                             isOwner={isOwner}
                             onWatchToggle={() => handleWatchToggle(item)}
+                            dragHandleProps={provided.dragHandleProps}
                           />
                         </div>
                       )}

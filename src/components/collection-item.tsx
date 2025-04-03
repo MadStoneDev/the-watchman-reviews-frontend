@@ -10,24 +10,23 @@ import {
   IconDeviceTv,
   IconChairDirector,
   IconEye,
-  IconEyeOff,
-  IconEyeCheck,
-  IconEyeCancel,
   IconLineHeight,
   IconUsersGroup,
 } from "@tabler/icons-react";
 
 import { MediaItem } from "@/src/lib/types";
+import { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
 // Extend MediaItem with some collection-specific properties
 interface CollectionMediaItemProps {
   data: MediaItem & {
     collectionEntryId?: string;
   };
-  collectionId: string; // Need this to track watches for this specific collection
+  collectionId: string;
   isOwner?: boolean;
   onDelete: () => void;
-  onWatchToggle?: () => void; // Optional callback for parent to update sorting
+  onWatchToggle?: () => void;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }
 
 export default function CollectionItem({
@@ -36,6 +35,7 @@ export default function CollectionItem({
   isOwner = false,
   onDelete,
   onWatchToggle,
+  dragHandleProps,
 }: CollectionMediaItemProps) {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -228,7 +228,10 @@ export default function CollectionItem({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Drag Handle */}
-      <div className="cursor-grab active:cursor-grabbing mr-2 text-neutral-500 hover:text-neutral-300">
+      <div
+        className="cursor-grab active:cursor-grabbing mr-2 text-neutral-500 hover:text-neutral-300"
+        {...dragHandleProps}
+      >
         <IconLineHeight size={20} />
       </div>
 
