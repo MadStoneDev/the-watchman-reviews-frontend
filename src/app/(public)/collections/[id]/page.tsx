@@ -39,7 +39,7 @@ const fetchInitialMedia = async (id: string) => {
       .filter((item) => item.media_type === "movie")
       .map((item) => item.media_id);
     const seriesIds = mediaEntries
-      .filter((item) => item.media_type === "series")
+      .filter((item) => item.media_type === "tv")
       .map((item) => item.media_id);
 
     const mediaItems: MediaItem[] = [];

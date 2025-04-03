@@ -106,7 +106,7 @@ export default function MediasCollection({
             .filter((item) => item.media_type === "movie")
             .map((item) => item.media_id);
           const seriesIds = mediaEntries
-            .filter((item) => item.media_type === "series")
+            .filter((item) => item.media_type === "tv")
             .map((item) => item.media_id);
 
           const mediaItems: CollectionMediaItem[] = [];
