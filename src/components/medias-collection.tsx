@@ -287,7 +287,7 @@ export default function MediasCollection({
       const { error } = await supabase
         .from("medias_collections")
         .delete()
-        .eq("id", item.collectionEntryId);
+        .eq("id", item.id);
 
       if (error) {
         console.error("Error deleting item:", error);
@@ -485,26 +485,19 @@ export default function MediasCollection({
   };
 
   const handleDragEnd = async (result: any) => {
-    // If dropped outside the list, do nothing
     if (!result.destination) return;
-
-    // If position didn't change, do nothing
     if (result.destination.index === result.source.index) return;
 
-    // Get item that was moved
     const sourceIndex = result.source.index;
     const destinationIndex = result.destination.index;
 
-    // Reorder items in state
     const newItems = Array.from(items);
     const [removed] = newItems.splice(sourceIndex, 1);
     newItems.splice(destinationIndex, 0, removed);
 
-    // Update positions based on new order, but don't mix watched/unwatched sorting
     const unwatchedItems = newItems.filter((item) => !item.isWatched);
     const watchedItems = newItems.filter((item) => item.isWatched);
 
-    // Update positions for each group
     const updatedItems = [
       ...unwatchedItems.map((item, index) => ({
         ...item,
@@ -516,25 +509,21 @@ export default function MediasCollection({
       })),
     ];
 
-    // Update state
     setItems(updatedItems);
-
-    // Save new positions to database
     setIsSavingOrder(true);
+
     try {
       const updates = updatedItems
         .map((item) => ({
           id: item.collectionEntryId,
           position: item.position,
         }))
-        .filter((item) => item.id); // Filter out any items without collectionEntryId
+        .filter((item) => item.id);
 
-      // Update positions in batches to avoid making too many requests
       const batchSize = 20;
       for (let i = 0; i < updates.length; i += batchSize) {
         const batch = updates.slice(i, i + batchSize);
 
-        // Update each item in the batch
         for (const update of batch) {
           await supabase
             .from("medias_collections")
