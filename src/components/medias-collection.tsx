@@ -141,6 +141,8 @@ export default function MediasCollection({
                   (e) => e.media_id === movie.id && e.media_type === "movie",
                 );
 
+                console.log(entry);
+
                 return {
                   id: movie.id,
                   title: movie.title,
