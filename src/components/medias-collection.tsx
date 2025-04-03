@@ -291,7 +291,7 @@ export default function MediasCollection({
       const { error } = await supabase
         .from("medias_collections")
         .delete()
-        .eq("id", item.id);
+        .eq("id", item.collectionEntryId);
 
       if (error) {
         console.error("Error deleting item:", error);
@@ -784,7 +784,7 @@ export default function MediasCollection({
                 >
                   {items.map((item, index) => (
                     <Draggable
-                      key={item.id}
+                      key={item.collectionEntryId}
                       draggableId={item.id}
                       index={index}
                       isDragDisabled={!isOwner}
