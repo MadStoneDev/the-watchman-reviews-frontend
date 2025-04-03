@@ -221,7 +221,7 @@ export default function CollectionItem({
     <div
       className={`flex items-center p-3 border ${
         isWatched
-          ? "bg-lime-400 border-lime-400 hover:border-lime-500"
+          ? "bg-lime-400 hover:bg-lime-500 border-lime-400 hover:border-lime-500"
           : "border-neutral-800 hover:border-neutral-600"
       } rounded transition-all duration-300 ease-in-out`}
       onMouseEnter={() => setIsHovered(true)}
