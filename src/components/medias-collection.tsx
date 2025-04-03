@@ -171,8 +171,7 @@ export default function MediasCollection({
               const seriesItems: CollectionMediaItem[] = series.map(
                 (series) => {
                   const entry = mediaEntries.find(
-                    (e) =>
-                      e.media_id === series.id && e.media_type === "series",
+                    (e) => e.media_id === series.id && e.media_type === "tv",
                   );
 
                   return {
@@ -182,7 +181,7 @@ export default function MediasCollection({
                     posterPath: series.poster_path,
                     backdropPath: series.backdrop_path,
                     tmdbId: series.tmdb_id,
-                    mediaType: "series",
+                    mediaType: "tv",
                     releaseYear: series.release_year,
                     collectionEntryId: entry?.id,
                     position: entry?.position,
