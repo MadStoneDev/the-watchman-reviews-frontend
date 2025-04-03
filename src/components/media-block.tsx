@@ -105,6 +105,13 @@ export default function MediaBlock({
           .eq("media_type", mediaType)
           .in("collection_id", collectionIds);
 
+        console.log("Existing entries:");
+        console.log(existingEntries);
+        console.log(`Media Id: ${dbMediaId}`);
+        console.log(`Media Type: ${mediaType}`);
+        console.log(`Collection IDs:`);
+        console.log(collectionIds);
+
         if (existingEntries && existingEntries.length > 0) {
           existingInCollections = existingEntries.map(
             (entry) => entry.collection_id,
@@ -281,7 +288,7 @@ export default function MediaBlock({
 
       {showCollections && (
         <section
-          className={`absolute top-0 right-0 bottom-0 left-0 p-3 grid place-content-center bg-neutral-800/70 z-50`}
+          className={`fixed p-3 top-0 left-0 grid place-content-center w-dvw h-dvh bg-neutral-800/70 z-50`}
         >
           <div
             className={`p-4 flex flex-col gap-2 w-full md:w-[400px] max-w-md bg-neutral-900 shadow-lg shadow-neutral-900`}
@@ -313,7 +320,9 @@ export default function MediaBlock({
             )}
 
             {/* Collections */}
-            <div className={"flex flex-col gap-2 max-h-44 overflow-y-auto"}>
+            <div
+              className={"flex flex-col gap-2 max-h-[300px] overflow-y-auto"}
+            >
               <h3 className={`text-xs italic`}>Owned Collections</h3>
               {ownedCollections.length === 0 ? (
                 <p className="text-xs text-neutral-400">
@@ -359,9 +368,9 @@ export default function MediaBlock({
                             }`}
                           >
                             {selectedCollections.includes(collection.id) ? (
-                              <IconCheck size={14} />
+                              <IconCheck size={18} />
                             ) : (
-                              <IconSquarePlus size={14} />
+                              <IconSquarePlus size={18} />
                             )}
                             <span>{collection.title}</span>
                           </button>
@@ -375,7 +384,7 @@ export default function MediaBlock({
               <h3 className={`mt-4 text-xs italic`}>Shared Collections</h3>
               {sharedCollections.length === 0 ? (
                 <p className="text-xs text-neutral-400">
-                  You don't own any collections yet.
+                  You don't have any shared collections yet.
                 </p>
               ) : (
                 <ul className="space-y-1">
@@ -406,9 +415,9 @@ export default function MediaBlock({
                             }`}
                           >
                             {selectedCollections.includes(collection.id) ? (
-                              <IconCheck size={14} />
+                              <IconCheck size={18} />
                             ) : (
-                              <IconSquarePlus size={14} />
+                              <IconSquarePlus size={18} />
                             )}
                             <span>{collection.title}</span>
                           </button>
@@ -433,7 +442,7 @@ export default function MediaBlock({
                 "Adding..."
               ) : (
                 <>
-                  <IconCheck size={14} />
+                  <IconCheck size={18} />
                   <span>
                     Add to{" "}
                     {selectedCollections.length === 1

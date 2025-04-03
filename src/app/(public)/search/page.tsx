@@ -63,9 +63,9 @@ const fetchCollections = async (user: User | null) => {
         // Clean shared collections
         if (sharedCollections) {
           cleanSharedCollections = sharedCollections.map((collection) => ({
-            id: collection.collection_id,
-            title: collection.collection_id || "Untitled Shared Collection",
-            owner: collection.user_id,
+            id: collection.id,
+            title: collection.title || "Untitled Shared Collection",
+            owner: collection.owner,
             is_public: collection.is_public,
             shared: true,
           }));
