@@ -141,8 +141,6 @@ export default function MediasCollection({
                   (e) => e.media_id === movie.id && e.media_type === "movie",
                 );
 
-                console.log(entry);
-
                 return {
                   id: movie.id,
                   title: movie.title,
@@ -175,8 +173,6 @@ export default function MediasCollection({
                   const entry = mediaEntries.find(
                     (e) => e.media_id === series.id && e.media_type === "tv",
                   );
-
-                  console.log(entry);
 
                   return {
                     id: series.id,
@@ -495,11 +491,6 @@ export default function MediasCollection({
     const sourceIndex = result.source.index;
     const destinationIndex = result.destination.index;
 
-    // Log drag operation details
-    console.log(
-      `Moving item from position ${sourceIndex} to ${destinationIndex}`,
-    );
-
     const newItems = Array.from(items);
     const [removed] = newItems.splice(sourceIndex, 1);
     newItems.splice(destinationIndex, 0, removed);
@@ -518,17 +509,6 @@ export default function MediasCollection({
       })),
     ];
 
-    // Log the items being updated in UI
-    console.log(
-      "Updated items for UI:",
-      updatedItems.map((item) => ({
-        id: item.id,
-        title: item.title,
-        position: item.position,
-        collectionEntryId: item.collectionEntryId,
-      })),
-    );
-
     // Update UI state
     setItems(updatedItems);
     setIsSavingOrder(true);
@@ -541,9 +521,6 @@ export default function MediasCollection({
         }))
         .filter((item) => item.id);
 
-      // Log the updates that will be sent to database
-      console.log("Updates for database:", updates);
-
       // Check if any items are missing collectionEntryId
       const missingIds = updatedItems.filter((item) => !item.collectionEntryId);
       if (missingIds.length > 0) {
@@ -553,15 +530,8 @@ export default function MediasCollection({
       const batchSize = 20;
       for (let i = 0; i < updates.length; i += batchSize) {
         const batch = updates.slice(i, i + batchSize);
-        console.log(
-          `Processing batch ${i / batchSize + 1}, items: ${batch.length}`,
-        );
 
         for (const update of batch) {
-          console.log(
-            `Updating item with id ${update.id} to position ${update.position}`,
-          );
-
           const { data, error } = await supabase
             .from("medias_collections")
             .update({ position: update.position })
@@ -569,8 +539,6 @@ export default function MediasCollection({
 
           if (error) {
             console.error(`Error updating item ${update.id}:`, error);
-          } else {
-            console.log(`Successfully updated item ${update.id}`);
           }
         }
       }
