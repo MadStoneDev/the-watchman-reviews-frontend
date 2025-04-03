@@ -587,10 +587,10 @@ export default function MediasCollection({
                     {sharedUsers.map((user) => (
                       <li
                         key={user.id}
-                        className="p-3 bg-neutral-800 rounded flex items-center justify-between"
+                        className={`p-3 bg-neutral-800 rounded flex flex-col md:flex-row items-start md:items-center justify-start md:justify-between`}
                       >
                         <span className="font-medium">{user.username}</span>
-                        <div className="flex items-center gap-2">
+                        <div className={"flex items-center gap-2"}>
                           <select
                             value={user.accessLevel}
                             onChange={(e) =>

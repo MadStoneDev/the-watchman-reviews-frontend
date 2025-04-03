@@ -82,6 +82,11 @@ const fetchCollections = async (user: User | null) => {
 export default async function SearchPage() {
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userData?.user?.id)
+    .single();
 
   const user = userData?.user || null;
   let ownedCollections: MediaCollection[] = [];
@@ -106,6 +111,7 @@ export default async function SearchPage() {
         <Suspense fallback={<SearchSkeletonBoundary />}>
           <SearchWrapper
             user={user}
+            profile={profile}
             ownedCollections={ownedCollections}
             sharedCollections={sharedCollections}
           />

@@ -16,6 +16,7 @@ type Profile = Tables<`profiles`>;
 export default function SearchWrapper({
   admin = false,
   user,
+  profile,
   ownedCollections = [],
   sharedCollections = [],
 }: {
@@ -78,6 +79,7 @@ export default function SearchWrapper({
               key={item.tmdbId}
               data={item}
               user={user}
+              username={profile?.username || ""}
               admin={admin}
               ownedCollections={ownedCollections}
               sharedCollections={sharedCollections}

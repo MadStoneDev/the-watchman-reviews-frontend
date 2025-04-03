@@ -236,7 +236,9 @@ export default function CollectionItem({
       </div>
 
       {/* Image */}
-      <div className="h-20 w-14 mr-3 bg-neutral-800 rounded overflow-hidden flex items-center justify-center">
+      <div
+        className={`h-20 w-14 shrink-0 mr-3 bg-neutral-800 rounded overflow-hidden flex items-center justify-center`}
+      >
         {data.posterPath && !imageError ? (
           <Image
             src={

@@ -15,11 +15,11 @@ import {
 
 import { User } from "@supabase/supabase-js";
 import { MediaCollection, MediaSearchResult } from "@/src/lib/types";
-import { Share } from "lucide-react";
 
 interface MediaBlockProps {
   data: MediaSearchResult;
   user?: User | null;
+  username?: string;
   admin?: boolean;
   ownedCollections?: MediaCollection[];
   sharedCollections?: MediaCollection[];
@@ -28,6 +28,7 @@ interface MediaBlockProps {
 export default function MediaBlock({
   data,
   user,
+  username = "",
   admin = false,
   ownedCollections = [],
   sharedCollections = [],
@@ -237,7 +238,23 @@ export default function MediaBlock({
           </div>
         )}
 
-        <div className="absolute inset-0 bg-black/70 opacity-0 group-hover/media:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+        {user && (
+          <div
+            className={`md:hidden absolute top-3 right-3 flex justify-center items-center gap-2 transition-all duration-300 ease-in-out`}
+          >
+            <button
+              onClick={handleShowCollections}
+              className={`p-1 flex justify-center items-center gap-1 w-full bg-lime-500/80 hover:bg-lime-500 rounded text-xs text-neutral-900 transition-all duration-300 ease-in-out`}
+              disabled={loading}
+            >
+              <IconSquarePlus size={24} />
+            </button>
+          </div>
+        )}
+
+        <div
+          className={`p-3 hidden md:flex flex-col justify-between absolute inset-0 bg-neutral-900/70 opacity-0 group-hover/media:opacity-100 transition-opacity duration-300`}
+        >
           <div className="w-full">
             <h3 className="text-base font-semibold">{data.title}</h3>
             {data.releaseYear && (
@@ -245,33 +262,35 @@ export default function MediaBlock({
             )}
           </div>
 
-          {user &&
-            (ownedCollections.length > 0 || sharedCollections.length > 0) &&
-            !showCollections && (
-              <div
-                className={`mt-2 flex items-center gap-2 transition-all duration-300 ease-in-out`}
+          {user && !showCollections && (
+            <div
+              className={`my-2 flex justify-center items-center gap-2 transition-all duration-300 ease-in-out`}
+            >
+              <button
+                onClick={handleShowCollections}
+                className={`p-3 flex justify-center items-center gap-1 w-full bg-lime-500/80 hover:bg-lime-500 rounded text-xs text-neutral-900 transition-all duration-300 ease-in-out`}
+                disabled={loading}
               >
-                <button
-                  onClick={handleShowCollections}
-                  className={`p-2 flex items-center gap-1 bg-lime-500/80 hover:bg-lime-500 rounded text-xs text-black transition-all duration-300 ease-in-out`}
-                  disabled={loading}
-                >
-                  <IconSquarePlus size={20} />
-                  <span>Add to Collection</span>
-                </button>
-              </div>
-            )}
+                <IconSquarePlus size={20} />
+                <span>Add to Collection</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {showCollections && (
         <section
-          className={`absolute top-0 right-0 bottom-0 left-0 p-3 grid place-content-center bg-neutral-800`}
+          className={`absolute top-0 right-0 bottom-0 left-0 p-3 grid place-content-center bg-neutral-800/70 z-50`}
         >
-          <div className={`flex flex-col gap-2 max-w-md`}>
+          <div
+            className={`p-4 flex flex-col gap-2 w-full md:w-[400px] max-w-md bg-neutral-900 shadow-lg shadow-neutral-900`}
+          >
             {/* Header */}
-            <div className={`flex justify-between items-center`}>
-              <h2 className={`text-sm font-semibold`}>
+            <div
+              className={`pb-2 flex justify-between items-start border-b border-neutral-700`}
+            >
+              <h2 className={`max-w-64 text-sm font-semibold`}>
                 Add <span className={`text-lime-400`}>{data.title}</span> to
                 Collections
               </h2>
@@ -281,7 +300,7 @@ export default function MediaBlock({
                   setShowCollections(false);
                   setSelectedCollections([]);
                 }}
-                className="text-neutral-400 hover:text-white"
+                className={`ml-6 text-neutral-400 hover:text-white`}
               >
                 <IconX size={16} />
               </button>
@@ -299,6 +318,17 @@ export default function MediaBlock({
               {ownedCollections.length === 0 ? (
                 <p className="text-xs text-neutral-400">
                   You don't own any collections yet.
+                  {username ? (
+                    <>
+                      {" "}
+                      <Link
+                        href={`/${username}/collections`}
+                        className={`text-lime-400 hover:text-lime-300 transition-all duration-300 ease-in-out`}
+                      >
+                        Create one now?
+                      </Link>
+                    </>
+                  ) : null}
                 </p>
               ) : (
                 <ul className="space-y-1">
@@ -396,7 +426,7 @@ export default function MediaBlock({
               className={`w-full mt-2 py-1 rounded text-xs flex items-center justify-center gap-1 ${
                 loading || selectedCollections.length === 0
                   ? "bg-neutral-700 text-neutral-400 cursor-not-allowed"
-                  : "bg-lime-500 text-black hover:bg-lime-400"
+                  : "bg-lime-500 text-neutral-900 hover:bg-lime-400"
               }`}
             >
               {loading ? (
