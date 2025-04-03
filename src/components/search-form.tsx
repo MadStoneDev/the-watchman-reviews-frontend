@@ -8,42 +8,58 @@ import axios from "axios";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 
-import { MediaItem } from "@/src/types/media";
 import { IconSearch } from "@tabler/icons-react";
+import { MediaSearchResult } from "@/src/lib/types";
 
-export default function SearchForm({
+export default ({
   onSearch,
   onLoading,
   setMessage,
   setAnimateMessage,
 }: {
-  onSearch: (results: MediaItem[]) => void;
+  onSearch: (results: MediaSearchResult[]) => void;
   onLoading?: (loading: boolean) => void;
   setMessage: (message: string) => void;
   setAnimateMessage: (animateMessage: boolean) => void;
-}) {
+}) => {
   // Hooks
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // States
   const [search, setSearch] = useState("");
 
   // Functions
   const cleanSearchTerm = (term: string): string => {
-    // Remove any non-alphanumeric characters except spaces
+    // Remove non-alphanumeric characters except spaces
     let cleaned = term.replace(/[^\w\s]/g, "");
+
     // Replace multiple spaces with a single space
     cleaned = cleaned.replace(/\s+/g, " ");
+
     // Trim leading and trailing whitespace
     cleaned = cleaned.trim();
+
     // URL encode the cleaned term
     return encodeURIComponent(cleaned);
   };
 
+  const getYear = (dateString: string) => {
+    if (!dateString) return null;
+
+    try {
+      const date = new Date(dateString);
+      return date.getFullYear().toString() || "";
+    } catch {
+      return "";
+    }
+  };
+
   const handleSearch = async (searchString: string) => {
     onSearch?.([]);
+
     if (searchString.length < 3) return;
+
     onLoading?.(true);
     setMessage("Searching...");
     setAnimateMessage(true);
@@ -65,23 +81,27 @@ export default function SearchForm({
 
     try {
       const response = await axios.request(options);
-      const searchResults: MediaItem[] = response.data.results
+      const searchResults: MediaSearchResult[] = response.data.results
         .filter(
           (item: any) =>
             item.media_type === "movie" || item.media_type === "tv",
         )
-        .map((item: any) => ({
-          id: item.id,
-          type: item.media_type,
-          title: item.title || item.name,
-          summary: item.overview,
-          poster: item.poster_path,
-          backdrop: item.backdrop_path,
-          genres: item.genre_ids,
-          rating: item.vote_average,
-          adult: item.adult,
-          releaseDate: item.release_date || item.first_air_date,
-        }));
+        .map(
+          (item: any): MediaSearchResult => ({
+            title: item.title || item.name,
+            overview: item.overview,
+            posterPath: item.poster_path,
+            backdropPath: item.backdrop_path,
+            tmdbId: item.id,
+            mediaType: item.media_type,
+            releaseYear:
+              getYear(
+                item.release_date || item.first_air_date || item.air_date || "",
+              ) || "",
+            tmdbRating: item.vote_average,
+            popularity: item.popularity,
+          }),
+        );
 
       router.push(`/search?q=${encodeURIComponent(searchString)}`);
 
@@ -126,8 +146,8 @@ export default function SearchForm({
         <Button
           type="button"
           variant={"secondary"}
-          onClick={() => handleSearch(search)}
-          className={`flex items-center gap-1 bg-lime-400 hover:bg-lime-400 hover:scale-110 transition-all duration-300 ease-in-out`}
+          onClick={async () => await handleSearch(search)}
+          className={`flex items-center gap-1 bg-lime-400 hover:bg-lime-400 hover:scale-110 text-neutral-900 transition-all duration-300 ease-in-out`}
         >
           <IconSearch size={20} strokeWidth={1.5} />
           <p className={`hidden sm:block`}>Search</p>
@@ -135,4 +155,4 @@ export default function SearchForm({
       </section>
     </>
   );
-}
+};

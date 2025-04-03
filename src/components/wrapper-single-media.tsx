@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 
-import { Genre } from "@/src/types/media";
 import { Database } from "@/src/types/supabase";
 
 import GoBack from "@/src/components/go-back";
@@ -13,7 +12,6 @@ interface TMDBItem {
   tagline: string;
   backdrop: string;
   poster: string;
-  genres: Genre[];
   numberOfSeasons?: number;
   seasons?: any[];
   imdb_id: string;
@@ -101,9 +99,9 @@ export default function SingleMediaWrapper({
           <h1 className={`text-2xl sm:3xl md:text-4xl font-bold`}>
             {mediaData?.title}
           </h1>
-          <h3 className={`text-lg text-neutral-500`}>
-            {TMDBData?.genres.map(({ id, name }) => name).join(", ")}
-          </h3>
+          {/*<h3 className={`text-lg text-neutral-500`}>*/}
+          {/*  {TMDBData?.genres.map(({ id, name }) => name).join(", ")}*/}
+          {/*</h3>*/}
         </section>
       </div>
 

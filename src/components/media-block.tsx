@@ -13,46 +13,39 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
-import { MediaItem, Genre } from "@/src/types/media";
 import { User } from "@supabase/supabase-js";
-
-// Helper function to format the date
-const formatDate = (dateString: string) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return isNaN(date.getTime()) ? "" : date.getFullYear().toString();
-};
+import { MediaCollection, MediaSearchResult } from "@/src/lib/types";
+import { Share } from "lucide-react";
 
 interface MediaBlockProps {
-  data: MediaItem;
-  movieGenres: Genre[];
-  seriesGenres: Genre[];
-  admin?: boolean;
+  data: MediaSearchResult;
   user?: User | null;
-  collections?: string[];
+  admin?: boolean;
+  ownedCollections?: MediaCollection[];
+  sharedCollections?: MediaCollection[];
 }
 
 export default function MediaBlock({
   data,
-  movieGenres,
-  seriesGenres,
-  admin = false,
   user,
-  collections = [],
+  admin = false,
+  ownedCollections = [],
+  sharedCollections = [],
 }: MediaBlockProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [showCollections, setShowCollections] = useState(false);
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
-  const [collectionsData, setCollectionsData] = useState<
-    Array<{ id: string; title: string }>
-  >([]);
 
-  // We'll track which collections this media is already in
   const [alreadyInCollections, setAlreadyInCollections] = useState<string[]>(
     [],
   );
 
+  const [existsInDb, setExistsInDb] = useState(false);
+  const [mediaDbId, setMediaDbId] = useState<string | null>(null);
+
+  // Supabase
   const supabase = createClient();
 
   const handleShowCollections = async () => {
@@ -62,62 +55,60 @@ export default function MediaBlock({
       setLoading(true);
       setError(null);
 
-      // Get available collections for this user
-      if (collections.length > 0) {
-        const { data: collectionsInfo, error: collectionError } = await supabase
-          .from("collections")
-          .select("id, title")
-          .in("id", collections);
+      const mediaType = data.mediaType;
+      const tmdbId = data.tmdbId;
+      let dbMediaId: string | null = null;
 
-        if (collectionError) throw collectionError;
+      // Check if this media already exists in the database
+      if (mediaType === "movie") {
+        const { data: movieData } = await supabase
+          .from("movies")
+          .select("id")
+          .eq("tmdb_id", tmdbId)
+          .single();
 
-        if (collectionsInfo) {
-          setCollectionsData(collectionsInfo);
+        if (movieData) {
+          dbMediaId = movieData.id;
+          setExistsInDb(true);
+          setMediaDbId(dbMediaId);
         }
+      } else if (mediaType === "tv") {
+        const { data: seriesData } = await supabase
+          .from("series")
+          .select("id")
+          .eq("tmdb_id", tmdbId)
+          .single();
 
-        // Check if this media is already in any collections
-        // First check if the movie/series exists in our database
-        const mediaType = data.mediaType;
-        const tmdbId = data.id;
-
-        let mediaId: string | null = null;
-
-        if (mediaType === "movie") {
-          const { data: movieData } = await supabase
-            .from("movies")
-            .select("id")
-            .eq("tmdb_id", tmdbId)
-            .single();
-
-          if (movieData) {
-            mediaId = movieData.id;
-          }
-        } else if (mediaType === "tv") {
-          const { data: seriesData } = await supabase
-            .from("series")
-            .select("id")
-            .eq("tmdb_id", tmdbId)
-            .single();
-
-          if (seriesData) {
-            mediaId = seriesData.id;
-          }
+        if (seriesData) {
+          dbMediaId = seriesData.id;
+          setExistsInDb(true);
+          setMediaDbId(dbMediaId);
         }
+      }
 
-        // If we found the media in our database, check which collections it's in
-        if (mediaId) {
-          const { data: existingEntries } = await supabase
-            .from("medias_collections")
-            .select("collection_id")
-            .eq("media_id", mediaId)
-            .eq("media_type", mediaType);
+      const allCollections: MediaCollection[] = [
+        ...ownedCollections,
+        ...sharedCollections,
+      ];
 
-          if (existingEntries && existingEntries.length > 0) {
-            const collectionIds = existingEntries.map(
-              (entry) => entry.collection_id,
-            );
-            setAlreadyInCollections(collectionIds);
-          }
+      let existingInCollections: string[] = [];
+
+      if (dbMediaId && allCollections.length > 0) {
+        const collectionIds = allCollections.map((item) => item.id);
+
+        // Check if media is already in any collection
+        const { data: existingEntries } = await supabase
+          .from("medias_collections")
+          .select("collection_id")
+          .eq("media_id", dbMediaId)
+          .eq("media_type", mediaType)
+          .in("collection_id", collectionIds);
+
+        if (existingEntries && existingEntries.length > 0) {
+          existingInCollections = existingEntries.map(
+            (entry) => entry.collection_id,
+          );
+          setAlreadyInCollections(existingInCollections);
         }
       }
 
@@ -149,79 +140,57 @@ export default function MediaBlock({
       setLoading(true);
       setError(null);
 
-      // Prepare media data from TMDB
       const mediaType = data.mediaType;
-      const releaseYear = data.releaseYear || null;
+      const releaseYear = data.releaseYear || "";
 
-      // Check if the movie/series already exists in our database
-      let mediaId: string | null = null;
-
-      if (mediaType === "movie") {
-        const { data: existingMovie } = await supabase
-          .from("movies")
-          .select("id")
-          .eq("tmdb_id", data.id)
-          .single();
-
-        if (existingMovie) {
-          mediaId = existingMovie.id;
-        } else {
+      // If the media doesn't exist in the database, create it
+      if (!existsInDb) {
+        if (mediaType === "movie") {
           // Insert new movie into movies table
           const { data: newMovie, error: movieError } = await supabase
             .from("movies")
             .insert({
               title: data.title,
-              poster_path: data.posterPath,
               overview: data.overview || "",
-              release_year: releaseYear,
-              tmdb_id: data.id,
+              poster_path: data.posterPath,
+              backdrop_path: data.backdropPath,
+              tmdb_id: data.tmdbId,
+              media_type: mediaType,
+              tmdb_rating: data.tmdbRating,
+              release_year: releaseYear.toString(),
             })
             .select("id")
             .single();
 
           if (movieError) throw movieError;
-          if (newMovie) mediaId = newMovie.id;
-        }
-      } else if (mediaType === "tv") {
-        const { data: existingSeries } = await supabase
-          .from("series")
-          .select("id")
-          .eq("tmdb_id", data.id)
-          .single();
-
-        if (existingSeries) {
-          mediaId = existingSeries.id;
-        } else {
+        } else if (mediaType === "tv") {
           // Insert new series into series table
           const { data: newSeries, error: seriesError } = await supabase
             .from("series")
             .insert({
               title: data.title,
-              poster_path: data.posterPath,
               overview: data.overview || "",
-              release_year: releaseYear,
-              tmdb_id: data.id,
+              poster_path: data.posterPath,
+              backdrop_path: data.backdropPath,
+              tmdb_id: data.tmdbId,
+              media_type: mediaType,
+              tmdb_rating: data.tmdbRating,
+              release_year: releaseYear.toString(),
             })
             .select("id")
             .single();
 
           if (seriesError) throw seriesError;
-          if (newSeries) mediaId = newSeries.id;
         }
-      }
-
-      if (!mediaId) {
-        throw new Error("Failed to create or find media record");
       }
 
       // For each selected collection, add an entry in medias_collections
       const collectionEntries = selectedCollections.map((collectionId) => ({
         collection_id: collectionId,
-        media_id: mediaId,
+        media_id: mediaDbId,
         media_type: mediaType,
       }));
 
-      // Add to medias_collections table
       const { error: collectionError } = await supabase
         .from("medias_collections")
         .insert(collectionEntries);
@@ -276,125 +245,176 @@ export default function MediaBlock({
             )}
           </div>
 
-          <div className="flex items-center gap-2 mt-2 transition-opacity">
-            {user && collections.length > 0 && !showCollections && (
-              <button
-                onClick={handleShowCollections}
-                className="flex items-center gap-1 text-xs bg-lime-500/80 text-black px-2 py-1 rounded hover:bg-lime-500 transition-colors"
-                disabled={loading}
+          {user &&
+            (ownedCollections.length > 0 || sharedCollections.length > 0) &&
+            !showCollections && (
+              <div
+                className={`mt-2 flex items-center gap-2 transition-all duration-300 ease-in-out`}
               >
-                <IconSquarePlus size={14} />
-                <span>Add to Collection</span>
-              </button>
+                <button
+                  onClick={handleShowCollections}
+                  className={`p-2 flex items-center gap-1 bg-lime-500/80 hover:bg-lime-500 rounded text-xs text-black transition-all duration-300 ease-in-out`}
+                  disabled={loading}
+                >
+                  <IconSquarePlus size={20} />
+                  <span>Add to Collection</span>
+                </button>
+              </div>
             )}
-            <Link
-              href={`https://www.themoviedb.org/${data.mediaType}/${data.id}`}
-              target="_blank"
-              className="flex items-center gap-1 text-xs bg-neutral-700/90 text-white px-2 py-1 rounded hover:bg-neutral-700 transition-colors"
-            >
-              <span>View on TMDB</span>
-            </Link>
-          </div>
         </div>
       </div>
 
       {showCollections && (
-        <div className="bg-neutral-800 rounded mt-2 p-3">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="text-sm font-semibold">Add to Collections</h4>
+        <section
+          className={`absolute top-0 right-0 bottom-0 left-0 p-3 grid place-content-center bg-neutral-800`}
+        >
+          <div className={`flex flex-col gap-2 max-w-md`}>
+            {/* Header */}
+            <div className={`flex justify-between items-center`}>
+              <h2 className={`text-sm font-semibold`}>
+                Add <span className={`text-lime-400`}>{data.title}</span> to
+                Collections
+              </h2>
+
+              <button
+                onClick={() => {
+                  setShowCollections(false);
+                  setSelectedCollections([]);
+                }}
+                className="text-neutral-400 hover:text-white"
+              >
+                <IconX size={16} />
+              </button>
+            </div>
+
+            {error && (
+              <div className="text-xs text-red-400 bg-red-500/20 p-2 rounded mb-2">
+                {error}
+              </div>
+            )}
+
+            {/* Collections */}
+            <div className={"flex flex-col gap-2 max-h-44 overflow-y-auto"}>
+              <h3 className={`text-xs italic`}>Owned Collections</h3>
+              {ownedCollections.length === 0 ? (
+                <p className="text-xs text-neutral-400">
+                  You don't own any collections yet.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {ownedCollections.map((collection) => {
+                    const isAlreadyInCollection = alreadyInCollections.includes(
+                      collection.id,
+                    );
+
+                    return (
+                      <li key={collection.id} className="flex items-center">
+                        {isAlreadyInCollection ? (
+                          <div className="flex items-center gap-2 w-full text-xs py-1 px-2 bg-neutral-700 rounded">
+                            <IconCheck size={16} className="text-lime-400" />
+                            <span>{collection.title}</span>
+                            <span className="ml-auto text-[10px] text-neutral-400">
+                              Already added
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleCollectionToggle(collection.id)
+                            }
+                            className={`flex items-center gap-2 w-full text-xs py-1 px-2 hover:bg-neutral-700 rounded transition-colors ${
+                              selectedCollections.includes(collection.id)
+                                ? "bg-neutral-700 text-lime-400"
+                                : ""
+                            }`}
+                          >
+                            {selectedCollections.includes(collection.id) ? (
+                              <IconCheck size={14} />
+                            ) : (
+                              <IconSquarePlus size={14} />
+                            )}
+                            <span>{collection.title}</span>
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              <h3 className={`mt-4 text-xs italic`}>Shared Collections</h3>
+              {sharedCollections.length === 0 ? (
+                <p className="text-xs text-neutral-400">
+                  You don't own any collections yet.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {sharedCollections.map((collection) => {
+                    const isAlreadyInCollection = alreadyInCollections.includes(
+                      collection.id,
+                    );
+
+                    return (
+                      <li key={collection.id} className="flex items-center">
+                        {isAlreadyInCollection ? (
+                          <div className="flex items-center gap-2 w-full text-xs py-1 px-2 bg-neutral-700 rounded">
+                            <IconCheck size={16} className="text-lime-400" />
+                            <span>{collection.title}</span>
+                            <span className="ml-auto text-[10px] text-neutral-400">
+                              Already added
+                            </span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              handleCollectionToggle(collection.id)
+                            }
+                            className={`flex items-center gap-2 w-full text-xs py-1 px-2 hover:bg-neutral-700 rounded transition-colors ${
+                              selectedCollections.includes(collection.id)
+                                ? "bg-neutral-700 text-lime-400"
+                                : ""
+                            }`}
+                          >
+                            {selectedCollections.includes(collection.id) ? (
+                              <IconCheck size={14} />
+                            ) : (
+                              <IconSquarePlus size={14} />
+                            )}
+                            <span>{collection.title}</span>
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+
             <button
-              onClick={() => {
-                setShowCollections(false);
-                setSelectedCollections([]);
-              }}
-              className="text-neutral-400 hover:text-white"
+              onClick={addToCollections}
+              disabled={loading || selectedCollections.length === 0}
+              className={`w-full mt-2 py-1 rounded text-xs flex items-center justify-center gap-1 ${
+                loading || selectedCollections.length === 0
+                  ? "bg-neutral-700 text-neutral-400 cursor-not-allowed"
+                  : "bg-lime-500 text-black hover:bg-lime-400"
+              }`}
             >
-              <IconX size={16} />
+              {loading ? (
+                "Adding..."
+              ) : (
+                <>
+                  <IconCheck size={14} />
+                  <span>
+                    Add to{" "}
+                    {selectedCollections.length === 1
+                      ? "Collection"
+                      : `${selectedCollections.length} Collections`}
+                  </span>
+                </>
+              )}
             </button>
           </div>
-
-          {error && (
-            <div className="text-xs text-red-400 bg-red-500/20 p-2 rounded mb-2">
-              {error}
-            </div>
-          )}
-
-          <div className="max-h-40 overflow-y-auto">
-            {collectionsData.length === 0 ? (
-              <p className="text-xs text-neutral-400">
-                You don't have any collections yet.
-              </p>
-            ) : (
-              <ul className="space-y-1">
-                {collectionsData.map((collection) => {
-                  const isAlreadyInCollection = alreadyInCollections.includes(
-                    collection.id,
-                  );
-
-                  return (
-                    <li key={collection.id} className="flex items-center">
-                      {isAlreadyInCollection ? (
-                        <div className="flex items-center gap-2 w-full text-xs py-1 px-2 bg-neutral-700 rounded">
-                          <IconCheck size={14} className="text-lime-400" />
-                          <span>{collection.title}</span>
-                          <span className="ml-auto text-[10px] text-neutral-400">
-                            Already added
-                          </span>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleCollectionToggle(collection.id)}
-                          className={`flex items-center gap-2 w-full text-xs py-1 px-2 hover:bg-neutral-700 rounded transition-colors ${
-                            selectedCollections.includes(collection.id)
-                              ? "bg-neutral-700 text-lime-400"
-                              : ""
-                          }`}
-                        >
-                          {selectedCollections.includes(collection.id) ? (
-                            <IconCheck size={14} />
-                          ) : (
-                            <IconSquarePlus size={14} />
-                          )}
-                          <span>{collection.title}</span>
-                        </button>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-
-          <button
-            onClick={addToCollections}
-            disabled={
-              loading ||
-              selectedCollections.length === 0 ||
-              collectionsData.length === 0
-            }
-            className={`w-full mt-2 py-1 rounded text-xs flex items-center justify-center gap-1 ${
-              loading ||
-              selectedCollections.length === 0 ||
-              collectionsData.length === 0
-                ? "bg-neutral-700 text-neutral-400 cursor-not-allowed"
-                : "bg-lime-500 text-black hover:bg-lime-400"
-            }`}
-          >
-            {loading ? (
-              "Adding..."
-            ) : (
-              <>
-                <IconCheck size={14} />
-                <span>
-                  Add to{" "}
-                  {selectedCollections.length === 1
-                    ? "Collection"
-                    : `${selectedCollections.length} Collections`}
-                </span>
-              </>
-            )}
-          </button>
-        </div>
+        </section>
       )}
     </article>
   );

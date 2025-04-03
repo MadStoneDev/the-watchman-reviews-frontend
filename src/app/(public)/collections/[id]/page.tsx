@@ -1,26 +1,124 @@
 ﻿import React from "react";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
+
 import { createClient } from "@/src/utils/supabase/server";
-import CollectionBlock from "@/src/components/collections-block";
+
+import MediasCollection from "@/src/components/medias-collection";
 import BrowseNavigation from "@/src/components/browse-navigation";
 
-type Props = {
-  params: Promise<{ id: string }>;
-};
+import { MediaItem } from "@/src/lib/types";
 
-export async function generateMetadata({ params }: Props) {
-  const { id } = await params;
-
+const fetchCollection = async (id: string) => {
+  // Supabase
   const supabase = await createClient();
 
-  // Get the collection details
-  const { data: collection, error: collectionError } = await supabase
+  const { data: collection } = await supabase
     .from("collections")
-    .select("title")
+    .select("*")
     .eq("id", id)
     .single();
 
-  if (collectionError || !collection) {
+  return collection;
+};
+
+// This function will only be used for initial SSR rendering
+// The client component will handle further data fetching
+const fetchInitialMedia = async (id: string) => {
+  // Supabase
+  const supabase = await createClient();
+
+  const { data: mediaEntries } = await supabase
+    .from("medias_collections")
+    .select("*")
+    .eq("collection_id", id)
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (mediaEntries && mediaEntries.length > 0) {
+    const movieIds = mediaEntries
+      .filter((item) => item.media_type === "movie")
+      .map((item) => item.media_id);
+    const seriesIds = mediaEntries
+      .filter((item) => item.media_type === "series")
+      .map((item) => item.media_id);
+
+    const mediaItems: MediaItem[] = [];
+
+    if (movieIds.length > 0) {
+      const { data: movies } = await supabase
+        .from("movies")
+        .select("*")
+        .in("id", movieIds);
+
+      if (movies) {
+        const movieItems: MediaItem[] = movies.map((movie) => {
+          const entry = mediaEntries.find(
+            (e) => e.media_id === movie.id && e.media_type === "movie",
+          );
+
+          return {
+            id: movie.id,
+            title: movie.title,
+            overview: movie.overview,
+            posterPath: movie.poster_path,
+            backdropPath: movie.backdrop_path,
+            tmdbId: movie.tmdb_id,
+            mediaType: "movie",
+            releaseYear: movie.release_year,
+            collectionEntryId: entry?.id, // Add this for deletion reference
+            mediaId: movie.id,
+          };
+        });
+
+        mediaItems.push(...movieItems);
+      }
+    }
+
+    if (seriesIds.length > 0) {
+      const { data: series } = await supabase
+        .from("series")
+        .select("*")
+        .in("id", seriesIds);
+
+      if (series) {
+        const seriesItems: MediaItem[] = series.map((series) => {
+          const entry = mediaEntries.find(
+            (e) => e.media_id === series.id && e.media_type === "series",
+          );
+
+          return {
+            id: series.id,
+            title: series.title,
+            overview: series.overview,
+            posterPath: series.poster_path,
+            backdropPath: series.backdrop_path,
+            tmdbId: series.tmdb_id,
+            mediaType: "series",
+            releaseYear: series.release_year,
+            collectionEntryId: entry?.id, // Add this for deletion reference
+            mediaId: series.id,
+          };
+        });
+
+        mediaItems.push(...seriesItems);
+      }
+    }
+
+    return mediaItems;
+  }
+
+  return [];
+};
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const collection = await fetchCollection(id);
+
+  if (!collection) {
     return {
       title: `Collection | The Watchman Reviews`,
       description: `Collections on The Watchman Reviews`,
@@ -33,10 +131,15 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function CollectionPage({ params }: Props) {
+export default async function CollectionPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
-  const supabase = await createClient();
 
+  // Supabase
+  const supabase = await createClient();
   const { data: user, error: userError } = await supabase.auth.getUser();
 
   let userId = null;
@@ -46,17 +149,18 @@ export default async function CollectionPage({ params }: Props) {
   }
 
   // Check if collection exists
-  const { data: collection, error: collectionError } = await supabase
-    .from("collections")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const collection = await fetchCollection(id);
 
-  if (collectionError || !collection) {
+  if (!collection) {
     notFound();
   }
 
+  // Fetch initial media for SSR
+  // This provides better initial page load and SEO
+  const initialMedias = await fetchInitialMedia(id);
+
   let profile = null;
+
   if (user && user.user) {
     const { data } = await supabase
       .from("profiles")
@@ -67,11 +171,11 @@ export default async function CollectionPage({ params }: Props) {
   }
 
   const isOwner = collection.owner === userId;
-  // Determine access type for UI
-  let accessType: "owner" | "shared" | "public" = "owner";
+  let accessType: "owner" | "shared" | "public" | "none" = "owner";
 
   if (!isOwner) {
     const isPublic = collection.is_public;
+    accessType = isPublic ? "public" : "none";
 
     const { data: sharedWithUser } = await supabase
       .from("shared_collection")
@@ -79,10 +183,9 @@ export default async function CollectionPage({ params }: Props) {
       .eq("collection_id", id)
       .eq("user_id", userId);
 
-    accessType =
-      sharedWithUser && sharedWithUser.length > 0 ? "shared" : "public";
+    if (sharedWithUser && sharedWithUser.length > 0) accessType = "shared";
 
-    if (!isPublic && (!sharedWithUser || sharedWithUser.length === 0)) {
+    if (accessType === "none") {
       return (
         <div className="flex-grow flex flex-col items-center justify-center px-4 text-center">
           <h1 className="text-4xl font-bold mb-4">Thou Shalt Not Pass!</h1>
@@ -97,8 +200,6 @@ export default async function CollectionPage({ params }: Props) {
     }
   }
 
-  // Count media items in this collection
-  // Using the new medias_collections table
   const { count: mediaCount, error: countError } = await supabase
     .from("medias_collections")
     .select("*", { count: "exact", head: true })
@@ -127,12 +228,12 @@ export default async function CollectionPage({ params }: Props) {
       <div className="mt-4 text-sm text-neutral-400 flex items-center gap-2">
         <p>{itemCount} items in collection</p>
 
-        {/* Show appropriate badge based on access type */}
         {accessType === "shared" && (
           <span className="px-2 py-0.5 bg-neutral-700 text-xs rounded-full">
             Shared with you
           </span>
         )}
+
         {accessType === "public" && (
           <span className="px-2 py-0.5 bg-blue-800/50 text-blue-400 text-xs rounded-full">
             Public collection
@@ -140,7 +241,11 @@ export default async function CollectionPage({ params }: Props) {
         )}
       </div>
 
-      <CollectionBlock collectionId={id} isOwner={isOwner} />
+      <MediasCollection
+        collection={collection}
+        initialMedias={initialMedias} // Pass as initialMedias instead of medias
+        isOwner={isOwner}
+      />
     </>
   );
 }

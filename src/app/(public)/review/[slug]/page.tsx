@@ -1,8 +1,5 @@
 ﻿import React from "react";
 
-import axios from "axios";
-
-import { Genre } from "@/src/types/media";
 import { Database } from "@/src/types/supabase";
 
 import { createClient } from "@/src/utils/supabase/server";
@@ -21,7 +18,6 @@ interface TMDBItem {
   tagline: string;
   backdrop: string;
   poster: string;
-  genres: Genre[];
   imdb_id: string;
   overview: string;
   date: string;

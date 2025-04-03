@@ -1,15 +1,82 @@
 ﻿import type { Metadata } from "next";
 import React, { Suspense } from "react";
 
+import { User } from "@supabase/supabase-js";
+import { MediaCollection } from "@/src/lib/types";
+import { createClient } from "@/src/utils/supabase/server";
+
 import SearchWrapper from "@/src/components/wrapper-search";
 import SearchSkeletonBoundary from "@/src/components/search-skeleton-boundary";
-
-import { createClient } from "@/src/utils/supabase/server";
 
 export const metadata: Metadata = {
   title: "Search - The Watchman Reviews",
   description:
-    "Guiding families and groups to make informed viewing choices. Get detailed content analysis of movies and TV shows, including themes, language, and values.",
+    "Helping you make informed viewing choices. Get detailed content analysis of movies and TV shows, including" +
+    " themes, language, and values.",
+};
+
+const fetchCollections = async (user: User | null) => {
+  // Supabase
+  const supabase = await createClient();
+
+  // Get Collections
+  let cleanOwnedCollections: MediaCollection[] = [];
+  let cleanSharedCollections: MediaCollection[] = [];
+
+  if (user) {
+    try {
+      const { data: ownedCollections } = await supabase
+        .from("collections")
+        .select("*")
+        .eq("owner", user.id);
+
+      // Clean owned collections
+      if (ownedCollections) {
+        cleanOwnedCollections = ownedCollections.map((collection) => ({
+          id: collection.id,
+          title: collection.title || "Untitled Collection",
+          owner: collection.owner,
+          is_public: collection.is_public,
+          shared: false,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching owned collections:", error);
+    }
+
+    try {
+      const { data: sharedCollectionsIds } = await supabase
+        .from("shared_collection")
+        .select("collection_id")
+        .eq("user_id", user.id);
+
+      if (sharedCollectionsIds && sharedCollectionsIds.length > 0) {
+        const collectionIds = sharedCollectionsIds.map(
+          (item) => item.collection_id,
+        );
+
+        const { data: sharedCollections } = await supabase
+          .from("collections")
+          .select("*")
+          .in("id", collectionIds);
+
+        // Clean shared collections
+        if (sharedCollections) {
+          cleanSharedCollections = sharedCollections.map((collection) => ({
+            id: collection.collection_id,
+            title: collection.collection_id || "Untitled Shared Collection",
+            owner: collection.user_id,
+            is_public: collection.is_public,
+            shared: true,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching shared collections:", error);
+    }
+  }
+
+  return { cleanOwnedCollections, cleanSharedCollections };
 };
 
 export default async function SearchPage() {
@@ -17,42 +84,14 @@ export default async function SearchPage() {
   const { data: userData, error: userError } = await supabase.auth.getUser();
 
   const user = userData?.user || null;
-  let collections: string[] = [];
+  let ownedCollections: MediaCollection[] = [];
+  let sharedCollections: MediaCollection[] = [];
 
   if (user) {
-    try {
-      // Fetch owned collections
-      const { data: ownedCollections, error: ownedError } = await supabase
-        .from("collections")
-        .select("id")
-        .eq("owner", user.id);
-
-      if (ownedError) {
-        console.error("Error fetching owned collections:", ownedError);
-      }
-
-      // Get collection IDs from owned collections
-      const ownedIds = ownedCollections?.map((item) => item.id) || [];
-
-      // Fetch shared collections
-      const { data: sharedCollections, error: sharedError } = await supabase
-        .from("shared_collection")
-        .select("collection_id")
-        .eq("user_id", user.id);
-
-      if (sharedError) {
-        console.error("Error fetching shared collections:", sharedError);
-      }
-
-      // Get collection IDs from shared collections
-      const sharedIds =
-        sharedCollections?.map((item) => item.collection_id) || [];
-
-      // Combine all collection IDs
-      collections = [...ownedIds, ...sharedIds];
-    } catch (error) {
-      console.error("Error fetching collections:", error);
-    }
+    const { cleanOwnedCollections, cleanSharedCollections } =
+      await fetchCollections(user);
+    ownedCollections = cleanOwnedCollections;
+    sharedCollections = cleanSharedCollections;
   }
 
   return (
@@ -65,7 +104,11 @@ export default async function SearchPage() {
         </h1>
 
         <Suspense fallback={<SearchSkeletonBoundary />}>
-          <SearchWrapper user={user} collections={collections} />
+          <SearchWrapper
+            user={user}
+            ownedCollections={ownedCollections}
+            sharedCollections={sharedCollections}
+          />
         </Suspense>
       </section>
     </>

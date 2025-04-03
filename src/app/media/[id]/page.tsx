@@ -2,7 +2,6 @@
 
 import axios from "axios";
 
-import { Genre } from "@/src/types/media";
 import SingleMediaWrapper from "@/src/components/wrapper-single-media";
 
 interface SearchParams {
@@ -17,7 +16,6 @@ interface FullMediaItem {
   tagline: string;
   backdrop: string;
   poster: string;
-  genres: Genre[];
   imdb_id: string;
   overview: string;
   date: string;
@@ -81,7 +79,6 @@ export default async function MediaPage(searchParams: SearchParams) {
         tagline: response.data.tagline,
         backdrop: response.data.backdrop_path,
         poster: response.data.poster_path,
-        genres: response.data.genres,
         imdb_id: response.data.imdb_id,
         overview: response.data.overview,
         date: response.data.release_date || response.data.first_air_date,

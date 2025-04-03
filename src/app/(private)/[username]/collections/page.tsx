@@ -2,17 +2,19 @@
 
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
-import UserCollectionsBlock from "@/src/components/user-collections-block";
+import UserCollections from "@/src/components/user-collections-block";
 
-export default async function ListsPage({
+export default async function UserCollectionsPage({
   params,
 }: {
   params: { username: string };
 }) {
   const { username } = params;
 
-  // Get current authenticated user
+  // Supabase
   const supabase = await createClient();
+
+  // Get current user
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -24,12 +26,16 @@ export default async function ListsPage({
     .eq("username", username)
     .single();
 
+  // If profile doesn't exist, could handle this better with a 404 page
+  if (!urlProfile) {
+    return <div>User not found</div>;
+  }
+
   // Check if this is the current user's profile
   const isCurrentUser = user?.id === urlProfile?.id;
+  let currentUserProfile = isCurrentUser ? urlProfile : null;
 
-  // Get the current user's profile if authenticated
-  let currentUserProfile = null;
-  if (user) {
+  if (user && !isCurrentUser) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("*")
@@ -37,11 +43,6 @@ export default async function ListsPage({
       .single();
 
     currentUserProfile = profile;
-  }
-
-  // If profile doesn't exist, could handle this better with a 404 page
-  if (!urlProfile) {
-    return <div>User not found</div>;
   }
 
   return (
@@ -56,13 +57,13 @@ export default async function ListsPage({
       <section
         className={`mt-14 lg:mt-20 transition-all duration-300 ease-in-out`}
       >
-        <h1 className={`max-w-60 text-2xl sm:3xl md:text-4xl font-bold`}>
+        <h1 className={`max-w-3xl text-2xl sm:3xl md:text-4xl font-bold`}>
           {isCurrentUser ? "My Collections" : `${username}'s Collections`}
         </h1>
       </section>
 
-      <UserCollectionsBlock
-        urlProfile={urlProfile}
+      <UserCollections
+        userProfile={urlProfile}
         currentUserProfile={currentUserProfile}
         isCurrentUser={isCurrentUser}
       />
