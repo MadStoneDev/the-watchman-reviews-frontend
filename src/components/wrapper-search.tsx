@@ -44,36 +44,25 @@ export default function SearchWrapper({
     return [...results].sort((a, b) => (a.popularity > b.popularity ? -1 : 1));
   };
 
-  // Handle search results
   const handleSearch = (results: MediaSearchResult[], isNewSearch: boolean) => {
-    console.log(
-      `Handling search results. isNewSearch: ${isNewSearch}, results count: ${results.length}`,
-    );
-
     if (isNewSearch && results.length === 0) {
-      // For new search with no results yet, just clear the results
       setSearchResults([]);
       return;
     }
 
     const sortedResults = sortSearchResults(results);
 
-    // If it's a new search, replace results, otherwise append them
     setSearchResults((prev) =>
       isNewSearch ? sortedResults : [...prev, ...sortedResults],
     );
   };
 
-  // Handle more results availability - use useCallback to ensure function stability
   const handleMoreResultsAvailable = useCallback(
     (hasMore: boolean, loadMoreFn: () => Promise<void>) => {
-      console.log(`More results available: ${hasMore}`);
       setHasMoreResults(hasMore);
 
       if (hasMore && loadMoreFn) {
-        console.log("Setting load more function");
         setLoadMoreFunction(() => async () => {
-          console.log("Load more function triggered");
           setLoading(true);
           try {
             await loadMoreFn();
@@ -88,9 +77,7 @@ export default function SearchWrapper({
     [],
   );
 
-  // Function to handle load more button click
   const handleLoadMore = async () => {
-    console.log("Load more requested");
     if (loadMoreFunction) {
       await loadMoreFunction();
     } else {

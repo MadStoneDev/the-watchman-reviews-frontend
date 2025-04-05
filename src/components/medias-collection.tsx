@@ -85,16 +85,14 @@ export default function MediasCollection({
 
   useEffect(() => {
     const fetchMediaItems = async () => {
-      if (items.length > 0) return; // Already loaded
+      if (items.length > 0) return;
 
       setLoading(true);
 
       try {
-        // Get current user
         const { data: userData } = await supabase.auth.getUser();
         const currentUserId = userData?.user?.id;
 
-        // Fetch media entries with position
         const { data: mediaEntries } = await supabase
           .from("medias_collections")
           .select("*")
@@ -112,7 +110,6 @@ export default function MediasCollection({
 
           const mediaItems: CollectionMediaItem[] = [];
 
-          // Fetch all watched items for the current user in this collection
           const watchedItemsSet = new Set<string>();
           if (currentUserId) {
             const { data: watchedData } = await supabase
@@ -129,7 +126,6 @@ export default function MediasCollection({
             }
           }
 
-          // Process movies
           if (movieIds.length > 0) {
             const { data: movies } = await supabase
               .from("movies")
@@ -161,7 +157,6 @@ export default function MediasCollection({
             }
           }
 
-          // Process series
           if (seriesIds.length > 0) {
             const { data: series } = await supabase
               .from("series")
@@ -195,14 +190,11 @@ export default function MediasCollection({
             }
           }
 
-          // Sort items - unwatched first, then by position
           const sortedItems = [...mediaItems].sort((a, b) => {
-            // First sort by watched status
             if (a.isWatched !== b.isWatched) {
-              return a.isWatched ? 1 : -1; // Unwatched items first
+              return a.isWatched ? 1 : -1;
             }
 
-            // Then sort by position
             if (a.position !== undefined && b.position !== undefined) {
               return a.position - b.position;
             }
@@ -230,7 +222,6 @@ export default function MediasCollection({
 
       setLoadingSharedUsers(true);
       try {
-        // Get all users this collection is shared with
         const { data: sharedWithData, error: sharedError } = await supabase
           .from("shared_collection")
           .select("user_id, access_level")
@@ -239,7 +230,6 @@ export default function MediasCollection({
         if (sharedError) throw sharedError;
 
         if (sharedWithData && sharedWithData.length > 0) {
-          // Get profile info for all shared users
           const userIds = sharedWithData.map((item) => item.user_id);
 
           const { data: profiles, error: profilesError } = await supabase
@@ -284,7 +274,6 @@ export default function MediasCollection({
     }
 
     try {
-      // Delete from medias_collections table
       const { error } = await supabase
         .from("medias_collections")
         .delete()
@@ -295,7 +284,6 @@ export default function MediasCollection({
         return;
       }
 
-      // Update UI
       setItems(
         items.filter((i) => i.collectionEntryId !== item.collectionEntryId),
       );
@@ -314,7 +302,6 @@ export default function MediasCollection({
     setMessage("");
 
     try {
-      // Get current user for checking
       const { data: userData } = await supabase.auth.getUser();
       const currentUserId = userData?.user?.id;
 
@@ -324,7 +311,6 @@ export default function MediasCollection({
         return;
       }
 
-      // Find the user by username (case insensitive)
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id, username")
@@ -337,14 +323,12 @@ export default function MediasCollection({
         return;
       }
 
-      // Don't allow sharing with oneself
       if (profile.id === currentUserId) {
         setStatus("error");
         setMessage("You can't share a collection with yourself.");
         return;
       }
 
-      // Check if already shared with this user
       const { data: existingShare, error: existingError } = await supabase
         .from("shared_collection")
         .select("*")
@@ -358,13 +342,12 @@ export default function MediasCollection({
         return;
       }
 
-      // Add to shared_collection table
       const { error: shareError } = await supabase
         .from("shared_collection")
         .insert({
           collection_id: collection.id,
           user_id: profile.id,
-          access_level: 0, // Default to View Only
+          access_level: 0,
         });
 
       if (shareError) {
@@ -374,11 +357,9 @@ export default function MediasCollection({
         return;
       }
 
-      // Success
       setStatus("success");
       setMessage(`Collection shared with ${profile.username}!`);
 
-      // Add to shared users list
       setSharedUsers([
         ...sharedUsers,
         {
@@ -388,7 +369,6 @@ export default function MediasCollection({
         },
       ]);
 
-      // Reset form after delay
       setTimeout(() => {
         setUsername("");
         setStatus("idle");
@@ -412,7 +392,6 @@ export default function MediasCollection({
 
       if (error) throw error;
 
-      // Update local state
       setSharedUsers(
         sharedUsers.map((user) =>
           user.id === userId ? { ...user, accessLevel: newLevel } : user,
@@ -433,7 +412,6 @@ export default function MediasCollection({
 
       if (error) throw error;
 
-      // Update local state
       setSharedUsers(sharedUsers.filter((user) => user.id !== userId));
     } catch (error) {
       console.error("Error removing shared user:", error);
@@ -441,23 +419,16 @@ export default function MediasCollection({
   };
 
   const handleWatchToggle = (item: CollectionMediaItem) => {
-    // Update the local state to reflect watched status change
-    // This is called from CollectionItem when watch status changes
-
-    // Clone the current items array
     const updatedItems = [...items];
 
-    // Find the item that was toggled
     const index = updatedItems.findIndex((i) => i.id === item.id);
     if (index !== -1) {
-      // Update its watched status
       const newIsWatched = !updatedItems[index].isWatched;
       updatedItems[index] = {
         ...updatedItems[index],
         isWatched: newIsWatched,
       };
 
-      // Update watched items set
       const newWatchedItems = new Set(watchedItems);
       if (newIsWatched) {
         newWatchedItems.add(item.id);
@@ -466,14 +437,11 @@ export default function MediasCollection({
       }
       setWatchedItems(newWatchedItems);
 
-      // Resort items - unwatched first, then by position
       const sortedItems = [...updatedItems].sort((a, b) => {
-        // First sort by watched status
         if (a.isWatched !== b.isWatched) {
-          return a.isWatched ? 1 : -1; // Unwatched items first
+          return a.isWatched ? 1 : -1;
         }
 
-        // Then sort by position
         if (a.position !== undefined && b.position !== undefined) {
           return a.position - b.position;
         }

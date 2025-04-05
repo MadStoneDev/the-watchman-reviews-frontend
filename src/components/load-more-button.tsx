@@ -4,14 +4,13 @@ import React from "react";
 import { Button } from "@/src/components/ui/button";
 import { ChevronDown } from "lucide-react";
 
-export default function LoadMoreButton({
+export default ({
   loading,
   onLoadMore,
 }: {
   loading: boolean;
   onLoadMore: () => Promise<void>;
-}) {
-  // Add a console log to verify the function is being called
+}) => {
   const handleClick = async () => {
     console.log("Load more button clicked");
     if (onLoadMore) {
@@ -45,4 +44,4 @@ export default function LoadMoreButton({
       </Button>
     </div>
   );
-}
+};

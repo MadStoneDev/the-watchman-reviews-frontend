@@ -19,7 +19,6 @@ const fetchCollections = async (user: User | null) => {
   // Supabase
   const supabase = await createClient();
 
-  // Get Collections
   let cleanOwnedCollections: MediaCollection[] = [];
   let cleanSharedCollections: MediaCollection[] = [];
 
@@ -30,7 +29,6 @@ const fetchCollections = async (user: User | null) => {
         .select("*")
         .eq("owner", user.id);
 
-      // Clean owned collections
       if (ownedCollections) {
         cleanOwnedCollections = ownedCollections.map((collection) => ({
           id: collection.id,

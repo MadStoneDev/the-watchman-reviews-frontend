@@ -17,7 +17,6 @@ import {
 import { MediaItem } from "@/src/lib/types";
 import { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
-// Extend MediaItem with some collection-specific properties
 interface CollectionMediaItemProps {
   data: MediaItem & {
     collectionEntryId?: string;
@@ -48,13 +47,11 @@ export default function CollectionItem({
   // Check if this media is marked as watched by the current user
   useEffect(() => {
     const checkWatchStatus = async () => {
-      // Get current user
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) return;
 
       const userId = userData.user.id;
 
-      // Check if this media is watched by the current user
       const { data: watchData } = await supabase
         .from("media_watches")
         .select("id")
@@ -77,13 +74,11 @@ export default function CollectionItem({
           .eq("id", collectionId)
           .single();
 
-        // Combine owner and shared users
         const allUserIds = [
           collectionData?.owner,
           ...(sharedData?.map((item) => item.user_id) || []),
         ].filter(Boolean);
 
-        // Count watches for this media
         const { data: watchesData, count } = await supabase
           .from("media_watches")
           .select("id", { count: "exact" })
@@ -92,7 +87,6 @@ export default function CollectionItem({
           .eq("media_type", data.mediaType)
           .in("user_id", allUserIds);
 
-        // Check if all users have watched it
         setIsWatchedByAll(count === allUserIds.length);
       }
     };
@@ -109,7 +103,6 @@ export default function CollectionItem({
       const userId = userData.user.id;
 
       if (isWatched) {
-        // Delete watch record
         await supabase
           .from("media_watches")
           .delete()
@@ -118,7 +111,6 @@ export default function CollectionItem({
           .eq("media_type", data.mediaType)
           .eq("user_id", userId);
       } else {
-        // Add watch record
         await supabase.from("media_watches").insert({
           collection_id: collectionId,
           media_id: data.id,
@@ -128,10 +120,8 @@ export default function CollectionItem({
         });
       }
 
-      // Update local state
       setIsWatched(!isWatched);
 
-      // Notify parent component about the status change (for sorting)
       if (onWatchToggle) onWatchToggle();
     } catch (error) {
       console.error("Error toggling watch status:", error);
@@ -145,7 +135,6 @@ export default function CollectionItem({
 
     setIsUpdatingWatch(true);
     try {
-      // Get all users with access to this collection
       const { data: sharedData } = await supabase
         .from("shared_collection")
         .select("user_id")
@@ -157,14 +146,12 @@ export default function CollectionItem({
         .eq("id", collectionId)
         .single();
 
-      // Combine owner and shared users
       const allUserIds = [
         collectionData?.owner,
         ...(sharedData?.map((item) => item.user_id) || []),
       ].filter(Boolean);
 
       if (isWatchedByAll) {
-        // Delete watch records for all users
         await supabase
           .from("media_watches")
           .delete()
@@ -173,7 +160,6 @@ export default function CollectionItem({
           .eq("media_type", data.mediaType)
           .in("user_id", allUserIds);
       } else {
-        // Add watch records for all users who don't already have one
         const { data: existingWatches } = await supabase
           .from("media_watches")
           .select("user_id")
@@ -201,11 +187,9 @@ export default function CollectionItem({
         }
       }
 
-      // Update local state
       setIsWatchedByAll(!isWatchedByAll);
-      setIsWatched(!isWatchedByAll); // Update current user's status too
+      setIsWatched(!isWatchedByAll);
 
-      // Notify parent component
       if (onWatchToggle) onWatchToggle();
     } catch (error) {
       console.error("Error toggling watch-all status:", error);

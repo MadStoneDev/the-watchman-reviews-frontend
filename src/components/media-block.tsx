@@ -60,7 +60,6 @@ export default function MediaBlock({
       const tmdbId = data.tmdbId;
       let dbMediaId: string | null = null;
 
-      // Check if this media already exists in the database
       if (mediaType === "movie") {
         const { data: movieData } = await supabase
           .from("movies")
@@ -97,20 +96,12 @@ export default function MediaBlock({
       if (dbMediaId && allCollections.length > 0) {
         const collectionIds = allCollections.map((item) => item.id);
 
-        // Check if media is already in any collection
         const { data: existingEntries } = await supabase
           .from("medias_collections")
           .select("collection_id")
           .eq("media_id", dbMediaId)
           .eq("media_type", mediaType)
           .in("collection_id", collectionIds);
-
-        console.log("Existing entries:");
-        console.log(existingEntries);
-        console.log(`Media Id: ${dbMediaId}`);
-        console.log(`Media Type: ${mediaType}`);
-        console.log(`Collection IDs:`);
-        console.log(collectionIds);
 
         if (existingEntries && existingEntries.length > 0) {
           existingInCollections = existingEntries.map(
@@ -196,23 +187,19 @@ export default function MediaBlock({
 
           if (seriesError) throw seriesError;
 
-          // Store the ID directly in our local variable
           mediaId = newSeries.id;
-          // Also update the state for future use
           setMediaDbId(newSeries.id);
           setExistsInDb(true);
         }
       }
 
-      // Check if we have a valid media ID before proceeding
       if (!mediaId) {
         throw new Error("Failed to get or create media record");
       }
 
-      // For each selected collection, add an entry in medias_collections
       const collectionEntries = selectedCollections.map((collectionId) => ({
         collection_id: collectionId,
-        media_id: mediaId, // Use the local variable, not the state variable
+        media_id: mediaId,
         media_type: mediaType,
       }));
 
@@ -222,11 +209,9 @@ export default function MediaBlock({
 
       if (collectionError) throw collectionError;
 
-      // Close the collections panel
       setShowCollections(false);
       setSelectedCollections([]);
 
-      // Update the list of collections this media is already in
       setAlreadyInCollections([
         ...alreadyInCollections,
         ...selectedCollections,
