@@ -16,11 +16,16 @@ export default ({
   onLoading,
   setMessage,
   setAnimateMessage,
+  onMoreResultsAvailable,
 }: {
-  onSearch: (results: MediaSearchResult[]) => void;
+  onSearch: (results: MediaSearchResult[], isNewSearch: boolean) => void;
   onLoading?: (loading: boolean) => void;
   setMessage: (message: string) => void;
   setAnimateMessage: (animateMessage: boolean) => void;
+  onMoreResultsAvailable: (
+    hasMore: boolean,
+    loadMoreFn: () => Promise<void>,
+  ) => void;
 }) => {
   // Hooks
   const router = useRouter();
@@ -28,6 +33,9 @@ export default ({
 
   // States
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentSearchTerm, setCurrentSearchTerm] = useState("");
+  const [totalPages, setTotalPages] = useState(0);
 
   // Functions
   const cleanSearchTerm = (term: string): string => {
@@ -55,14 +63,22 @@ export default ({
     }
   };
 
-  const handleSearch = async (searchString: string) => {
-    onSearch?.([]);
-
+  const fetchSearchResults = async (
+    searchString: string,
+    page = 1,
+    isNewSearch = true,
+  ) => {
     if (searchString.length < 3) return;
 
     onLoading?.(true);
-    setMessage("Searching...");
-    setAnimateMessage(true);
+
+    if (isNewSearch) {
+      setMessage("Searching...");
+      setAnimateMessage(true);
+    } else {
+      setMessage("Loading more results...");
+      setAnimateMessage(true);
+    }
 
     const options = {
       method: "GET",
@@ -71,7 +87,7 @@ export default ({
         query: cleanSearchTerm(searchString),
         include_adult: false,
         language: `en-US`,
-        page: 1,
+        page: page,
       },
       headers: {
         accept: "application/json",
@@ -81,6 +97,9 @@ export default ({
 
     try {
       const response = await axios.request(options);
+      const totalPagesFromResponse = response.data.total_pages || 1;
+      setTotalPages(totalPagesFromResponse);
+
       const searchResults: MediaSearchResult[] = response.data.results
         .filter(
           (item: any) =>
@@ -103,31 +122,74 @@ export default ({
           }),
         );
 
-      router.push(`/search?q=${encodeURIComponent(searchString)}`);
+      if (isNewSearch) {
+        // Only update URL for initial searches
+        router.push(`/search?q=${encodeURIComponent(searchString)}`);
+      }
 
       setTimeout(() => {
-        onSearch(searchResults);
+        onSearch(searchResults, isNewSearch);
         onLoading?.(false);
 
-        if (searchResults.length === 0) {
+        if (searchResults.length === 0 && isNewSearch) {
           setMessage("No results found...try something else?");
           setAnimateMessage(false);
         } else {
           setMessage("");
         }
-      }, 1500);
+
+        // Check if there are more pages available
+        const hasMorePages = page < totalPagesFromResponse;
+        const loadMoreFunction = hasMorePages
+          ? () => loadMoreResults()
+          : async () => {}; // Empty function if no more results
+
+        onMoreResultsAvailable(hasMorePages, loadMoreFunction);
+      }, 1000);
+
+      return { results: searchResults, totalPages: totalPagesFromResponse };
     } catch (error) {
       console.error(`Error fetching search results: ${error}`);
+      onLoading?.(false);
+      setMessage("Error fetching results. Please try again.");
+      setAnimateMessage(false);
+      onMoreResultsAvailable(false, async () => {});
+      return { results: [], totalPages: 0 };
     }
   };
 
-  // Hooks
+  const handleSearch = async (searchString: string) => {
+    setCurrentSearchTerm(searchString);
+    setCurrentPage(1);
+    await fetchSearchResults(searchString, 1, true);
+  };
+
+  const loadMoreResults = async () => {
+    if (currentSearchTerm && currentPage < totalPages) {
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      await fetchSearchResults(currentSearchTerm, nextPage, false);
+    }
+  };
+
+  // Initial search from URL parameters
   useEffect(() => {
     if (searchParams.has("q")) {
-      setSearch(searchParams.get("q") as string);
-      handleSearch(searchParams.get("q") as string);
+      const searchQuery = searchParams.get("q") as string;
+      setSearch(searchQuery);
+      setCurrentSearchTerm(searchQuery);
+      handleSearch(searchQuery);
     }
   }, []);
+
+  // Expose load more function
+  useEffect(() => {
+    const hasMorePages = currentPage < totalPages;
+    onMoreResultsAvailable(
+      hasMorePages,
+      hasMorePages ? loadMoreResults : async () => {},
+    );
+  }, [currentPage, totalPages]);
 
   return (
     <>

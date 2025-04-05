@@ -1,12 +1,13 @@
 ﻿"use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 import { Popcorn } from "lucide-react";
 
 import { User } from "@supabase/supabase-js";
 import SearchForm from "@/src/components/search-form";
 import MediaBlock from "@/src/components/media-block";
+import LoadMoreButton from "@/src/components/load-more-button";
 
 import { Tables } from "@/database.types";
 import { MediaCollection, MediaSearchResult } from "@/src/lib/types";
@@ -28,6 +29,10 @@ export default function SearchWrapper({
 }) {
   // States
   const [searchResults, setSearchResults] = useState<MediaSearchResult[]>([]);
+  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [loadMoreFn, setLoadMoreFn] = useState<(() => Promise<void>) | null>(
+    null,
+  );
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("Start Searching!");
@@ -36,14 +41,26 @@ export default function SearchWrapper({
   // Functions
   const sortSearchResults = (results: MediaSearchResult[]) => {
     if (!results.length) return results;
-
     return [...results].sort((a, b) => (a.popularity > b.popularity ? -1 : 1));
   };
 
-  // Functions
-  const handleSearch = (results: MediaSearchResult[]) => {
+  // Handle search results
+  const handleSearch = (results: MediaSearchResult[], isNewSearch: boolean) => {
     const sortedResults = sortSearchResults(results);
-    setSearchResults(sortedResults);
+
+    // If it's a new search, replace results, otherwise append them
+    setSearchResults(
+      isNewSearch ? sortedResults : [...searchResults, ...sortedResults],
+    );
+  };
+
+  // Handle more results availability
+  const handleMoreResultsAvailable = (
+    hasMore: boolean,
+    loadMoreFunction: () => Promise<void>,
+  ) => {
+    setHasMoreResults(hasMore);
+    setLoadMoreFn(() => loadMoreFunction);
   };
 
   return (
@@ -53,6 +70,7 @@ export default function SearchWrapper({
         onLoading={setLoading}
         setMessage={setMessage}
         setAnimateMessage={setAnimateMessage}
+        onMoreResultsAvailable={handleMoreResultsAvailable}
       />
 
       {message && (
@@ -67,25 +85,31 @@ export default function SearchWrapper({
       )}
 
       {!loading && searchResults.length > 0 && (
-        <section
-          className={`grid ${
-            admin
-              ? "grid-cols-1"
-              : "grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-          } gap-x-5 gap-y-5 transition-all duration-300 ease-in-out`}
-        >
-          {searchResults.map((item) => (
-            <MediaBlock
-              key={item.tmdbId}
-              data={item}
-              user={user}
-              username={profile?.username || ""}
-              admin={admin}
-              ownedCollections={ownedCollections}
-              sharedCollections={sharedCollections}
-            />
-          ))}
-        </section>
+        <>
+          <section
+            className={`grid ${
+              admin
+                ? "grid-cols-1"
+                : "grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+            } gap-x-5 gap-y-5 transition-all duration-300 ease-in-out`}
+          >
+            {searchResults.map((item, index) => (
+              <MediaBlock
+                key={`${item.tmdbId}-${item.mediaType}-${index}`}
+                data={item}
+                user={user}
+                username={profile?.username || ""}
+                admin={admin}
+                ownedCollections={ownedCollections}
+                sharedCollections={sharedCollections}
+              />
+            ))}
+          </section>
+
+          {hasMoreResults && loadMoreFn && (
+            <LoadMoreButton loading={loading} onLoadMore={loadMoreFn} />
+          )}
+        </>
       )}
     </>
   );
