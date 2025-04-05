@@ -61,14 +61,11 @@ export default function CollectionItem({
         .eq("collection_id", collectionId)
         .eq("media_id", data.id)
         .eq("media_type", data.mediaType)
-        .eq("user_id", userId)
-        .single();
+        .eq("user_id", userId);
 
-      setIsWatched(!!watchData);
+      setIsWatched(watchData !== null && watchData.length > 0);
 
-      // If owner, check if all users with access have watched it
       if (isOwner) {
-        // Get all users with access to this collection (owner + shared with)
         const { data: sharedData } = await supabase
           .from("shared_collection")
           .select("user_id")
@@ -221,7 +218,7 @@ export default function CollectionItem({
     <div
       className={`flex items-center p-3 border ${
         isWatched
-          ? "bg-lime-400 hover:bg-lime-500 border-lime-400 hover:border-lime-500"
+          ? "bg-lime-800 hover:bg-lime-700 border-lime-400 hover:border-lime-500"
           : "border-neutral-800 hover:border-neutral-600"
       } rounded transition-all duration-300 ease-in-out`}
       onMouseEnter={() => setIsHovered(true)}
@@ -229,7 +226,11 @@ export default function CollectionItem({
     >
       {/* Drag Handle */}
       <div
-        className="cursor-grab active:cursor-grabbing mr-2 text-neutral-500 hover:text-neutral-300"
+        className={`cursor-grab active:cursor-grabbing mr-2 ${
+          isWatched
+            ? "text-neutral-50/50 hover:text-neutral-50"
+            : "text-neutral-500" + " hover:text-neutral-300"
+        } transition-all duration-300 ease-in-out`}
         {...dragHandleProps}
       >
         <IconLineHeight size={20} />
@@ -250,7 +251,7 @@ export default function CollectionItem({
             width={100}
             height={200}
             className={`object-cover object-center w-full h-full ${
-              isWatched ? "opacity-70" : "opacity-100"
+              isWatched ? "opacity-80" : "opacity-100"
             }`}
             onError={() => setImageError(true)}
           />
@@ -267,13 +268,19 @@ export default function CollectionItem({
           href={`https://www.themoviedb.org/${data.mediaType}/${data.tmdbId}`}
           target="_blank"
           className={`text-base font-medium hover:text-lime-400 transition-all duration-300 ease-in-out ${
-            isWatched ? "text-neutral-400" : ""
+            isWatched ? "text-lime-400/50" : ""
           }`}
         >
           {data.title}
         </Link>
         {data.releaseYear && (
-          <div className={`text-sm text-neutral-500`}>{data.releaseYear}</div>
+          <div
+            className={`${
+              isWatched ? "text-neutral-50/30" : "text-neutral-600"
+            } text-sm`}
+          >
+            {data.releaseYear}
+          </div>
         )}
       </div>
 
@@ -289,11 +296,7 @@ export default function CollectionItem({
           disabled={isUpdatingWatch}
           className={`p-2 transition-colors ${
             isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""
-          } ${
-            isWatched
-              ? "text-neutral-50 hover:text-lime-600"
-              : "text-neutral-50 hover:text-lime-400"
-          }`}
+          } text-neutral-50 hover:text-lime-400`}
           title={isWatched ? "Mark as unwatched" : "Mark as watched"}
         >
           <IconEye size={20} />
@@ -306,11 +309,7 @@ export default function CollectionItem({
             disabled={isUpdatingWatch}
             className={`p-2 transition-colors ${
               isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""
-            } ${
-              isWatchedByAll
-                ? "text-neutral-50 hover:text-lime-600"
-                : "text-neutral-50 hover:text-lime-400"
-            }`}
+            } text-neutral-50 hover:text-lime-400`}
             title={
               isWatchedByAll
                 ? "Mark as unwatched by all"
@@ -325,10 +324,10 @@ export default function CollectionItem({
         {isOwner && (
           <button
             onClick={onDelete}
-            className={`p-2 text-neutral-50 hover:text-red-600 transition-all duration-300 ease-in-out`}
+            className={`p-2 text-neutral-50 hover:bg-red-700 rounded-full transition-all duration-300 ease-in-out`}
             title="Remove from collection"
           >
-            <IconTrash size={18} />
+            <IconTrash size={20} />
           </button>
         )}
       </div>

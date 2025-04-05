@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 
 import { Popcorn } from "lucide-react";
 
@@ -30,9 +30,9 @@ export default function SearchWrapper({
   // States
   const [searchResults, setSearchResults] = useState<MediaSearchResult[]>([]);
   const [hasMoreResults, setHasMoreResults] = useState(false);
-  const [loadMoreFn, setLoadMoreFn] = useState<(() => Promise<void>) | null>(
-    null,
-  );
+  const [loadMoreFunction, setLoadMoreFunction] = useState<
+    null | (() => Promise<void>)
+  >(null);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("Start Searching!");
@@ -46,21 +46,56 @@ export default function SearchWrapper({
 
   // Handle search results
   const handleSearch = (results: MediaSearchResult[], isNewSearch: boolean) => {
+    console.log(
+      `Handling search results. isNewSearch: ${isNewSearch}, results count: ${results.length}`,
+    );
+
+    if (isNewSearch && results.length === 0) {
+      // For new search with no results yet, just clear the results
+      setSearchResults([]);
+      return;
+    }
+
     const sortedResults = sortSearchResults(results);
 
     // If it's a new search, replace results, otherwise append them
-    setSearchResults(
-      isNewSearch ? sortedResults : [...searchResults, ...sortedResults],
+    setSearchResults((prev) =>
+      isNewSearch ? sortedResults : [...prev, ...sortedResults],
     );
   };
 
-  // Handle more results availability
-  const handleMoreResultsAvailable = (
-    hasMore: boolean,
-    loadMoreFunction: () => Promise<void>,
-  ) => {
-    setHasMoreResults(hasMore);
-    setLoadMoreFn(() => loadMoreFunction);
+  // Handle more results availability - use useCallback to ensure function stability
+  const handleMoreResultsAvailable = useCallback(
+    (hasMore: boolean, loadMoreFn: () => Promise<void>) => {
+      console.log(`More results available: ${hasMore}`);
+      setHasMoreResults(hasMore);
+
+      if (hasMore && loadMoreFn) {
+        console.log("Setting load more function");
+        setLoadMoreFunction(() => async () => {
+          console.log("Load more function triggered");
+          setLoading(true);
+          try {
+            await loadMoreFn();
+          } finally {
+            setLoading(false);
+          }
+        });
+      } else {
+        setLoadMoreFunction(null);
+      }
+    },
+    [],
+  );
+
+  // Function to handle load more button click
+  const handleLoadMore = async () => {
+    console.log("Load more requested");
+    if (loadMoreFunction) {
+      await loadMoreFunction();
+    } else {
+      console.error("Load more function is not available");
+    }
   };
 
   return (
@@ -73,7 +108,7 @@ export default function SearchWrapper({
         onMoreResultsAvailable={handleMoreResultsAvailable}
       />
 
-      {message && (
+      {message && searchResults.length === 0 && (
         <section
           className={`flex flex-col gap-3 justify-center items-center min-h-[200px] ${
             animateMessage ? "animate-pulse" : ""
@@ -84,7 +119,7 @@ export default function SearchWrapper({
         </section>
       )}
 
-      {!loading && searchResults.length > 0 && (
+      {searchResults.length > 0 && (
         <>
           <section
             className={`grid ${
@@ -106,8 +141,8 @@ export default function SearchWrapper({
             ))}
           </section>
 
-          {hasMoreResults && loadMoreFn && (
-            <LoadMoreButton loading={loading} onLoadMore={loadMoreFn} />
+          {hasMoreResults && loadMoreFunction && (
+            <LoadMoreButton loading={loading} onLoadMore={handleLoadMore} />
           )}
         </>
       )}

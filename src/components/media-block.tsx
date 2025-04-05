@@ -149,7 +149,11 @@ export default function MediaBlock({
       setError(null);
 
       const mediaType = data.mediaType;
+      const tmdbId = data.tmdbId;
       const releaseYear = data.releaseYear || "";
+
+      // We'll store the actual media ID here
+      let mediaId = mediaDbId;
 
       // If the media doesn't exist in the database, create it
       if (!existsInDb) {
@@ -163,14 +167,18 @@ export default function MediaBlock({
               poster_path: data.posterPath,
               backdrop_path: data.backdropPath,
               tmdb_id: data.tmdbId,
-              media_type: mediaType,
-              tmdb_rating: data.tmdbRating,
               release_year: releaseYear.toString(),
             })
             .select("id")
             .single();
 
           if (movieError) throw movieError;
+
+          // Store the ID directly in our local variable instead of just setting state
+          mediaId = newMovie.id;
+          // Also update the state for future use
+          setMediaDbId(newMovie.id);
+          setExistsInDb(true);
         } else if (mediaType === "tv") {
           // Insert new series into series table
           const { data: newSeries, error: seriesError } = await supabase
@@ -181,21 +189,30 @@ export default function MediaBlock({
               poster_path: data.posterPath,
               backdrop_path: data.backdropPath,
               tmdb_id: data.tmdbId,
-              media_type: mediaType,
-              tmdb_rating: data.tmdbRating,
               release_year: releaseYear.toString(),
             })
             .select("id")
             .single();
 
           if (seriesError) throw seriesError;
+
+          // Store the ID directly in our local variable
+          mediaId = newSeries.id;
+          // Also update the state for future use
+          setMediaDbId(newSeries.id);
+          setExistsInDb(true);
         }
+      }
+
+      // Check if we have a valid media ID before proceeding
+      if (!mediaId) {
+        throw new Error("Failed to get or create media record");
       }
 
       // For each selected collection, add an entry in medias_collections
       const collectionEntries = selectedCollections.map((collectionId) => ({
         collection_id: collectionId,
-        media_id: mediaDbId,
+        media_id: mediaId, // Use the local variable, not the state variable
         media_type: mediaType,
       }));
 
@@ -214,11 +231,23 @@ export default function MediaBlock({
         ...alreadyInCollections,
         ...selectedCollections,
       ]);
-    } catch (err) {
-      console.error("Error adding to collections:", err);
-      setError(
-        err instanceof Error ? err.message : "Error adding item to collections",
-      );
+    } catch (error: unknown) {
+      console.error("Error adding to collections:", error);
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "23505"
+      ) {
+        setError("This item is already in your collection");
+      } else {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Error adding item to collections",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -275,7 +304,7 @@ export default function MediaBlock({
             >
               <button
                 onClick={handleShowCollections}
-                className={`p-3 flex justify-center items-center gap-1 w-full bg-lime-500/80 hover:bg-lime-500 rounded text-xs text-neutral-900 transition-all duration-300 ease-in-out`}
+                className={`p-3 flex justify-center items-center gap-1 w-full bg-lime-400 hover:scale-105 rounded text-xs text-neutral-900 transition-all duration-300 ease-in-out`}
                 disabled={loading}
               >
                 <IconSquarePlus size={20} />
@@ -435,8 +464,8 @@ export default function MediaBlock({
               className={`w-full mt-2 py-1 rounded text-xs flex items-center justify-center gap-1 ${
                 loading || selectedCollections.length === 0
                   ? "bg-neutral-700 text-neutral-400 cursor-not-allowed"
-                  : "bg-lime-500 text-neutral-900 hover:bg-lime-400"
-              }`}
+                  : "bg-lime-400 text-neutral-900 hover:scale-105"
+              } transition-all duration-300 ease-in-out`}
             >
               {loading ? (
                 "Adding..."

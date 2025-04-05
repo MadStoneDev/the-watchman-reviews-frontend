@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import axios from "axios";
@@ -68,6 +68,10 @@ export default ({
     page = 1,
     isNewSearch = true,
   ) => {
+    console.log(
+      `Fetching results for: "${searchString}", page: ${page}, isNewSearch: ${isNewSearch}`,
+    );
+
     if (searchString.length < 3) return;
 
     onLoading?.(true);
@@ -98,7 +102,12 @@ export default ({
     try {
       const response = await axios.request(options);
       const totalPagesFromResponse = response.data.total_pages || 1;
+      console.log(
+        `API returned ${response.data.results.length} results, total pages: ${totalPagesFromResponse}, current page requested: ${page}`,
+      );
+
       setTotalPages(totalPagesFromResponse);
+      setCurrentPage(page);
 
       const searchResults: MediaSearchResult[] = response.data.results
         .filter(
@@ -127,25 +136,36 @@ export default ({
         router.push(`/search?q=${encodeURIComponent(searchString)}`);
       }
 
-      setTimeout(() => {
-        onSearch(searchResults, isNewSearch);
-        onLoading?.(false);
+      // Remove the timeout to improve image loading speed
+      onSearch(searchResults, isNewSearch);
+      onLoading?.(false);
 
-        if (searchResults.length === 0 && isNewSearch) {
-          setMessage("No results found...try something else?");
-          setAnimateMessage(false);
-        } else {
-          setMessage("");
-        }
+      if (searchResults.length === 0 && isNewSearch) {
+        setMessage("No results found...try something else?");
+        setAnimateMessage(false);
+      } else {
+        setMessage("");
+      }
 
-        // Check if there are more pages available
-        const hasMorePages = page < totalPagesFromResponse;
-        const loadMoreFunction = hasMorePages
-          ? () => loadMoreResults()
-          : async () => {}; // Empty function if no more results
+      // Check if there are more pages available
+      const hasMorePages = page < totalPagesFromResponse;
+      console.log(
+        `Has more pages: ${hasMorePages}, current: ${page}, total: ${totalPagesFromResponse}`,
+      );
 
-        onMoreResultsAvailable(hasMorePages, loadMoreFunction);
-      }, 1000);
+      // Define the load more function to always start from the next page
+      // This ensures the first click loads the next page, not the current one
+      const loadMoreFn = hasMorePages
+        ? async (): Promise<void> => {
+            const nextPage = page + 1; // Always use the next page number directly
+            console.log(
+              `Loading more results - jumping directly to page ${nextPage}`,
+            );
+            await fetchSearchResults(searchString, nextPage, false);
+          }
+        : async (): Promise<void> => {};
+
+      onMoreResultsAvailable(hasMorePages, loadMoreFn);
 
       return { results: searchResults, totalPages: totalPagesFromResponse };
     } catch (error) {
@@ -153,43 +173,32 @@ export default ({
       onLoading?.(false);
       setMessage("Error fetching results. Please try again.");
       setAnimateMessage(false);
-      onMoreResultsAvailable(false, async () => {});
+      onMoreResultsAvailable(false, async (): Promise<void> => {});
       return { results: [], totalPages: 0 };
     }
   };
 
   const handleSearch = async (searchString: string) => {
+    console.log(`New search initiated for: "${searchString}"`);
     setCurrentSearchTerm(searchString);
     setCurrentPage(1);
-    await fetchSearchResults(searchString, 1, true);
-  };
 
-  const loadMoreResults = async () => {
-    if (currentSearchTerm && currentPage < totalPages) {
-      const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      await fetchSearchResults(currentSearchTerm, nextPage, false);
-    }
+    // Clear previous results first
+    onSearch([], true);
+
+    await fetchSearchResults(searchString, 1, true);
   };
 
   // Initial search from URL parameters
   useEffect(() => {
     if (searchParams.has("q")) {
       const searchQuery = searchParams.get("q") as string;
+      console.log(`Initial search from URL: "${searchQuery}"`);
       setSearch(searchQuery);
       setCurrentSearchTerm(searchQuery);
       handleSearch(searchQuery);
     }
   }, []);
-
-  // Expose load more function
-  useEffect(() => {
-    const hasMorePages = currentPage < totalPages;
-    onMoreResultsAvailable(
-      hasMorePages,
-      hasMorePages ? loadMoreResults : async () => {},
-    );
-  }, [currentPage, totalPages]);
 
   return (
     <>

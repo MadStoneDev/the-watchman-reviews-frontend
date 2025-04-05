@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
+
 import { createClient } from "@/src/utils/supabase/client";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 import CollectionItem from "./collection-item";
 import {
@@ -19,11 +21,10 @@ import {
 
 import { MediaCollection, MediaItem } from "@/src/lib/types";
 
-// Extend MediaItem to include collection-specific properties
 interface CollectionMediaItem extends MediaItem {
   collectionEntryId?: string;
   position?: number;
-  isWatched?: boolean; // Track watched status for sorting
+  isWatched?: boolean;
 }
 
 type MediasCollectionProps = {
@@ -755,7 +756,7 @@ export default function MediasCollection({
                   {items.map((item, index) => (
                     <Draggable
                       key={item.collectionEntryId}
-                      draggableId={item.id}
+                      draggableId={String(item.id)}
                       index={index}
                       isDragDisabled={!isOwner}
                     >
@@ -771,7 +772,7 @@ export default function MediasCollection({
                             onDelete={() => handleDeleteItem(item)}
                             isOwner={isOwner}
                             onWatchToggle={() => handleWatchToggle(item)}
-                            dragHandleProps={provided.dragHandleProps}
+                            dragHandleProps={provided.dragHandleProps as any}
                           />
                         </div>
                       )}
