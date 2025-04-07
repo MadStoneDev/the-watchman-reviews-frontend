@@ -122,6 +122,41 @@ export type Database = {
           },
         ]
       }
+      media_watches: {
+        Row: {
+          collection_id: string
+          id: string
+          media_id: string
+          media_type: string
+          user_id: string
+          watched_at: string | null
+        }
+        Insert: {
+          collection_id: string
+          id?: string
+          media_id: string
+          media_type: string
+          user_id: string
+          watched_at?: string | null
+        }
+        Update: {
+          collection_id?: string
+          id?: string
+          media_id?: string
+          media_type?: string
+          user_id?: string
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_watches_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medias_collections: {
         Row: {
           collection_id: string
@@ -129,6 +164,7 @@ export type Database = {
           id: string
           media_id: string
           media_type: string
+          position: number | null
         }
         Insert: {
           collection_id: string
@@ -136,6 +172,7 @@ export type Database = {
           id?: string
           media_id: string
           media_type: string
+          position?: number | null
         }
         Update: {
           collection_id?: string
@@ -143,6 +180,7 @@ export type Database = {
           id?: string
           media_id?: string
           media_type?: string
+          position?: number | null
         }
         Relationships: [
           {
@@ -156,6 +194,7 @@ export type Database = {
       }
       movies: {
         Row: {
+          backdrop_path: string | null
           created_at: string | null
           id: string
           overview: string | null
@@ -165,6 +204,7 @@ export type Database = {
           tmdb_id: number
         }
         Insert: {
+          backdrop_path?: string | null
           created_at?: string | null
           id?: string
           overview?: string | null
@@ -174,6 +214,7 @@ export type Database = {
           tmdb_id: number
         }
         Update: {
+          backdrop_path?: string | null
           created_at?: string | null
           id?: string
           overview?: string | null
@@ -188,18 +229,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_username_change: string | null
           settings: Json | null
           username: string
         }
         Insert: {
           created_at?: string
           id?: string
+          last_username_change?: string | null
           settings?: Json | null
           username?: string
         }
         Update: {
           created_at?: string
           id?: string
+          last_username_change?: string | null
           settings?: Json | null
           username?: string
         }
@@ -248,6 +292,7 @@ export type Database = {
       }
       series: {
         Row: {
+          backdrop_path: string | null
           created_at: string | null
           id: string
           overview: string | null
@@ -257,6 +302,7 @@ export type Database = {
           tmdb_id: number
         }
         Insert: {
+          backdrop_path?: string | null
           created_at?: string | null
           id?: string
           overview?: string | null
@@ -266,6 +312,7 @@ export type Database = {
           tmdb_id: number
         }
         Update: {
+          backdrop_path?: string | null
           created_at?: string | null
           id?: string
           overview?: string | null
@@ -313,7 +360,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      populate_media_positions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

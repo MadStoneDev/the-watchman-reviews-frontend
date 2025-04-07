@@ -151,41 +151,66 @@ export default function EditableUsername({
   return (
     <section>
       {isEditing ? (
-        <div className={`flex flex-col gap-1 w-full max-w-xs`}>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={editUsername}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              className={`p-2 border ${
-                error ? "border-red-500" : "border-neutral-300"
-              } rounded focus:outline-none focus:border-lime-400 font-bold text-2xl sm:3xl md:text-4xl`}
-              autoFocus
-              disabled={isSubmitting}
-            />
-            <div className="flex items-center gap-1">
-              <button
-                onClick={confirmEdit}
-                disabled={!!error || !editUsername.trim() || isSubmitting}
-                className={`p-1 text-lime-400 ${
-                  !!error || !editUsername.trim() || isSubmitting
-                    ? "text-neutral-600 cursor-not-allowed"
-                    : "hover:text-neutral-900 hover:bg-lime-400"
-                } rounded transition-all duration-300 ease-in-out`}
-              >
-                <IconCheck size={24} />
-              </button>
-              <button
-                onClick={cancelEdit}
+        <div className={`flex flex-col gap-1`}>
+          <article
+            className={`p-2 flex flex-col gap-2 w-fit rounded bg-neutral-600 transition-all duration-300 ease-in-out`}
+          >
+            <div className={`flex items-center gap-2`}>
+              <input
+                type="text"
+                value={editUsername}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                className={`p-2 border ${
+                  error ? "border-red-500" : "border-neutral-300"
+                } bg-neutral-900 rounded focus:outline-none focus:border-lime-400 font-bold text-2xl sm:3xl md:text-4xl`}
+                autoFocus
                 disabled={isSubmitting}
-                className={`p-1 hover:bg-red-700 text-red-600 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
-              >
-                <IconX size={24} />
-              </button>
+              />
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={confirmEdit}
+                  disabled={!!error || !editUsername.trim() || isSubmitting}
+                  className={`p-1 text-lime-400 ${
+                    !!error || !editUsername.trim() || isSubmitting
+                      ? "text-neutral-600 cursor-not-allowed"
+                      : "hover:text-neutral-900 hover:bg-lime-400"
+                  } rounded transition-all duration-300 ease-in-out`}
+                >
+                  <IconCheck size={20} />
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  disabled={isSubmitting}
+                  className={`p-1 hover:bg-neutral-400 text-neutral-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+                >
+                  <IconX size={20} />
+                </button>
+              </div>
             </div>
-          </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+            {isCurrentUserProfile &&
+              (lastChangeInfo.lastChange ? (
+                <p
+                  className={`block w-full mt-0 text-sm text-neutral-400 italic`}
+                >
+                  Last change: {lastChangeInfo.daysSince} days ago
+                  {lastChangeInfo.daysSince < 30 && (
+                    <span className="ml-1">
+                      (can change again in {30 - lastChangeInfo.daysSince} days)
+                    </span>
+                  )}
+                </p>
+              ) : (
+                <p
+                  className={`block w-full mt-2 text-sm text-neutral-400 italic`}
+                >
+                  You can change your username once every 30 days.
+                </p>
+              ))}
+          </article>
+          <article>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+          </article>
         </div>
       ) : (
         <article className={`flex items-center gap-2`}>
@@ -195,36 +220,21 @@ export default function EditableUsername({
           {canEdit ? (
             <button
               onClick={handleEdit}
-              className={`p-1 hover:bg-lime-400 text-neutral-600 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
-              title="Edit username"
+              className={`p-1 hover:bg-lime-400 text-neutral-500 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+              title={`Edit username`}
             >
               <IconPencil size={20} />
             </button>
           ) : isCurrentUserProfile ? (
             <span
-              className="p-1 text-neutral-300 cursor-not-allowed"
-              title="Username can only be changed once every 30 days"
+              className={`p-1 text-neutral-500 cursor-not-allowed`}
+              title={`Username can only be changed once every 30 days`}
             >
               <IconPencil size={20} />
             </span>
           ) : null}
         </article>
       )}
-      {isCurrentUserProfile &&
-        (lastChangeInfo.lastChange ? (
-          <p className={`block w-full mt-2 text-sm text-neutral-400 italic`}>
-            Last change: {lastChangeInfo.daysSince} days ago
-            {lastChangeInfo.daysSince < 30 && (
-              <span className="ml-1">
-                (can change again in {30 - lastChangeInfo.daysSince} days)
-              </span>
-            )}
-          </p>
-        ) : (
-          <p className={`block w-full mt-2 text-sm text-neutral-400 italic`}>
-            You can change your username once every 30 days.
-          </p>
-        ))}
     </section>
   );
 }

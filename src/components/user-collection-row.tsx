@@ -142,15 +142,15 @@ export const UserCollectionRow = ({
                   disabled={!!error || !editTitle.trim()}
                   className={`p-1 text-lime-600 ${
                     !!error || !editTitle.trim()
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-lime-200/70"
-                  } rounded`}
+                      ? "text-neutral-600 cursor-not-allowed"
+                      : "hover:text-neutral-900 hover:bg-lime-400"
+                  } rounded transition-all duration-300 ease-in-out`}
                 >
                   <IconCheck size={20} />
                 </button>
                 <button
                   onClick={cancelEdit}
-                  className="p-1 text-rose-500 hover:bg-rose-100 rounded"
+                  className={`p-1 hover:bg-neutral-400 text-neutral-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
                 >
                   <IconX size={20} />
                 </button>
@@ -168,13 +168,13 @@ export const UserCollectionRow = ({
                 <>
                   <button
                     onClick={handleEdit}
-                    className="p-1 text-neutral-600 hover:bg-neutral-100 hover:text-lime-400 rounded transition-colors"
+                    className={`p-1 text-neutral-600 hover:bg-lime-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
                   >
                     <IconPencil size={20} />
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="p-1 text-neutral-600 hover:bg-neutral-100 hover:text-red-500 rounded transition-colors"
+                    className={`p-1 text-neutral-600 hover:bg-red-600 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
                   >
                     <IconTrash size={20} />
                   </button>
