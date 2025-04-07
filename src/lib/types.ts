@@ -1,4 +1,10 @@
-﻿export type MediaCollection = {
+﻿// Profiles
+export type ProfileRole = {
+  [key: number]: string;
+};
+
+// Media
+export type MediaCollection = {
   id: string;
   title: string;
   owner: string;

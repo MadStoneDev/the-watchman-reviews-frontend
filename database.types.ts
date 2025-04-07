@@ -230,6 +230,7 @@ export type Database = {
           created_at: string
           id: string
           last_username_change: string | null
+          role: number | null
           settings: Json | null
           username: string
         }
@@ -237,6 +238,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_username_change?: string | null
+          role?: number | null
           settings?: Json | null
           username?: string
         }
@@ -244,6 +246,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_username_change?: string | null
+          role?: number | null
           settings?: Json | null
           username?: string
         }
