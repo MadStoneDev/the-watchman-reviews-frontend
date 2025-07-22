@@ -11,8 +11,46 @@ type AuthResponse = {
   redirectTo?: string;
 };
 
+async function verifyRecaptcha(token: string, ip?: string): Promise<boolean> {
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+
+  if (!secretKey) {
+    console.error("reCAPTCHA secret key not configured");
+    return false;
+  }
+
+  try {
+    const response = await fetch(
+      "https://www.google.com/recaptcha/api/siteverify",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          secret: secretKey,
+          response: token,
+          ...(ip && { remoteip: ip }),
+        }),
+      },
+    );
+
+    const data = await response.json();
+
+    // reCAPTCHA v3 returns a score from 0.0 to 1.0
+    // 1.0 is very likely a good interaction, 0.0 is very likely a bot
+    const threshold = 0.5;
+
+    return data.success && data.score >= threshold;
+  } catch (error) {
+    console.error("reCAPTCHA verification failed:", error);
+    return false;
+  }
+}
+
 export async function handleAuth(formData: FormData): Promise<AuthResponse> {
   const email = formData.get("email") as string;
+  const recaptchaToken = formData.get("recaptcha-token") as string;
 
   if (!email) {
     return {
@@ -21,7 +59,26 @@ export async function handleAuth(formData: FormData): Promise<AuthResponse> {
     };
   }
 
+  if (!recaptchaToken) {
+    return {
+      error: "Security check failed. Please refresh the page and try again.",
+      success: false,
+    };
+  }
+
   try {
+    // First check: reCAPTCHA verification
+    const isHuman = await verifyRecaptcha(recaptchaToken);
+
+    if (!isHuman) {
+      return {
+        error:
+          "🤖 Beep boop! Our robot detector thinks you might be a bot. Please try again.",
+        success: false,
+      };
+    }
+
+    // Second check: Rate limiting by email
     const { success: rateLimiter } = await rateLimit.limit(email.toLowerCase());
 
     if (!rateLimiter) {
@@ -85,6 +142,7 @@ export async function handleAuth(formData: FormData): Promise<AuthResponse> {
 export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
   const email = formData.get("email") as string;
   const otp = formData.get("otp") as string;
+  const recaptchaToken = formData.get("recaptcha-token") as string;
 
   if (!email || !otp) {
     return {
@@ -93,7 +151,24 @@ export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
     };
   }
 
+  if (!recaptchaToken) {
+    return {
+      error: "Security check failed. Please refresh the page and try again.",
+      success: false,
+    };
+  }
+
   try {
+    // Verify reCAPTCHA for OTP verification too
+    const isHuman = await verifyRecaptcha(recaptchaToken);
+
+    if (!isHuman) {
+      return {
+        error: "🤖 Security check failed. Please try again.",
+        success: false,
+      };
+    }
+
     const supabase = await createClient();
 
     const { error } = await supabase.auth.verifyOtp({

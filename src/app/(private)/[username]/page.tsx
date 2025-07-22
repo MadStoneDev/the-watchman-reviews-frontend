@@ -17,10 +17,10 @@ export default async function PrivatePage({
   const supabase = await createClient();
 
   // Check if user is authenticated
-  const { data: user, error } = await supabase.auth.getUser();
+  const { data: user, error } = await supabase.auth.getClaims();
 
   // If no user is found, redirect to auth portal
-  if (error || !user || !user.user) {
+  if (error || !user) {
     redirect("/auth/portal");
   }
 
@@ -72,11 +72,9 @@ export default async function PrivatePage({
             daysSinceLastChange !== null ? daysSinceLastChange : 999
           }
           profileId={profileData.id}
-          currentUserId={user.user.id}
+          currentUserId={user.claims.sub}
         />
       </section>
-
-      {profileData?.role > 9 && <MediaPreferenceBlock />}
     </>
   );
 }

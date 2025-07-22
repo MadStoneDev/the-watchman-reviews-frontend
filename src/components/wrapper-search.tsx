@@ -16,13 +16,13 @@ type Profile = Tables<`profiles`>;
 
 export default function SearchWrapper({
   admin = false,
-  user,
+  isUser,
   profile,
   ownedCollections = [],
   sharedCollections = [],
 }: {
   admin?: boolean;
-  user?: User | null;
+  isUser?: boolean;
   profile?: Profile | null;
   ownedCollections?: MediaCollection[];
   sharedCollections?: MediaCollection[];
@@ -119,7 +119,7 @@ export default function SearchWrapper({
               <MediaBlock
                 key={`${item.tmdbId}-${item.mediaType}-${index}`}
                 data={item}
-                user={user}
+                isUser={isUser}
                 username={profile?.username || ""}
                 admin={admin}
                 ownedCollections={ownedCollections}

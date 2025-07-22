@@ -8,7 +8,6 @@ import Logo from "@/src/components/logo";
 import MainFooter from "@/src/components/main-footer";
 
 import { IconPower, IconUser } from "@tabler/icons-react";
-import { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/src/utils/supabase/client";
 
@@ -28,14 +27,13 @@ interface Profile {
 
 interface MainNavigationProps {
   items?: NavigationItem[];
-  user?: User | null;
+  isUser?: boolean;
   profile?: Profile | null;
 }
 
 export default function MainNavigation({
   items = [],
-  user = null,
-  profile = null,
+  isUser = false,
 }: MainNavigationProps) {
   // Hooks
   const pathname = usePathname();
@@ -74,7 +72,7 @@ export default function MainNavigation({
         </article>
 
         <article className={`flex items-center gap-2 md:w-full`}>
-          {user ? (
+          {isUser ? (
             <div
               className={`flex-grow flex flex-row-reverse items-center gap-2`}
             >

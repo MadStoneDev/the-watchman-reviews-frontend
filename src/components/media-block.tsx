@@ -18,7 +18,7 @@ import { MediaCollection, MediaSearchResult } from "@/src/lib/types";
 
 interface MediaBlockProps {
   data: MediaSearchResult;
-  user?: User | null;
+  isUser?: boolean;
   username?: string;
   admin?: boolean;
   ownedCollections?: MediaCollection[];
@@ -27,7 +27,7 @@ interface MediaBlockProps {
 
 export default function MediaBlock({
   data,
-  user,
+  isUser,
   username = "",
   admin = false,
   ownedCollections = [],
@@ -50,7 +50,7 @@ export default function MediaBlock({
   const supabase = createClient();
 
   const handleShowCollections = async () => {
-    if (!user) return;
+    if (!isUser) return;
 
     try {
       setLoading(true);
@@ -133,7 +133,7 @@ export default function MediaBlock({
   };
 
   const addToCollections = async () => {
-    if (!user || selectedCollections.length === 0) return;
+    if (!isUser || selectedCollections.length === 0) return;
 
     try {
       setLoading(true);
@@ -259,7 +259,7 @@ export default function MediaBlock({
           </div>
         )}
 
-        {user && (
+        {isUser && (
           <div
             className={`md:hidden absolute top-3 right-3 flex justify-center items-center gap-2 transition-all duration-300 ease-in-out`}
           >
@@ -274,29 +274,38 @@ export default function MediaBlock({
         )}
 
         <div
-          className={`p-3 hidden md:flex flex-col justify-between absolute inset-0 bg-neutral-900/70 opacity-0 group-hover/media:opacity-100 transition-opacity duration-300`}
+          className={`p-3 hidden md:flex flex-col justify-between absolute inset-0 bg-neutral-900/70 opacity-0 group-hover/media:opacity-100 transition-opacity duration-500`}
         >
           <div className="w-full">
             <h3 className="text-base font-semibold">{data.title}</h3>
             {data.releaseYear && (
-              <p className="text-sm text-neutral-400">{data.releaseYear}</p>
+              <p className="text-sm font-medium text-neutral-400">
+                {data.releaseYear}
+              </p>
             )}
           </div>
 
-          {user && !showCollections && (
-            <div
-              className={`my-2 flex justify-center items-center gap-2 transition-all duration-300 ease-in-out`}
-            >
-              <button
-                onClick={handleShowCollections}
-                className={`p-3 flex justify-center items-center gap-1 w-full bg-lime-400 hover:scale-105 rounded text-xs text-neutral-900 transition-all duration-300 ease-in-out`}
-                disabled={loading}
-              >
-                <IconSquarePlus size={20} />
-                <span>Add to Collection</span>
-              </button>
+          <div className={`flex flex-col gap-2`}>
+            <div className={`flex gap-2 text-xs`}>
+              <img src={`/tmdb-logo.svg`} className={`w-6`} />
+              <p>{data.tmdbRating.toFixed(1)}</p>
             </div>
-          )}
+
+            {isUser && !showCollections && (
+              <div
+                className={`mb-2 flex justify-center items-center gap-2 transition-all duration-300 ease-in-out`}
+              >
+                <button
+                  onClick={handleShowCollections}
+                  className={`p-3 flex justify-center items-center gap-1 w-full bg-lime-400 hover:scale-105 rounded text-xs text-neutral-900 transition-all duration-300 ease-in-out`}
+                  disabled={loading}
+                >
+                  <IconSquarePlus size={20} />
+                  <span>Add to Collection</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

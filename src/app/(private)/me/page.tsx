@@ -3,17 +3,17 @@ import { createClient } from "@/src/utils/supabase/server";
 
 export default async function MeRedirectPage() {
   const supabase = await createClient();
-  const { data: user, error } = await supabase.auth.getUser();
+  const { data: user, error } = await supabase.auth.getClaims();
 
   // If no user is found, redirect to auth portal
-  if (error || !user || !user.user) {
+  if (error || !user) {
     redirect("/auth/portal");
   }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("username")
-    .eq("id", user.user.id)
+    .eq("id", user.claims.sub)
     .single();
 
   if (!profile) {

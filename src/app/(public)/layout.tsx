@@ -20,18 +20,20 @@ export default async function PublicLayout({
 }) {
   // Supabase
   const supabase = await createClient();
-  const { data: user } = await supabase.auth.getUser();
+  const { data: user } = await supabase.auth.getClaims();
 
   let profile = null;
-  if (user && user.user) {
+  if (user) {
     const { data } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user.user.id)
+      .eq("id", user.claims.sub)
       .single();
 
     profile = data;
   }
+
+  const isUser = !!user;
 
   return (
     <>
@@ -46,7 +48,7 @@ export default async function PublicLayout({
             href: "/how-it-works",
           },
         ]}
-        user={user.user}
+        isUser={isUser}
         profile={profile}
       />
 

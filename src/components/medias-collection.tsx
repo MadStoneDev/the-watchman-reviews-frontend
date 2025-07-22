@@ -90,8 +90,8 @@ export default function MediasCollection({
       setLoading(true);
 
       try {
-        const { data: userData } = await supabase.auth.getUser();
-        const currentUserId = userData?.user?.id;
+        const { data: userData } = await supabase.auth.getClaims();
+        const currentUserId = userData?.claims?.sub;
 
         const { data: mediaEntries } = await supabase
           .from("medias_collections")
@@ -302,8 +302,8 @@ export default function MediasCollection({
     setMessage("");
 
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const currentUserId = userData?.user?.id;
+      const { data: userData } = await supabase.auth.getClaims();
+      const currentUserId = userData?.claims?.sub;
 
       if (!currentUserId) {
         setStatus("error");

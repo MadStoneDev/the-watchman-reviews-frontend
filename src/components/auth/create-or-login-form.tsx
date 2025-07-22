@@ -6,6 +6,19 @@ import { IconCheck, IconMail } from "@tabler/icons-react";
 import { handleAuth, verifyOtp } from "@/src/app/(auth)/auth/portal/actions";
 import OTPInput from "@/src/components/otp-input";
 
+// reCAPTCHA types
+declare global {
+  interface Window {
+    grecaptcha: {
+      ready: (callback: () => void) => void;
+      execute: (
+        siteKey: string,
+        options: { action: string },
+      ) => Promise<string>;
+    };
+  }
+}
+
 export default function CreateOrLoginForm() {
   const router = useRouter();
   // States
@@ -16,10 +29,50 @@ export default function CreateOrLoginForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [otp, setOtp] = useState("");
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
   });
+
+  // Check if reCAPTCHA is loaded
+  useEffect(() => {
+    const checkRecaptcha = () => {
+      if (typeof window !== "undefined" && window.grecaptcha) {
+        window.grecaptcha.ready(() => {
+          setRecaptchaLoaded(true);
+        });
+      } else {
+        // Retry after a short delay if reCAPTCHA hasn't loaded yet
+        setTimeout(checkRecaptcha, 100);
+      }
+    };
+
+    checkRecaptcha();
+  }, []);
+
+  // Get reCAPTCHA token
+  const getRecaptchaToken = async (action: string): Promise<string | null> => {
+    if (!recaptchaLoaded || !window.grecaptcha) {
+      console.warn("reCAPTCHA not loaded yet");
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      window.grecaptcha.ready(async () => {
+        try {
+          const token = await window.grecaptcha.execute(
+            process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!,
+            { action },
+          );
+          resolve(token);
+        } catch (error) {
+          console.error("reCAPTCHA failed:", error);
+          resolve(null);
+        }
+      });
+    });
+  };
 
   // Functions
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,11 +111,23 @@ export default function CreateOrLoginForm() {
     setIsSubmitting(true);
     setServerError(null);
 
-    // Create FormData object
-    const formDataObj = new FormData();
-    formDataObj.append("email", formData.email);
-
     try {
+      // Get reCAPTCHA token
+      const recaptchaToken = await getRecaptchaToken("login");
+
+      if (!recaptchaToken) {
+        setServerError(
+          "Security check failed. Please refresh the page and try again.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Create FormData object
+      const formDataObj = new FormData();
+      formDataObj.append("email", formData.email);
+      formDataObj.append("recaptcha-token", recaptchaToken);
+
       const response = await handleAuth(formDataObj);
 
       if (!response.success) {
@@ -100,9 +165,21 @@ export default function CreateOrLoginForm() {
     setServerError(null);
 
     try {
+      // Get reCAPTCHA token for OTP verification
+      const recaptchaToken = await getRecaptchaToken("verify_otp");
+
+      if (!recaptchaToken) {
+        setServerError(
+          "Security check failed. Please refresh the page and try again.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       const formDataObj = new FormData();
       formDataObj.append("email", formData.email);
       formDataObj.append("otp", otp);
+      formDataObj.append("recaptcha-token", recaptchaToken);
 
       const response = await verifyOtp(formDataObj);
 
@@ -265,10 +342,37 @@ export default function CreateOrLoginForm() {
           className={`p-3 rounded-lg bg-lime-400 text-neutral-900 font-bold ${
             isSubmitting ? "opacity-70" : ""
           }`}
-          disabled={!isValidEmail || isSubmitting}
+          disabled={!isValidEmail || isSubmitting || !recaptchaLoaded}
         >
-          {isSubmitting ? "Sending..." : "Get Access"}
+          {isSubmitting
+            ? "Sending..."
+            : !recaptchaLoaded
+              ? "Loading..."
+              : "Get Access"}
         </button>
+
+        {/* reCAPTCHA disclaimer */}
+        <p className="text-xs text-center text-neutral-500 mt-2">
+          This site is protected by reCAPTCHA and the Google{" "}
+          <a
+            href="https://policies.google.com/privacy"
+            className="text-lime-400 underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Privacy Policy
+          </a>{" "}
+          and{" "}
+          <a
+            href="https://policies.google.com/terms"
+            className="text-lime-400 underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Terms of Service
+          </a>{" "}
+          apply.
+        </p>
       </form>
     </>
   );

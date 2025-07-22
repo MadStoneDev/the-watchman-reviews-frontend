@@ -86,8 +86,10 @@ export const UserCollectionRow = ({
 
   return (
     <article
-      className={`flex items-center gap-2 p-2 ${
-        isEditing || showDeleteConfirm ? "bg-neutral-100" : ""
+      className={`group flex items-center gap-3 p-2 ${
+        isEditing || showDeleteConfirm
+          ? "bg-neutral-100"
+          : "hover:bg-neutral-700"
       } rounded-md transition-all duration-300 ease-in-out`}
     >
       {showDeleteConfirm ? (
@@ -160,25 +162,27 @@ export const UserCollectionRow = ({
             <>
               <Link
                 href={`/collections/${collection.id}`}
-                className={`flex-grow hover:text-lime-400 transition-all duration-300 ease-in-out`}
+                className={`flex-grow flex items-center h-10 hover:text-lime-400 transition-all duration-300 ease-in-out`}
               >
                 {collection.title}
               </Link>
               {canEdit && (
-                <>
+                <div
+                  className={`flex text-neutral-600 group-hover:text-neutral-400`}
+                >
                   <button
                     onClick={handleEdit}
-                    className={`p-1 text-neutral-600 hover:bg-lime-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+                    className={`p-1 grid place-content-center w-10 h-10 hover:bg-lime-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
                   >
                     <IconPencil size={20} />
                   </button>
                   <button
                     onClick={handleDelete}
-                    className={`p-1 text-neutral-600 hover:bg-red-600 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+                    className={`p-1 grid place-content-center w-10 h-10 hover:bg-red-600 hover:text-neutral-50 rounded transition-all duration-300 ease-in-out`}
                   >
                     <IconTrash size={20} />
                   </button>
-                </>
+                </div>
               )}
             </>
           )}

@@ -47,10 +47,10 @@ export default function CollectionItem({
   // Check if this media is marked as watched by the current user
   useEffect(() => {
     const checkWatchStatus = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) return;
+      const { data: userData } = await supabase.auth.getClaims();
+      if (!userData) return;
 
-      const userId = userData.user.id;
+      const userId = userData.claims.sub;
 
       const { data: watchData } = await supabase
         .from("media_watches")
@@ -97,10 +97,10 @@ export default function CollectionItem({
   const handleWatchToggle = async () => {
     setIsUpdatingWatch(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) return;
+      const { data: userData } = await supabase.auth.getClaims();
+      if (!userData) return;
 
-      const userId = userData.user.id;
+      const userId = userData.claims.sub;
 
       if (isWatched) {
         await supabase

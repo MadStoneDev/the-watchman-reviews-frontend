@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     " themes, language, and values.",
 };
 
-const fetchCollections = async (user: User | null) => {
+const fetchCollections = async (user: string | null) => {
   // Supabase
   const supabase = await createClient();
 
@@ -27,7 +27,7 @@ const fetchCollections = async (user: User | null) => {
       const { data: ownedCollections } = await supabase
         .from("collections")
         .select("*")
-        .eq("owner", user.id);
+        .eq("owner", user);
 
       if (ownedCollections) {
         cleanOwnedCollections = ownedCollections.map((collection) => ({
@@ -46,7 +46,7 @@ const fetchCollections = async (user: User | null) => {
       const { data: sharedCollectionsIds } = await supabase
         .from("shared_collection")
         .select("collection_id")
-        .eq("user_id", user.id);
+        .eq("user_id", user);
 
       if (sharedCollectionsIds && sharedCollectionsIds.length > 0) {
         const collectionIds = sharedCollectionsIds.map(
@@ -79,20 +79,21 @@ const fetchCollections = async (user: User | null) => {
 
 export default async function SearchPage() {
   const supabase = await createClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getClaims();
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", userData?.user?.id)
+    .eq("id", userData?.claims?.sub)
     .single();
 
-  const user = userData?.user || null;
+  const isUser = !!userData;
+
   let ownedCollections: MediaCollection[] = [];
   let sharedCollections: MediaCollection[] = [];
 
-  if (user) {
+  if (isUser) {
     const { cleanOwnedCollections, cleanSharedCollections } =
-      await fetchCollections(user);
+      await fetchCollections(userData.claims.sub);
     ownedCollections = cleanOwnedCollections;
     sharedCollections = cleanSharedCollections;
   }
@@ -108,7 +109,7 @@ export default async function SearchPage() {
 
         <Suspense fallback={<SearchSkeletonBoundary />}>
           <SearchWrapper
-            user={user}
+            isUser={isUser}
             profile={profile}
             ownedCollections={ownedCollections}
             sharedCollections={sharedCollections}

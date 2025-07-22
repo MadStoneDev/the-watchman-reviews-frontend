@@ -11,13 +11,14 @@ export default async function UserCollectionsPage({
 }) {
   const { username } = params;
 
+  const startTime = Date.now();
+  let loading = true;
+
   // Supabase
   const supabase = await createClient();
 
   // Get current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: user } = await supabase.auth.getClaims();
 
   // Get profile for the username in the URL
   const { data: urlProfile } = await supabase
@@ -32,18 +33,20 @@ export default async function UserCollectionsPage({
   }
 
   // Check if this is the current user's profile
-  const isCurrentUser = user?.id === urlProfile?.id;
+  const isCurrentUser = user?.claims.sub === urlProfile?.id;
   let currentUserProfile = isCurrentUser ? urlProfile : null;
 
   if (user && !isCurrentUser) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", user.claims.sub)
       .single();
 
     currentUserProfile = profile;
   }
+
+  loading = false;
 
   return (
     <>
@@ -62,11 +65,15 @@ export default async function UserCollectionsPage({
         </h1>
       </section>
 
-      <UserCollections
-        userProfile={urlProfile}
-        currentUserProfile={currentUserProfile}
-        isCurrentUser={isCurrentUser}
-      />
+      {loading ? (
+        <div className="my-4">Loading collections...</div>
+      ) : (
+        <UserCollections
+          userProfile={urlProfile}
+          currentUserProfile={currentUserProfile}
+          isCurrentUser={isCurrentUser}
+        />
+      )}
     </>
   );
 }
