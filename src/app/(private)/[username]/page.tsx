@@ -5,8 +5,6 @@ import { createClient } from "@/src/utils/supabase/server";
 
 import BrowseNavigation from "@/src/components/browse-navigation";
 import EditableUsername from "@/src/components/editable-username";
-import { lookupProfileRole } from "@/src/data/lookup-profile-role";
-import MediaPreferenceBlock from "@/src/components/media-preference-block";
 
 export default async function PrivatePage({
   params,
