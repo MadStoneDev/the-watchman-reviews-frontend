@@ -10,6 +10,7 @@
     "update-types": "supabase gen types typescript --project-id hzeqhfthqrlkprvcizkg > src/types/supabase.ts"
   },
   "dependencies": {
+    "@dnd-kit/sortable": "^10.0.0",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@hello-pangea/dnd": "^18.0.1",
