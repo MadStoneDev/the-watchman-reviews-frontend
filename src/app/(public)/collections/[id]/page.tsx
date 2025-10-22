@@ -24,15 +24,13 @@ const fetchCollection = async (id: string) => {
 // This function will only be used for initial SSR rendering
 // The client component will handle further data fetching
 const fetchInitialMedia = async (id: string) => {
-  // Supabase
   const supabase = await createClient();
 
   const { data: mediaEntries } = await supabase
     .from("medias_collections")
     .select("*")
     .eq("collection_id", id)
-    .order("position", { ascending: true })
-    .order("created_at", { ascending: false });
+    .order("position", { ascending: true });
 
   if (mediaEntries && mediaEntries.length > 0) {
     const movieIds = mediaEntries
@@ -56,8 +54,6 @@ const fetchInitialMedia = async (id: string) => {
             (e) => e.media_id === movie.id && e.media_type === "movie",
           );
 
-          console.log(entry);
-
           return {
             id: movie.id,
             title: movie.title,
@@ -69,6 +65,7 @@ const fetchInitialMedia = async (id: string) => {
             releaseYear: movie.release_year,
             collectionEntryId: entry?.id,
             mediaId: movie.id,
+            position: entry?.position ?? 0, // ADD THIS LINE
           };
         });
 
@@ -88,8 +85,6 @@ const fetchInitialMedia = async (id: string) => {
             (e) => e.media_id === series.id && e.media_type === "tv",
           );
 
-          console.log(entry);
-
           return {
             id: series.id,
             title: series.title,
@@ -99,8 +94,9 @@ const fetchInitialMedia = async (id: string) => {
             tmdbId: series.tmdb_id,
             mediaType: "tv",
             releaseYear: series.release_year,
-            collectionEntryId: entry?.id, // Add this for deletion reference
+            collectionEntryId: entry?.id,
             mediaId: series.id,
+            position: entry?.position ?? 0,
           };
         });
 
@@ -108,7 +104,12 @@ const fetchInitialMedia = async (id: string) => {
       }
     }
 
-    return mediaItems;
+    // ADD THIS: Sort by position after combining
+    const sortedMediaItems = mediaItems.sort(
+      (a, b) => (a.position ?? 0) - (b.position ?? 0),
+    );
+
+    return sortedMediaItems; // Return sorted items
   }
 
   return [];

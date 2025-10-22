@@ -137,6 +137,12 @@ export default function UserCollectionsBlock({
           throw new Error(ownedError.message);
         }
 
+        // Get first media item for each owned collection
+        // Get first media item for each owned collection
+        const ownedCollectionIds = ownedCollections?.map((c) => c.id) || [];
+        const { posterMap: ownedPostersMap, countMap: ownedCountMap } =
+          await fetchCollectionPosters(ownedCollectionIds);
+
         const cleanOwnedCollections: MediaCollection[] = (
           ownedCollections || []
         ).map((collection) => ({
@@ -145,6 +151,8 @@ export default function UserCollectionsBlock({
           owner: collection.owner,
           is_public: collection.is_public,
           shared: false,
+          backdrop_path: ownedPostersMap.get(collection.id) || null,
+          item_count: ownedCountMap.get(collection.id) || 0,
         }));
 
         allCollections = [...cleanOwnedCollections];
@@ -174,6 +182,10 @@ export default function UserCollectionsBlock({
               throw new Error(collectionsError.message);
             }
 
+            // Get first media item for each shared collection
+            const { posterMap: sharedPostersMap, countMap: sharedCountMap } =
+              await fetchCollectionPosters(sharedCollectionIds);
+
             const cleanSharedCollections: MediaCollection[] = (
               sharedCollections || []
             ).map((collection) => ({
@@ -182,6 +194,8 @@ export default function UserCollectionsBlock({
               owner: collection.owner,
               is_public: collection.is_public,
               shared: true,
+              backdrop_path: sharedPostersMap.get(collection.id) || null,
+              item_count: sharedCountMap.get(collection.id) || 0,
             }));
 
             allCollections = [...allCollections, ...cleanSharedCollections];
@@ -196,6 +210,175 @@ export default function UserCollectionsBlock({
         );
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchCollectionPosters = async (
+      collectionIds: string[],
+    ): Promise<{
+      posterMap: Map<string, string>;
+      countMap: Map<string, number>;
+    }> => {
+      if (collectionIds.length === 0) {
+        return { posterMap: new Map(), countMap: new Map() };
+      }
+
+      // Get all media items from collections (ordered by position)
+      const { data: mediaItems, error } = await supabase
+        .from("medias_collections")
+        .select("collection_id, media_id, media_type, position")
+        .in("collection_id", collectionIds)
+        .order("position", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching media items:", error);
+        return { posterMap: new Map(), countMap: new Map() };
+      }
+
+      // Count items per collection
+      const countMap = new Map<string, number>();
+      collectionIds.forEach((id) => countMap.set(id, 0));
+
+      mediaItems?.forEach((item) => {
+        const currentCount = countMap.get(item.collection_id) || 0;
+        countMap.set(item.collection_id, currentCount + 1);
+      });
+
+      // Get only the first item per collection for poster
+      const firstMediaPerCollection = new Map<string, (typeof mediaItems)[0]>();
+      mediaItems?.forEach((item) => {
+        if (!firstMediaPerCollection.has(item.collection_id)) {
+          firstMediaPerCollection.set(item.collection_id, item);
+        }
+      });
+
+      // Separate movie and TV IDs
+      const movieIds: number[] = [];
+      const seriesIds: number[] = [];
+      const mediaTypeMap = new Map<
+        Number,
+        { collectionId: string; type: string }
+      >();
+
+      firstMediaPerCollection.forEach((item, collectionId) => {
+        if (item.media_type === "movie") {
+          movieIds.push(item.media_id);
+          mediaTypeMap.set(item.media_id, { collectionId, type: "movie" });
+        } else if (item.media_type === "tv") {
+          seriesIds.push(item.media_id);
+          mediaTypeMap.set(item.media_id, { collectionId, type: "tv" });
+        }
+      });
+
+      const posterMap = new Map<string, string>();
+
+      // Fetch movie posters
+      if (movieIds.length > 0) {
+        const { data: movies } = await supabase
+          .from("movies")
+          .select("id, backdrop_path, tmdb_id")
+          .in("id", movieIds);
+
+        for (const movie of movies || []) {
+          const mediaInfo = mediaTypeMap.get(movie.id);
+          if (!mediaInfo) continue;
+
+          if (movie.backdrop_path) {
+            posterMap.set(mediaInfo.collectionId, movie.backdrop_path);
+          } else if (movie.tmdb_id) {
+            const backdropPath = await fetchAndUpdateBackdrop(
+              movie.tmdb_id,
+              "movie",
+              movie.id,
+            );
+            if (backdropPath) {
+              posterMap.set(mediaInfo.collectionId, backdropPath);
+            }
+          }
+        }
+      }
+
+      // Fetch series posters
+      if (seriesIds.length > 0) {
+        const { data: series } = await supabase
+          .from("series")
+          .select("id, backdrop_path, tmdb_id")
+          .in("id", seriesIds);
+
+        for (const show of series || []) {
+          const mediaInfo = mediaTypeMap.get(show.id);
+          if (!mediaInfo) continue;
+
+          if (show.backdrop_path) {
+            posterMap.set(mediaInfo.collectionId, show.backdrop_path);
+          } else if (show.tmdb_id) {
+            const backdropPath = await fetchAndUpdateBackdrop(
+              show.tmdb_id,
+              "tv",
+              show.id,
+            );
+            if (backdropPath) {
+              posterMap.set(mediaInfo.collectionId, backdropPath);
+            }
+          }
+        }
+      }
+
+      return { posterMap, countMap };
+    };
+
+    // Helper function to fetch backdrop from TMDB and update database
+    const fetchAndUpdateBackdrop = async (
+      tmdbId: number,
+      mediaType: "movie" | "tv",
+      recordId: number,
+    ): Promise<string | null> => {
+      try {
+        const options = {
+          method: "GET",
+          url:
+            mediaType === "movie"
+              ? `https://api.themoviedb.org/3/movie/${tmdbId}`
+              : `https://api.themoviedb.org/3/tv/${tmdbId}`,
+          params: {
+            language: "en-US",
+          },
+          headers: {
+            accept: "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+          },
+        };
+
+        const response = await fetch(
+          options.url + "?" + new URLSearchParams(options.params),
+          {
+            method: options.method,
+            headers: options.headers,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(`TMDB API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const backdropPath = data.backdrop_path;
+
+        if (backdropPath) {
+          // Update the database with the fetched backdrop_path
+          const tableName = mediaType === "movie" ? "movies" : "series";
+          await supabase
+            .from(tableName)
+            .update({ backdrop_path: backdropPath })
+            .eq("id", recordId);
+
+          return backdropPath;
+        }
+
+        return null;
+      } catch (error) {
+        console.error(`Error fetching backdrop from TMDB:`, error);
+        return null;
       }
     };
 
@@ -229,7 +412,7 @@ export default function UserCollectionsBlock({
             : "This user doesn't have a ny public collections."}
         </div>
       ) : (
-        <section className="my-4 space-y-2">
+        <section className="my-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           {collections.map((collection) => (
             <UserCollectionRow
               key={collection.id}

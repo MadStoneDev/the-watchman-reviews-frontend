@@ -10,8 +10,10 @@ import {
   IconDeviceTv,
   IconChairDirector,
   IconEye,
-  IconLineHeight,
+  IconEyeOff,
   IconUsersGroup,
+  IconGripVertical,
+  IconExternalLink,
 } from "@tabler/icons-react";
 
 import { MediaItem } from "@/src/lib/types";
@@ -25,7 +27,8 @@ interface CollectionMediaItemProps {
   isOwner?: boolean;
   onDelete: () => void;
   onWatchToggle?: () => void;
-  dragHandleProps?: DraggableProvidedDragHandleProps | null;
+  dragHandleProps?: any;
+  dragAttributes?: any;
 }
 
 export default function CollectionItem({
@@ -35,6 +38,7 @@ export default function CollectionItem({
   onDelete,
   onWatchToggle,
   dragHandleProps,
+  dragAttributes,
 }: CollectionMediaItemProps) {
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -149,7 +153,7 @@ export default function CollectionItem({
       const allUserIds = [
         collectionData?.owner,
         ...(sharedData?.map((item) => item.user_id) || []),
-      ].filter(Boolean);
+      ].filter(Boolean) as string[];
 
       if (isWatchedByAll) {
         await supabase
@@ -159,14 +163,16 @@ export default function CollectionItem({
           .eq("media_id", data.id)
           .eq("media_type", data.mediaType)
           .in("user_id", allUserIds);
+
+        setIsWatchedByAll(false);
+        setIsWatched(false);
       } else {
         const { data: existingWatches } = await supabase
           .from("media_watches")
           .select("user_id")
           .eq("collection_id", collectionId)
           .eq("media_id", data.id)
-          .eq("media_type", data.mediaType)
-          .in("user_id", allUserIds);
+          .eq("media_type", data.mediaType);
 
         const existingUserIds =
           existingWatches?.map((watch) => watch.user_id) || [];
@@ -185,10 +191,10 @@ export default function CollectionItem({
 
           await supabase.from("media_watches").insert(watchRecords);
         }
-      }
 
-      setIsWatchedByAll(!isWatchedByAll);
-      setIsWatched(!isWatchedByAll);
+        setIsWatchedByAll(true);
+        setIsWatched(true);
+      }
 
       if (onWatchToggle) onWatchToggle();
     } catch (error) {
@@ -200,119 +206,141 @@ export default function CollectionItem({
 
   return (
     <div
-      className={`flex items-center p-3 border ${
-        isWatched
-          ? "bg-lime-800 hover:bg-lime-700 border-lime-400 hover:border-lime-500"
-          : "border-neutral-800 hover:border-neutral-600"
-      } rounded transition-all duration-300 ease-in-out`}
+      className="group relative bg-neutral-900 h-full rounded-lg overflow-hidden border border-neutral-800 hover:border-neutral-700 transition-all duration-300"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Drag Handle */}
+      {/* Watched Overlay */}
+      {isWatched && (
+        <div className="absolute inset-0 bg-lime-500/10 z-10 pointer-events-none" />
+      )}
+
+      {/* Drag Handle - Top Left */}
       <div
-        className={`cursor-grab active:cursor-grabbing mr-2 ${
-          isWatched
-            ? "text-neutral-50/50 hover:text-neutral-50"
-            : "text-neutral-500" + " hover:text-neutral-300"
-        } transition-all duration-300 ease-in-out`}
+        className="absolute top-2 left-2 z-20 p-1.5 bg-neutral-900/80 backdrop-blur-sm rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
         {...dragHandleProps}
+        {...dragAttributes}
       >
-        <IconLineHeight size={20} />
+        <IconGripVertical size={16} className="text-neutral-400" />
       </div>
 
-      {/* Image */}
-      <div
-        className={`h-20 w-14 shrink-0 mr-3 bg-neutral-800 rounded overflow-hidden flex items-center justify-center`}
-      >
+      {/* Watch Status Badge - Top Right */}
+      {isWatched && (
+        <div className="absolute top-2 right-2 z-20 px-2 py-1 bg-lime-500 rounded-full flex items-center gap-1">
+          <IconEye size={14} className="text-neutral-900" />
+          <span className="text-xs font-medium text-neutral-900">Watched</span>
+        </div>
+      )}
+
+      {/* Poster Image */}
+      <div className="relative aspect-[2/3] bg-neutral-800">
         {data.posterPath && !imageError ? (
           <Image
             src={
               data.posterPath.startsWith("http")
                 ? data.posterPath
-                : `https://image.tmdb.org/t/p/w92${data.posterPath}`
+                : `https://image.tmdb.org/t/p/w342${data.posterPath}`
             }
             alt={data.title}
-            width={100}
-            height={200}
-            className={`object-cover object-center w-full h-full ${
-              isWatched ? "opacity-80" : "opacity-100"
-            }`}
+            fill
+            className={`object-cover ${
+              isWatched ? "opacity-60" : "opacity-100"
+            } transition-opacity`}
             onError={() => setImageError(true)}
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
-        ) : data.mediaType === "movie" ? (
-          <IconChairDirector size={20} className="text-neutral-500" />
         ) : (
-          <IconDeviceTv size={20} className="text-neutral-500" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            {data.mediaType === "movie" ? (
+              <IconChairDirector size={48} className="text-neutral-700" />
+            ) : (
+              <IconDeviceTv size={48} className="text-neutral-700" />
+            )}
+          </div>
         )}
+
+        {/* Hover Overlay with Actions */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/60 to-transparent flex flex-col justify-end p-3 transition-opacity ${
+            isHovered ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="flex justify-between items-center gap-2 mb-2">
+            {/* Watch Toggle */}
+            <button
+              onClick={handleWatchToggle}
+              disabled={isUpdatingWatch}
+              className={`py-2 px-3 rounded-lg transition-colors ${
+                isWatched
+                  ? "bg-lime-500 text-neutral-900 hover:bg-lime-400"
+                  : "bg-neutral-800/80 text-neutral-200 hover:bg-neutral-700"
+              } ${isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""}`}
+              title={isWatched ? "Mark as unwatched" : "Mark as watched"}
+            >
+              {isWatched ? (
+                <IconEyeOff size={18} className="mx-auto" />
+              ) : (
+                <IconEye size={18} className="mx-auto" />
+              )}
+            </button>
+
+            {/* Watch All Toggle (Owner Only) */}
+            {isOwner && (
+              <button
+                onClick={handleWatchAllToggle}
+                disabled={isUpdatingWatch}
+                className={`py-2 px-3 rounded-lg transition-colors ${
+                  isWatchedByAll
+                    ? "bg-lime-500 text-neutral-900 hover:bg-lime-400"
+                    : "bg-neutral-800/80 text-neutral-200 hover:bg-neutral-700"
+                } ${isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""}`}
+                title={isWatchedByAll ? "Unwatch for all" : "Watch for all"}
+              >
+                <IconUsersGroup size={18} />
+              </button>
+            )}
+
+            {/* Delete Button (Owner Only) */}
+            {isOwner && (
+              <button
+                onClick={onDelete}
+                className="py-2 px-3 bg-red-600/80 text-neutral-50 hover:bg-red-600 rounded-lg transition-colors"
+                title="Remove from collection"
+              >
+                <IconTrash size={18} />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Content */}
-      <div className="flex-grow">
+      <div className="p-3">
         <Link
           href={`https://www.themoviedb.org/${data.mediaType}/${data.tmdbId}`}
           target="_blank"
-          className={`text-base font-medium hover:text-lime-400 transition-all duration-300 ease-in-out ${
-            isWatched ? "text-lime-400/50" : ""
-          }`}
+          className="group/link flex items-start gap-1 mb-1"
         >
-          {data.title}
+          <h3
+            className={`text-sm font-medium line-clamp-2 group-hover/link:text-lime-400 transition-colors ${
+              isWatched ? "text-neutral-400" : "text-neutral-100"
+            }`}
+          >
+            {data.title}
+          </h3>
+          <IconExternalLink
+            size={14}
+            className="text-neutral-600 group-hover/link:text-lime-400 transition-colors shrink-0 mt-0.5"
+          />
         </Link>
         {data.releaseYear && (
-          <div
-            className={`${
-              isWatched ? "text-neutral-50/30" : "text-neutral-600"
-            } text-sm`}
+          <p
+            className={`text-xs ${
+              isWatched ? "text-neutral-600" : "text-neutral-500"
+            }`}
           >
             {data.releaseYear}
-          </div>
-        )}
-      </div>
-
-      {/* Action Buttons */}
-      <div
-        className={`flex items-center gap-2 ${
-          isHovered ? "opacity-100" : "md:opacity-0"
-        }`}
-      >
-        {/* Watch Toggle Button */}
-        <button
-          onClick={handleWatchToggle}
-          disabled={isUpdatingWatch}
-          className={`p-2 transition-colors ${
-            isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""
-          } text-neutral-50 hover:text-lime-400`}
-          title={isWatched ? "Mark as unwatched" : "Mark as watched"}
-        >
-          <IconEye size={20} />
-        </button>
-
-        {/* Watch All Toggle Button (for owners only) */}
-        {isOwner && (
-          <button
-            onClick={handleWatchAllToggle}
-            disabled={isUpdatingWatch}
-            className={`p-2 transition-colors ${
-              isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""
-            } text-neutral-50 hover:text-lime-400`}
-            title={
-              isWatchedByAll
-                ? "Mark as unwatched by all"
-                : "Mark as watched by all"
-            }
-          >
-            <IconUsersGroup size={20} />
-          </button>
-        )}
-
-        {/* Delete Button */}
-        {isOwner && (
-          <button
-            onClick={onDelete}
-            className={`p-2 text-neutral-50 hover:bg-red-700 rounded-full transition-all duration-300 ease-in-out`}
-            title="Remove from collection"
-          >
-            <IconTrash size={20} />
-          </button>
+          </p>
         )}
       </div>
     </div>

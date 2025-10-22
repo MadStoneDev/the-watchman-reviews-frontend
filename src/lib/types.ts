@@ -4,13 +4,15 @@ export type ProfileRole = {
 };
 
 // Media
-export type MediaCollection = {
+export interface MediaCollection {
   id: string;
   title: string;
   owner: string;
   is_public: boolean;
-  shared?: boolean;
-};
+  shared: boolean;
+  backdrop_path?: string | null;
+  item_count?: number;
+}
 
 export type MediaSearchResult = {
   title: string;
@@ -30,13 +32,16 @@ export interface Genre {
 }
 
 export interface MediaItem {
-  id: string;
+  id: number;
   title: string;
-  overview: string;
-  posterPath: string;
-  backdropPath: string;
+  overview?: string;
+  posterPath?: string;
+  backdropPath?: string;
   tmdbId: number;
-  mediaType: string;
-  releaseYear: string;
+  mediaType: "movie" | "tv";
+  releaseYear?: number;
+  collectionEntryId?: string;
+  mediaId?: number;
+  position?: number; // Add this
   existsInDb?: boolean;
 }

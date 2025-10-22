@@ -71,8 +71,6 @@ export default async function MediaPage(searchParams: SearchParams) {
   await axios
     .request(options)
     .then(function (response) {
-      console.log(response.data);
-
       mediaData = {
         id: response.data.id,
         title: response.data.title || response.data.name,
@@ -90,6 +88,5 @@ export default async function MediaPage(searchParams: SearchParams) {
       console.error(error);
     });
 
-  console.log(mediaData);
   return mediaData && <SingleMediaWrapper mediaData={mediaData} />;
 }
