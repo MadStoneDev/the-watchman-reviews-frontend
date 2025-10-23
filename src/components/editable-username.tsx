@@ -215,7 +215,9 @@ export default function EditableUsername({
       ) : (
         <article className={`flex items-center gap-2`}>
           <h1 className={`text-2xl sm:3xl md:text-4xl font-bold`}>
-            Hi {username}!
+            {isCurrentUserProfile && "Hi "}
+            {username}
+            {isCurrentUserProfile ? "!" : "'s Profile"}
           </h1>
           {canEdit ? (
             <button

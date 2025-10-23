@@ -52,12 +52,19 @@ export default async function PrivatePage({
     <>
       <BrowseNavigation
         items={[
-          { label: "Account", href: `/${profileData.username}` },
+          {
+            label: `${
+              profileData.id === user.claims.sub ? "Account" : "Profile"
+            }`,
+            href: `/${profileData.username}`,
+          },
           {
             label: "Collections",
             href: `/${profileData.username}/collections`,
           },
         ]}
+        profileId={profileData.id}
+        currentUserId={user.claims.sub}
       />
 
       <section

@@ -12,8 +12,12 @@ interface NavigationItem {
 
 export default function BrowseNavigation({
   items = [],
+  profileId,
+  currentUserId,
 }: {
   items?: NavigationItem[];
+  profileId: string;
+  currentUserId: string;
 }) {
   // Hooks
   const pathname = usePathname();
