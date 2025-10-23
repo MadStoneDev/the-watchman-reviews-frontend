@@ -56,6 +56,8 @@ export default function MediasCollection({
     }),
   );
 
+  const handleWatchToggle = (mediaId: string) => {};
+
   const refetchMedias = async () => {
     setLoading(true);
     try {
@@ -233,7 +235,7 @@ export default function MediasCollection({
             )}
             strategy={rectSortingStrategy}
           >
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {medias.map((media) => (
                 <SortableCollectionItem
                   key={media.collectionEntryId || media.id}
@@ -241,7 +243,8 @@ export default function MediasCollection({
                   collectionId={collection.id}
                   isOwner={isOwner}
                   onDelete={() => handleDelete(media.collectionEntryId!)}
-                  onWatchToggle={refetchMedias}
+                  // onWatchToggle={refetchMedias}
+                  onWatchToggle={() => handleWatchToggle(media.id.toString())}
                 />
               ))}
             </div>

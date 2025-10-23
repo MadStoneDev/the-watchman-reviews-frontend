@@ -14,6 +14,13 @@ import {
   IconUsersGroup,
   IconGripVertical,
   IconExternalLink,
+  IconCheck,
+  IconX,
+  IconChecks,
+  IconCopyX,
+  IconCopyCheck,
+  IconSquareX,
+  IconSquareCheck,
 } from "@tabler/icons-react";
 
 import { MediaItem } from "@/src/lib/types";
@@ -99,36 +106,50 @@ export default function CollectionItem({
   }, [collectionId, data.id, data.mediaType, isOwner, supabase]);
 
   const handleWatchToggle = async () => {
+    const previousWatchedState = isWatched;
+    setIsWatched(!isWatched);
     setIsUpdatingWatch(true);
+
     try {
       const { data: userData } = await supabase.auth.getClaims();
-      if (!userData) return;
+      if (!userData) {
+        setIsWatched(previousWatchedState);
+        return;
+      }
 
       const userId = userData.claims.sub;
 
-      if (isWatched) {
-        await supabase
+      if (previousWatchedState) {
+        const { error } = await supabase
           .from("media_watches")
           .delete()
           .eq("collection_id", collectionId)
           .eq("media_id", data.id)
           .eq("media_type", data.mediaType)
           .eq("user_id", userId);
+
+        if (error) throw error;
+
+        setIsWatched(false);
       } else {
-        await supabase.from("media_watches").insert({
-          collection_id: collectionId,
-          media_id: data.id,
-          media_type: data.mediaType,
-          user_id: userId,
-          watched_at: new Date().toISOString(),
-        });
+        const { data: insertedData, error } = await supabase
+          .from("media_watches")
+          .upsert({
+            collection_id: collectionId,
+            media_id: data.id,
+            media_type: data.mediaType,
+            user_id: userId,
+            watched_at: new Date().toISOString(),
+          })
+          .select();
+
+        if (error) throw error;
+
+        setIsWatched(insertedData && insertedData.length > 0);
       }
-
-      setIsWatched(!isWatched);
-
-      if (onWatchToggle) onWatchToggle();
     } catch (error) {
       console.error("Error toggling watch status:", error);
+      setIsWatched(previousWatchedState);
     } finally {
       setIsUpdatingWatch(false);
     }
@@ -137,7 +158,13 @@ export default function CollectionItem({
   const handleWatchAllToggle = async () => {
     if (!isOwner) return;
 
+    const previousWatchedByAllState = isWatchedByAll;
+    const previousWatchedState = isWatched;
+
+    setIsWatchedByAll(!isWatchedByAll);
+    setIsWatched(!isWatchedByAll);
     setIsUpdatingWatch(true);
+
     try {
       const { data: sharedData } = await supabase
         .from("shared_collection")
@@ -155,14 +182,16 @@ export default function CollectionItem({
         ...(sharedData?.map((item) => item.user_id) || []),
       ].filter(Boolean) as string[];
 
-      if (isWatchedByAll) {
-        await supabase
+      if (previousWatchedByAllState) {
+        const { error } = await supabase
           .from("media_watches")
           .delete()
           .eq("collection_id", collectionId)
           .eq("media_id", data.id)
           .eq("media_type", data.mediaType)
           .in("user_id", allUserIds);
+
+        if (error) throw error;
 
         setIsWatchedByAll(false);
         setIsWatched(false);
@@ -189,16 +218,35 @@ export default function CollectionItem({
             watched_at: new Date().toISOString(),
           }));
 
-          await supabase.from("media_watches").insert(watchRecords);
+          const { data: insertedData, error } = await supabase
+            .from("media_watches")
+            .upsert(watchRecords)
+            .select();
+
+          if (error) throw error;
+
+          const totalWatches =
+            (existingUserIds.length || 0) + (insertedData?.length || 0);
+          setIsWatchedByAll(totalWatches === allUserIds.length);
+
+          const { data: userData } = await supabase.auth.getClaims();
+          if (userData) {
+            const userId = userData.claims.sub;
+            setIsWatched(
+              existingUserIds.includes(userId) ||
+                insertedData?.some((watch) => watch.user_id === userId) ||
+                false,
+            );
+          }
+        } else {
+          setIsWatchedByAll(true);
         }
-
-        setIsWatchedByAll(true);
-        setIsWatched(true);
       }
-
-      if (onWatchToggle) onWatchToggle();
     } catch (error) {
       console.error("Error toggling watch-all status:", error);
+      // Revert on error
+      setIsWatchedByAll(previousWatchedByAllState);
+      setIsWatched(previousWatchedState);
     } finally {
       setIsUpdatingWatch(false);
     }
@@ -206,31 +254,39 @@ export default function CollectionItem({
 
   return (
     <div
-      className="group relative bg-neutral-900 h-full rounded-lg overflow-hidden border border-neutral-800 hover:border-neutral-700 transition-all duration-300"
+      className={`group relative bg-neutral-900 h-full rounded-lg overflow-hidden border ${
+        isWatched
+          ? "border-lime-500"
+          : "border-neutral-800 hover:border-neutral-700"
+      } transition-all duration-300`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Watched Overlay */}
       {isWatched && (
-        <div className="absolute inset-0 bg-lime-500/10 z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-lime-500/20 z-10 pointer-events-none" />
       )}
 
-      {/* Drag Handle - Top Left */}
-      <div
-        className="absolute top-2 left-2 z-20 p-1.5 bg-neutral-900/80 backdrop-blur-sm rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-        {...dragHandleProps}
-        {...dragAttributes}
-      >
-        <IconGripVertical size={16} className="text-neutral-400" />
-      </div>
-
-      {/* Watch Status Badge - Top Right */}
-      {isWatched && (
-        <div className="absolute top-2 right-2 z-20 px-2 py-1 bg-lime-500 rounded-full flex items-center gap-1">
-          <IconEye size={14} className="text-neutral-900" />
-          <span className="text-xs font-medium text-neutral-900">Watched</span>
+      <section className={`p-1 flex flex-row items-center justify-between`}>
+        {/* Drag Handle - Top Left */}
+        <div
+          className="relative lg:absolute lg:top-2 lg:left-2 z-20 p-1.5 bg-neutral-900/80 backdrop-blur-sm rounded cursor-grab active:cursor-grabbing opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity"
+          {...dragHandleProps}
+          {...dragAttributes}
+        >
+          <IconGripVertical size={16} className="text-neutral-400" />
         </div>
-      )}
+
+        {/* Watch Status Badge - Top Right */}
+        {isWatched && (
+          <div className="relative lg:absolute lg:top-2 lg:right-2 z-20 px-2 py-1 bg-lime-500 rounded-full flex items-center gap-1">
+            <IconEye size={14} className="text-neutral-900" />
+            <span className="text-xs font-medium text-neutral-900">
+              Watched
+            </span>
+          </div>
+        )}
+      </section>
 
       {/* Poster Image */}
       <div className="relative aspect-[2/3] bg-neutral-800">
@@ -261,26 +317,32 @@ export default function CollectionItem({
 
         {/* Hover Overlay with Actions */}
         <div
-          className={`absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/60 to-transparent flex flex-col justify-end p-3 transition-opacity ${
-            isHovered ? "opacity-100" : "opacity-0"
+          className={`absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/20 lg:via-neutral-900/60 to-transparent flex flex-col justify-end p-2 transition-opacity ${
+            isHovered ? "opacity-100" : "lg:opacity-0"
           }`}
         >
-          <div className="flex justify-between items-center gap-2 mb-2">
+          <div className="flex justify-between items-center gap-2 mb-2 z-30">
             {/* Watch Toggle */}
             <button
               onClick={handleWatchToggle}
               disabled={isUpdatingWatch}
-              className={`py-2 px-3 rounded-lg transition-colors ${
+              className={`py-2 px-2 lg:px-3 rounded-lg transition-colors ${
                 isWatched
                   ? "bg-lime-500 text-neutral-900 hover:bg-lime-400"
-                  : "bg-neutral-800/80 text-neutral-200 hover:bg-neutral-700"
+                  : "bg-neutral-700/80 text-neutral-200 hover:bg-neutral-700"
               } ${isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""}`}
               title={isWatched ? "Mark as unwatched" : "Mark as watched"}
             >
               {isWatched ? (
-                <IconEyeOff size={18} className="mx-auto" />
+                <IconSquareX
+                  size={18}
+                  className="mx-auto scale-90 lg:scale-100"
+                />
               ) : (
-                <IconEye size={18} className="mx-auto" />
+                <IconSquareCheck
+                  size={18}
+                  className="mx-auto scale-90 lg:scale-100"
+                />
               )}
             </button>
 
@@ -289,14 +351,24 @@ export default function CollectionItem({
               <button
                 onClick={handleWatchAllToggle}
                 disabled={isUpdatingWatch}
-                className={`py-2 px-3 rounded-lg transition-colors ${
+                className={`py-2 px-2 lg:px-3 rounded-lg transition-colors ${
                   isWatchedByAll
                     ? "bg-lime-500 text-neutral-900 hover:bg-lime-400"
-                    : "bg-neutral-800/80 text-neutral-200 hover:bg-neutral-700"
+                    : "bg-neutral-700/80 text-neutral-200 hover:bg-neutral-700"
                 } ${isUpdatingWatch ? "opacity-50 cursor-not-allowed" : ""}`}
                 title={isWatchedByAll ? "Unwatch for all" : "Watch for all"}
               >
-                <IconUsersGroup size={18} />
+                {isWatchedByAll ? (
+                  <IconCopyX
+                    size={18}
+                    className="mx-auto scale-90 lg:scale-100"
+                  />
+                ) : (
+                  <IconCopyCheck
+                    size={18}
+                    className="mx-auto scale-90 lg:scale-100"
+                  />
+                )}
               </button>
             )}
 
@@ -304,10 +376,13 @@ export default function CollectionItem({
             {isOwner && (
               <button
                 onClick={onDelete}
-                className="py-2 px-3 bg-red-600/80 text-neutral-50 hover:bg-red-600 rounded-lg transition-colors"
+                className="py-2 px-2 lg:px-3 bg-red-600/80 text-neutral-50 hover:bg-red-600 rounded-lg transition-colors"
                 title="Remove from collection"
               >
-                <IconTrash size={18} />
+                <IconTrash
+                  size={18}
+                  className="mx-auto scale-90 lg:scale-100"
+                />
               </button>
             )}
           </div>
@@ -319,7 +394,7 @@ export default function CollectionItem({
         <Link
           href={`https://www.themoviedb.org/${data.mediaType}/${data.tmdbId}`}
           target="_blank"
-          className="group/link flex items-start gap-1 mb-1"
+          className="group/link flex items-start justify-between gap-1 mb-1"
         >
           <h3
             className={`text-sm font-medium line-clamp-2 group-hover/link:text-lime-400 transition-colors ${
@@ -329,7 +404,7 @@ export default function CollectionItem({
             {data.title}
           </h3>
           <IconExternalLink
-            size={14}
+            size={18}
             className="text-neutral-600 group-hover/link:text-lime-400 transition-colors shrink-0 mt-0.5"
           />
         </Link>

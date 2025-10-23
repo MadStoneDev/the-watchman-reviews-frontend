@@ -41,15 +41,15 @@ export default function MainNavigation({
 
   return (
     <nav
-      className={`fixed md:top-0 bottom-0 left-0 right-0 md:right-auto px-10 pb-2 pt-5 md:p-10 min-h-[70px] md:min-h-auto md:min-w-[250px] bg-neutral-800 z-50`}
+      className={`fixed lg:top-0 bottom-0 left-0 right-0 lg:right-auto px-10 pb-2 pt-5 lg:p-10 min-h-[70px] lg:min-h-auto lg:min-w-[250px] bg-neutral-800 z-50`}
     >
       <section
-        className={`flex flex-row md:flex-col gap-10 md:gap-0 justify-center md:justify-start items-center md:items-start w-full h-full`}
+        className={`flex flex-row lg:flex-col gap-10 lg:gap-0 justify-center lg:justify-start items-center lg:items-start w-full h-full`}
       >
-        <Logo className={`hidden md:block`} />
+        <Logo className={`hidden lg:block`} />
 
         <article
-          className={`md:flex-grow md:mt-20 flex md:flex-col justify-center md:justify-start items-center md:items-start gap-10 md:gap-14`}
+          className={`lg:flex-grow lg:mt-20 flex lg:flex-col justify-center lg:justify-start items-center lg:items-start gap-10 lg:gap-14`}
         >
           {items.map(({ icon, label, href }) => (
             <Link
@@ -66,12 +66,12 @@ export default function MainNavigation({
               } font-bold transition-all duration-300 ease-in-out`}
             >
               {icon}
-              <span className={`hidden md:block`}>{label}</span>
+              <span className={`hidden lg:block`}>{label}</span>
             </Link>
           ))}
         </article>
 
-        <article className={`flex items-center gap-2 md:w-full`}>
+        <article className={`flex items-center gap-2 lg:w-full`}>
           {isUser ? (
             <div
               className={`flex-grow flex flex-row-reverse items-center gap-2`}
@@ -91,7 +91,7 @@ export default function MainNavigation({
                   router.push("/");
                   router.refresh();
                 }}
-                className={`fixed top-5 md:top-auto right-5 md:right-auto md:relative p-2 flex items-center justify-center ${
+                className={`fixed top-5 lg:top-auto right-5 lg:right-auto lg:relative p-2 flex items-center justify-center ${
                   pathname === "/logout"
                     ? "text-lime-400"
                     : "text-neutral-600 hover:text-lime-400"
@@ -108,12 +108,12 @@ export default function MainNavigation({
               title={`Login`}
             >
               <IconUser size={26} />
-              <span className={`hidden md:block text-sm`}>Login</span>
+              <span className={`hidden lg:block text-sm`}>Login</span>
             </Link>
           )}
         </article>
       </section>
-      <MainFooter className={`flex md:hidden`} />
+      <MainFooter className={`flex lg:hidden`} />
     </nav>
   );
 }
