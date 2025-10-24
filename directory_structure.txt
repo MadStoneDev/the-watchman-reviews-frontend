@@ -1,0 +1,210 @@
+|   .env.local
+|   .gitignore
+|   components.json
+|   database.types.ts
+|   directory_structure.txt
+|   middleware.ts
+|   next-env.d.ts
+|   next.config.mjs
+|   package-lock.json
+|   package.json
+|   postcss.config.mjs
+|   README.md
+|   tailwind.config.ts
+|   tsconfig.json
+|   
++---public
+|       tmdb-logo.svg
+|       
++---src
+|   +---app
+|   |   |   favicon.ico
+|   |   |   globals.css
+|   |   |   layout.tsx
+|   |   |   
+|   |   +---(auth)
+|   |   |   |   layout.tsx
+|   |   |   |   
+|   |   |   \---auth
+|   |   |       +---check-email
+|   |   |       |       page.tsx
+|   |   |       |       
+|   |   |       +---confirm
+|   |   |       |       route.ts
+|   |   |       |       
+|   |   |       \---portal
+|   |   |               actions.ts
+|   |   |               page.tsx
+|   |   |               
+|   |   +---(private)
+|   |   |   +---me
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---settings
+|   |   |   |       layout.tsx
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   \---[username]
+|   |   |       |   layout.tsx
+|   |   |       |   not-found.tsx
+|   |   |       |   page.tsx
+|   |   |       |   
+|   |   |       +---collections
+|   |   |       |       page.tsx
+|   |   |       |       
+|   |   |       +---notifications
+|   |   |       |       page.tsx
+|   |   |       |       
+|   |   |       \---settings
+|   |   |               page.tsx
+|   |   |               
+|   |   +---(public)
+|   |   |   |   layout.tsx
+|   |   |   |   page.tsx
+|   |   |   |   
+|   |   |   +---(policies)
+|   |   |   |   +---privacy-policy
+|   |   |   |   |       page.tsx
+|   |   |   |   |       
+|   |   |   |   \---terms-of-use
+|   |   |   |           page.tsx
+|   |   |   |           
+|   |   |   +---about
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---blog
+|   |   |   |   |   page.tsx
+|   |   |   |   |   
+|   |   |   |   \---[title]
+|   |   |   |           page.tsx
+|   |   |   |           
+|   |   |   +---browse
+|   |   |   |   |   layout.tsx
+|   |   |   |   |   page.tsx
+|   |   |   |   |   
+|   |   |   |   +---kids
+|   |   |   |   |       page.tsx
+|   |   |   |   |       
+|   |   |   |   +---movies
+|   |   |   |   |       page.tsx
+|   |   |   |   |       
+|   |   |   |   +---new
+|   |   |   |   |       page.tsx
+|   |   |   |   |       
+|   |   |   |   \---series
+|   |   |   |           page.tsx
+|   |   |   |           
+|   |   |   +---collections
+|   |   |   |   |   not-found.tsx
+|   |   |   |   |   
+|   |   |   |   \---[id]
+|   |   |   |           page.tsx
+|   |   |   |           
+|   |   |   +---how-it-works
+|   |   |   |       page.tsx
+|   |   |   |       
+|   |   |   +---review
+|   |   |   |   \---[slug]
+|   |   |   |           page.tsx
+|   |   |   |           
+|   |   |   \---search
+|   |   |           page.tsx
+|   |   |           
+|   |   +---admin
+|   |   |   \---search
+|   |   |           page.tsx
+|   |   |           
+|   |   +---api
+|   |   +---fonts
+|   |   |       GeistMonoVF.woff
+|   |   |       GeistVF.woff
+|   |   |       Montserrat-Bold.ttf
+|   |   |       Montserrat-Regular.ttf
+|   |   |       Montserrat-SemiBold.ttf
+|   |   |       Montserrat.ttf
+|   |   |       
+|   |   \---media
+|   |       \---[id]
+|   |               page.tsx
+|   |               
+|   +---components
+|   |   |   add-media-form.tsx
+|   |   |   browse-media-row.tsx
+|   |   |   browse-navigation.tsx
+|   |   |   collection-item.tsx
+|   |   |   delete-account-modal.tsx
+|   |   |   editable-username.tsx
+|   |   |   go-back.tsx
+|   |   |   load-more-button.tsx
+|   |   |   logo.tsx
+|   |   |   main-footer.tsx
+|   |   |   main-navigation.tsx
+|   |   |   media-block.tsx
+|   |   |   medias-collection.tsx
+|   |   |   otp-input.tsx
+|   |   |   results-view.tsx
+|   |   |   search-form.tsx
+|   |   |   search-skeleton-boundary.tsx
+|   |   |   settings-content.tsx
+|   |   |   sortable-collection-item.tsx
+|   |   |   sortable-media-item.tsx
+|   |   |   special-block-wrapper.tsx
+|   |   |   special-media-block.tsx
+|   |   |   theme-provider.tsx
+|   |   |   user-collection-row.tsx
+|   |   |   user-collections-block.tsx
+|   |   |   wrapper-search.tsx
+|   |   |   wrapper-single-media.tsx
+|   |   |   
+|   |   +---auth
+|   |   |       create-or-login-form.tsx
+|   |   |       login-form.tsx
+|   |   |       
+|   |   \---ui
+|   |           button.tsx
+|   |           form.tsx
+|   |           input-otp.tsx
+|   |           input.tsx
+|   |           label.tsx
+|   |           skeleton.tsx
+|   |           
+|   +---data
+|   |       dummy-review-list.ts
+|   |       lookup-profile-role.ts
+|   |       
+|   +---lib
+|   |       types.ts
+|   |       utils.ts
+|   |       
+|   +---types
+|   |       supabase.ts
+|   |       
+|   +---utils
+|   |   +---supabase
+|   |   |       authentication.ts
+|   |   |       client.ts
+|   |   |       middleware.ts
+|   |   |       server.ts
+|   |   |       
+|   |   +---tmdb
+|   |   |       clean-data.ts
+|   |   |       get-data.ts
+|   |   |       
+|   |   \---upstash
+|   |           rate-limit.ts
+|   |           
+|   \---_archive
+|       +---login
+|       |       page.tsx
+|       |       
+|       \---register
+|               actions.ts
+|               page.tsx
+|               
+\---supabase
+    |   .gitignore
+    |   config.toml
+    |   
+    \---.temp
+            cli-latest
+            

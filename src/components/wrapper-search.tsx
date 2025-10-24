@@ -4,7 +4,6 @@ import React, { useState, useCallback } from "react";
 
 import { Popcorn } from "lucide-react";
 
-import { User } from "@supabase/supabase-js";
 import SearchForm from "@/src/components/search-form";
 import MediaBlock from "@/src/components/media-block";
 import LoadMoreButton from "@/src/components/load-more-button";

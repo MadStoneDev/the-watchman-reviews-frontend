@@ -33,10 +33,11 @@ export default function SettingsContent({
   const supabase = createClient();
 
   // Parse settings from JSONB
-  const initialSettings = profileData.settings || {
+  const initialSettings = {
     email_notifications: true,
     show_watching_deck: true,
     default_collection_privacy: "private",
+    ...profileData.settings,
   };
 
   const [settings, setSettings] = useState(initialSettings);

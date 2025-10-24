@@ -30,8 +30,12 @@ export default function BrowseNavigation({
   const highlightRef = React.useRef<HTMLDivElement>(null);
 
   // Add Settings tab if viewing own profile
+  // Check that currentUserId exists and is not an empty string (failsafe for logged out users)
   const isOwnProfile =
-    profileId && currentUserId && profileId === currentUserId;
+    profileId &&
+    currentUserId &&
+    currentUserId !== "" &&
+    profileId === currentUserId;
   const navigationItems = isOwnProfile
     ? [...items, { label: "Settings", href: "/settings" }]
     : items;

@@ -24,6 +24,7 @@ export default async function UserCollectionsPage({
 
   // Get current user
   const { data: user } = await supabase.auth.getClaims();
+  const currentUserId = user?.claims.sub || null; // Extract the ID once
 
   // Get profile for the username in the URL
   const { data: urlProfile } = await supabase
@@ -38,14 +39,14 @@ export default async function UserCollectionsPage({
   }
 
   // Check if this is the current user's profile
-  const isCurrentUser = user?.claims.sub === urlProfile?.id;
+  const isCurrentUser = currentUserId === urlProfile?.id;
   let currentUserProfile = isCurrentUser ? urlProfile : null;
 
   if (user && !isCurrentUser) {
     const { data: profile } = await supabase
       .from("profiles")
       .select()
-      .eq("id", user.claims.sub)
+      .eq("id", currentUserId)
       .single();
 
     currentUserProfile = profile;
@@ -58,11 +59,7 @@ export default async function UserCollectionsPage({
       <BrowseNavigation
         items={[
           {
-            label: `${
-              urlProfile.id === currentUserProfile.claims.sub
-                ? "Account"
-                : "Profile"
-            }`,
+            label: `${urlProfile.id === currentUserId ? "Account" : "Profile"}`,
             href: `/${urlProfile.username}`,
           },
           {
@@ -71,7 +68,7 @@ export default async function UserCollectionsPage({
           },
         ]}
         profileId={urlProfile.id}
-        currentUserId={currentUserProfile.claims.sub}
+        currentUserId={currentUserId || ""}
       />
 
       <section
