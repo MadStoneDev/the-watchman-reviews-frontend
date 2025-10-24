@@ -16,6 +16,7 @@ export default async function NotificationsPage({
           { label: "Collections", href: `/${username}/collections` },
         ]}
       />
+        
       <section
         className={`mt-14 lg:mt-20 transition-all duration-300 ease-in-out`}
       >

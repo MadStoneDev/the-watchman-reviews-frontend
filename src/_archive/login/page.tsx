@@ -10,9 +10,9 @@
 // import LoginForm from "@/src/components/auth/login-form";
 //
 // export const metadata = {
-//   title: "Login - The Watchman Reviews",
+//   title: "Login - Just Reel",
 //   description:
-//     "Welcome Back! Login to your account on The Watchman Reviews to track shows and movies and join the community.",
+//     "Welcome Back! Login to your account on  Just Reel to track shows and movies and join the community.",
 // };
 //
 // export default function Login() {

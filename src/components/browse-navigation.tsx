@@ -16,8 +16,8 @@ export default function BrowseNavigation({
   currentUserId,
 }: {
   items?: NavigationItem[];
-  profileId: string;
-  currentUserId: string;
+  profileId?: string;
+  currentUserId?: string;
 }) {
   // Hooks
   const pathname = usePathname();
@@ -28,6 +28,13 @@ export default function BrowseNavigation({
   // Refs
   const browseRef = React.useRef<HTMLAnchorElement[]>([]);
   const highlightRef = React.useRef<HTMLDivElement>(null);
+
+  // Add Settings tab if viewing own profile
+  const isOwnProfile =
+    profileId && currentUserId && profileId === currentUserId;
+  const navigationItems = isOwnProfile
+    ? [...items, { label: "Settings", href: "/settings" }]
+    : items;
 
   // Effects
   useEffect(() => {
@@ -56,10 +63,10 @@ export default function BrowseNavigation({
   }, [pathname]);
 
   return (
-    <section
+    <nav
       className={`relative flex gap-5 md:gap-10 transition-all duration-300 ease-in-out`}
     >
-      {items.map(({ label, href }, index) => (
+      {navigationItems.map(({ label, href }, index) => (
         <Link
           key={href}
           ref={(el) => {
@@ -80,9 +87,9 @@ export default function BrowseNavigation({
 
       <div
         ref={highlightRef}
-        className={`absolute top-0 h-full bg-lime-400 transition-all duration-500 ease-in-out`}
+        className={`absolute top-0 h-full bg-lime-400 transition-all duration-300 ease-in-out`}
         style={{ ...highlightStyle }}
       ></div>
-    </section>
+    </nav>
   );
 }

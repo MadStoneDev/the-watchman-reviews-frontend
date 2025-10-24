@@ -27,7 +27,7 @@ export const signInWithTwitch = async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "twitch",
     options: {
-      redirectTo: "https://thewatchmanreviews.com/auth/callback",
+      redirectTo: "https://justreel.app/auth/callback",
     },
   });
 };

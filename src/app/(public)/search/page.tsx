@@ -9,7 +9,7 @@ import SearchWrapper from "@/src/components/wrapper-search";
 import SearchSkeletonBoundary from "@/src/components/search-skeleton-boundary";
 
 export const metadata: Metadata = {
-  title: "Search - The Watchman Reviews",
+  title: "Search - Just Reel",
   description:
     "Helping you make informed viewing choices. Get detailed content analysis of movies and TV shows, including" +
     " themes, language, and values.",

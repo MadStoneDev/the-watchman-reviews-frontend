@@ -6,7 +6,7 @@ export default function MainFooter({ className }: { className?: string }) {
       className={`mt-5 lg:mt-16 pt-4 lg:pb-4 flex flex-col-reverse lg:flex-row items-center justify-between gap-3 border-t border-neutral-700 text-xs text-neutral-600/90 text-center lg:text-left ${className}`}
     >
       <section>
-        <p>© 2024 The Watchman Reviews</p>
+        <p>© 2024 Just Reel</p>
       </section>
 
       <section className={`flex gap-10 text-neutral-400`}>

@@ -3,6 +3,13 @@
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import UserCollections from "@/src/components/user-collections-block";
+import {
+  IconChartBar,
+  IconHome,
+  IconLayout2,
+  IconSearch,
+} from "@tabler/icons-react";
+import MainNavigation from "@/src/components/main-navigation";
 
 export default async function UserCollectionsPage({
   params,
@@ -10,8 +17,6 @@ export default async function UserCollectionsPage({
   params: { username: string };
 }) {
   const { username } = params;
-
-  const startTime = Date.now();
   let loading = true;
 
   // Supabase
@@ -23,7 +28,7 @@ export default async function UserCollectionsPage({
   // Get profile for the username in the URL
   const { data: urlProfile } = await supabase
     .from("profiles")
-    .select("*")
+    .select()
     .eq("username", username)
     .single();
 
@@ -39,7 +44,7 @@ export default async function UserCollectionsPage({
   if (user && !isCurrentUser) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("*")
+      .select()
       .eq("id", user.claims.sub)
       .single();
 
@@ -52,13 +57,25 @@ export default async function UserCollectionsPage({
     <>
       <BrowseNavigation
         items={[
-          { label: "Account", href: `/${username}` },
-          { label: "Collections", href: `/${username}/collections` },
+          {
+            label: `${
+              urlProfile.id === currentUserProfile.claims.sub
+                ? "Account"
+                : "Profile"
+            }`,
+            href: `/${urlProfile.username}`,
+          },
+          {
+            label: "Collections",
+            href: `/${urlProfile.username}/collections`,
+          },
         ]}
+        profileId={urlProfile.id}
+        currentUserId={currentUserProfile.claims.sub}
       />
 
       <section
-        className={`mt-14 lg:mt-20 transition-all duration-300 ease-in-out`}
+        className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
       >
         <h1 className={`max-w-3xl text-2xl sm:3xl md:text-4xl font-bold`}>
           {isCurrentUser ? "My Collections" : `${username}'s Collections`}

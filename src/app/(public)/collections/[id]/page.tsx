@@ -125,14 +125,14 @@ export async function generateMetadata({
 
   if (!collection) {
     return {
-      title: `Collection | The Watchman Reviews`,
-      description: `Collections on The Watchman Reviews`,
+      title: `Collection | Just Reel`,
+      description: `Collections on  Just Reel`,
     };
   }
 
   return {
-    title: `${collection.title} | The Watchman Reviews`,
-    description: `${collection.title} collection on The Watchman Reviews`,
+    title: `${collection.title} | Just Reel`,
+    description: `${collection.title} collection on  Just Reel`,
   };
 }
 

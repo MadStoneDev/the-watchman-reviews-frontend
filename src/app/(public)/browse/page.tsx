@@ -7,7 +7,7 @@ import { IconStarFilled } from "@tabler/icons-react";
 import { BrowseMediaRow } from "@/src/components/browse-media-row";
 
 export const metadata: Metadata = {
-  title: "Browse - The Watchman Reviews",
+  title: "Browse - Just Reel",
   description:
     "Guiding families and groups to make informed viewing choices. Get detailed content analysis of movies and TV shows, including themes, language, and values.",
 };

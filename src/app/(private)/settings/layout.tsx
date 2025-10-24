@@ -13,17 +13,12 @@ import {
 } from "@tabler/icons-react";
 
 import { createClient } from "@/src/utils/supabase/server";
+import BrowseNavigation from "@/src/components/browse-navigation";
 
-type Props = {
-  params: Promise<{ username: string }>;
-};
-
-export async function generateMetadata({ params }: Props) {
-  const { username } = await params;
-
+export async function generateMetadata() {
   return {
-    title: `${username} | Just Reel`,
-    description: `Follow ${username} on  Just Reel`,
+    title: `Settings | Just Reel`,
+    description: `Change your settings`,
   };
 }
 
