@@ -54,6 +54,18 @@ export default function MediaBlock({
 
   const supabase = createClient();
 
+  const MEDIA_REFRESH_INTERVAL_DAYS = 30;
+
+  const needsRefresh = (lastFetched: string | null): boolean => {
+    if (!lastFetched) return true;
+
+    const lastFetchedDate = new Date(lastFetched);
+    const daysSinceLastFetch =
+      (Date.now() - lastFetchedDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    return daysSinceLastFetch >= MEDIA_REFRESH_INTERVAL_DAYS;
+  };
+
   // Handle navigation to detail page
   const handleViewDetails = async () => {
     if (!isUser) return;
@@ -64,28 +76,109 @@ export default function MediaBlock({
       const tmdbId = data.tmdbId;
       let dbMediaId: string | null = null;
 
-      // Check if media exists in database
       if (mediaType === "movie") {
+        // Check if movie exists and get last_fetched
         const { data: movieData } = await supabase
           .from("movies")
-          .select("id")
+          .select("id, last_fetched")
           .eq("tmdb_id", tmdbId)
-          .single();
+          .maybeSingle();
 
         if (movieData) {
           dbMediaId = movieData.id;
+
+          // Check if movie needs refresh (older than 30 days)
+          const shouldRefresh = needsRefresh(movieData.last_fetched);
+
+          if (shouldRefresh) {
+            // Fetch updated data from TMDB
+            const tmdbResponse = await fetch(
+              `https://api.themoviedb.org/3/movie/${tmdbId}?language=en-US`,
+              {
+                headers: {
+                  accept: "application/json",
+                  Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+                },
+              },
+            );
+
+            if (tmdbResponse.ok) {
+              const tmdbMovie = await tmdbResponse.json();
+
+              // Update movie record with fresh data
+              await supabase
+                .from("movies")
+                .update({
+                  title: tmdbMovie.title,
+                  overview: tmdbMovie.overview || "",
+                  poster_path: tmdbMovie.poster_path,
+                  backdrop_path: tmdbMovie.backdrop_path,
+                  release_year: tmdbMovie.release_date
+                    ? new Date(tmdbMovie.release_date).getFullYear().toString()
+                    : "",
+                  runtime: tmdbMovie.runtime || null,
+                  popularity: tmdbMovie.popularity
+                    ? parseInt(tmdbMovie.popularity)
+                    : null,
+                  tmdb_popularity: tmdbMovie.popularity
+                    ? String(tmdbMovie.popularity)
+                    : null, // STRING field
+                  last_fetched: new Date().toISOString(),
+                })
+                .eq("id", dbMediaId);
+            } else {
+              console.warn(
+                `Failed to refresh movie data from TMDB, using cached data`,
+              );
+            }
+          } else {
+            //
+          }
         } else {
-          // Create movie record
+          // Movie doesn't exist, create it
+          const tmdbResponse = await fetch(
+            `https://api.themoviedb.org/3/movie/${tmdbId}?language=en-US`,
+            {
+              headers: {
+                accept: "application/json",
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+              },
+            },
+          );
+
+          if (!tmdbResponse.ok) {
+            throw new Error("Failed to fetch movie details from TMDB");
+          }
+
+          const tmdbMovie = await tmdbResponse.json();
+
+          // Upsert movie record with complete data
           const { data: newMovie, error: movieError } = await supabase
             .from("movies")
-            .insert({
-              title: data.title,
-              overview: data.overview || "",
-              poster_path: data.posterPath,
-              backdrop_path: data.backdropPath,
-              tmdb_id: data.tmdbId,
-              release_year: data.releaseYear?.toString() || "",
-            })
+            .upsert(
+              {
+                tmdb_id: tmdbMovie.id,
+                title: tmdbMovie.title,
+                overview: tmdbMovie.overview || "",
+                poster_path: tmdbMovie.poster_path,
+                backdrop_path: tmdbMovie.backdrop_path,
+                release_year: tmdbMovie.release_date
+                  ? new Date(tmdbMovie.release_date).getFullYear().toString()
+                  : "",
+                runtime: tmdbMovie.runtime || null,
+                popularity: tmdbMovie.popularity
+                  ? parseInt(tmdbMovie.popularity)
+                  : null,
+                tmdb_popularity: tmdbMovie.popularity
+                  ? String(tmdbMovie.popularity)
+                  : null, // STRING field
+                last_fetched: new Date().toISOString(),
+              },
+              {
+                onConflict: "tmdb_id",
+                ignoreDuplicates: false,
+              },
+            )
             .select("id")
             .single();
 
@@ -96,26 +189,102 @@ export default function MediaBlock({
         // Navigate to movie page
         router.push(`/movies/${dbMediaId}`);
       } else if (mediaType === "tv") {
+        // Check if series exists and get last_fetched
         const { data: seriesData } = await supabase
           .from("series")
-          .select("id")
+          .select("id, last_fetched")
           .eq("tmdb_id", tmdbId)
-          .single();
+          .maybeSingle();
 
         if (seriesData) {
           dbMediaId = seriesData.id;
+
+          // Check if series needs refresh (older than 30 days)
+          const shouldRefresh = needsRefresh(seriesData.last_fetched);
+
+          if (shouldRefresh) {
+            // Fetch updated data from TMDB
+            const tmdbResponse = await fetch(
+              `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`,
+              {
+                headers: {
+                  accept: "application/json",
+                  Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+                },
+              },
+            );
+
+            if (tmdbResponse.ok) {
+              const tmdbSeries = await tmdbResponse.json();
+
+              // Update series record with fresh data
+              await supabase
+                .from("series")
+                .update({
+                  title: tmdbSeries.name,
+                  overview: tmdbSeries.overview || "",
+                  poster_path: tmdbSeries.poster_path,
+                  backdrop_path: tmdbSeries.backdrop_path,
+                  release_year: tmdbSeries.first_air_date
+                    ? new Date(tmdbSeries.first_air_date)
+                        .getFullYear()
+                        .toString()
+                    : "",
+                  first_air_date: tmdbSeries.first_air_date || null,
+                  last_air_date: tmdbSeries.last_air_date || null,
+                  status: tmdbSeries.status || null,
+                  last_fetched: new Date().toISOString(),
+                })
+                .eq("id", dbMediaId);
+            } else {
+              console.warn(
+                `Failed to refresh series data from TMDB, using cached data`,
+              );
+            }
+          } else {
+            //
+          }
         } else {
-          // Create series record
+          // Series doesn't exist, create it
+          const tmdbResponse = await fetch(
+            `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`,
+            {
+              headers: {
+                accept: "application/json",
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+              },
+            },
+          );
+
+          if (!tmdbResponse.ok) {
+            throw new Error("Failed to fetch series details from TMDB");
+          }
+
+          const tmdbSeries = await tmdbResponse.json();
+
+          // Upsert series record with complete data
           const { data: newSeries, error: seriesError } = await supabase
             .from("series")
-            .insert({
-              title: data.title,
-              overview: data.overview || "",
-              poster_path: data.posterPath,
-              backdrop_path: data.backdropPath,
-              tmdb_id: data.tmdbId,
-              release_year: data.releaseYear?.toString() || "",
-            })
+            .upsert(
+              {
+                tmdb_id: tmdbSeries.id,
+                title: tmdbSeries.name,
+                overview: tmdbSeries.overview || "",
+                poster_path: tmdbSeries.poster_path,
+                backdrop_path: tmdbSeries.backdrop_path,
+                release_year: tmdbSeries.first_air_date
+                  ? new Date(tmdbSeries.first_air_date).getFullYear().toString()
+                  : "",
+                first_air_date: tmdbSeries.first_air_date || null,
+                last_air_date: tmdbSeries.last_air_date || null,
+                status: tmdbSeries.status || null,
+                last_fetched: new Date().toISOString(),
+              },
+              {
+                onConflict: "tmdb_id",
+                ignoreDuplicates: false,
+              },
+            )
             .select("id")
             .single();
 

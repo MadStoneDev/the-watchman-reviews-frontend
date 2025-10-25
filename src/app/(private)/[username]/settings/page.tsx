@@ -14,6 +14,10 @@ export default async function SettingsPage({
         items={[
           { label: "Account", href: `/${username}` },
           { label: "Collections", href: `/${username}/collections` },
+          {
+            label: "Reel Deck",
+            href: `/${username}/reel-deck`,
+          },
         ]}
       />
       <section

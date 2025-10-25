@@ -12,7 +12,6 @@ export default ({
   onLoadMore: () => Promise<void>;
 }) => {
   const handleClick = async () => {
-    console.log("Load more button clicked");
     if (onLoadMore) {
       await onLoadMore();
     } else {

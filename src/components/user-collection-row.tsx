@@ -86,8 +86,6 @@ export const UserCollectionRow = ({
     setError("");
   };
 
-  console.log(`${imageBasePath}${collection.backdrop_path}`);
-
   return (
     <article
       className={`group p-1 flex items-center gap-1 h-20 w-full ${

@@ -55,6 +55,9 @@
 |   |   |       +---notifications
 |   |   |       |       page.tsx
 |   |   |       |       
+|   |   |       +---reel-deck
+|   |   |       |       page.tsx
+|   |   |       |       
 |   |   |       \---settings
 |   |   |               page.tsx
 |   |   |               
@@ -62,54 +65,86 @@
 |   |   |   |   layout.tsx
 |   |   |   |   page.tsx
 |   |   |   |   
-|   |   |   +---(policies)
-|   |   |   |   +---privacy-policy
-|   |   |   |   |       page.tsx
-|   |   |   |   |       
-|   |   |   |   \---terms-of-use
-|   |   |   |           page.tsx
-|   |   |   |           
-|   |   |   +---about
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   +---blog
-|   |   |   |   |   page.tsx
-|   |   |   |   |   
-|   |   |   |   \---[title]
-|   |   |   |           page.tsx
-|   |   |   |           
-|   |   |   +---browse
+|   |   |   +---(general)
 |   |   |   |   |   layout.tsx
-|   |   |   |   |   page.tsx
 |   |   |   |   |   
-|   |   |   |   +---kids
+|   |   |   |   +---(policies)
+|   |   |   |   |   +---privacy-policy
+|   |   |   |   |   |       page.tsx
+|   |   |   |   |   |       
+|   |   |   |   |   \---terms-of-use
+|   |   |   |   |           page.tsx
+|   |   |   |   |           
+|   |   |   |   +---about
 |   |   |   |   |       page.tsx
 |   |   |   |   |       
-|   |   |   |   +---movies
+|   |   |   |   +---blog
+|   |   |   |   |   |   page.tsx
+|   |   |   |   |   |   
+|   |   |   |   |   \---[title]
+|   |   |   |   |           page.tsx
+|   |   |   |   |           
+|   |   |   |   +---browse
+|   |   |   |   |   |   layout.tsx
+|   |   |   |   |   |   page.tsx
+|   |   |   |   |   |   
+|   |   |   |   |   +---kids
+|   |   |   |   |   |       page.tsx
+|   |   |   |   |   |       
+|   |   |   |   |   +---movies
+|   |   |   |   |   |       page.tsx
+|   |   |   |   |   |       
+|   |   |   |   |   +---new
+|   |   |   |   |   |       page.tsx
+|   |   |   |   |   |       
+|   |   |   |   |   \---series
+|   |   |   |   |           page.tsx
+|   |   |   |   |           
+|   |   |   |   +---collections
+|   |   |   |   |   |   not-found.tsx
+|   |   |   |   |   |   
+|   |   |   |   |   \---[id]
+|   |   |   |   |           page.tsx
+|   |   |   |   |           
+|   |   |   |   +---how-it-works
 |   |   |   |   |       page.tsx
 |   |   |   |   |       
-|   |   |   |   +---new
-|   |   |   |   |       page.tsx
-|   |   |   |   |       
-|   |   |   |   \---series
+|   |   |   |   +---review
+|   |   |   |   |   \---[slug]
+|   |   |   |   |           page.tsx
+|   |   |   |   |           
+|   |   |   |   \---search
 |   |   |   |           page.tsx
 |   |   |   |           
-|   |   |   +---collections
-|   |   |   |   |   not-found.tsx
-|   |   |   |   |   
-|   |   |   |   \---[id]
-|   |   |   |           page.tsx
-|   |   |   |           
-|   |   |   +---how-it-works
-|   |   |   |       page.tsx
-|   |   |   |       
-|   |   |   +---review
-|   |   |   |   \---[slug]
-|   |   |   |           page.tsx
-|   |   |   |           
-|   |   |   \---search
-|   |   |           page.tsx
-|   |   |           
+|   |   |   \---(media)
+|   |   |       +---movies
+|   |   |       |   |   page.tsx
+|   |   |       |   |   
+|   |   |       |   \---[movieId]
+|   |   |       |           error.tsx
+|   |   |       |           not-found.tsx
+|   |   |       |           page.tsx
+|   |   |       |           
+|   |   |       \---series
+|   |   |           |   page.tsx
+|   |   |           |   
+|   |   |           \---[seriesId]
+|   |   |               |   error.tsx
+|   |   |               |   not-found.tsx
+|   |   |               |   page.tsx
+|   |   |               |   
+|   |   |               \---seasons
+|   |   |                   \---[seasonId]
+|   |   |                       |   error.tsx
+|   |   |                       |   not-found.tsx
+|   |   |                       |   page.tsx
+|   |   |                       |   
+|   |   |                       \---episodes
+|   |   |                           \---[episodeId]
+|   |   |                                   error.tsx
+|   |   |                                   not-found.tsx
+|   |   |                                   page.tsx
+|   |   |                                   
 |   |   +---admin
 |   |   |   \---search
 |   |   |           page.tsx
@@ -129,11 +164,13 @@
 |   |               
 |   +---components
 |   |   |   add-media-form.tsx
+|   |   |   add-to-reel-deck-button.tsx
 |   |   |   browse-media-row.tsx
 |   |   |   browse-navigation.tsx
 |   |   |   collection-item.tsx
 |   |   |   delete-account-modal.tsx
 |   |   |   editable-username.tsx
+|   |   |   genre-badges.tsx
 |   |   |   go-back.tsx
 |   |   |   load-more-button.tsx
 |   |   |   logo.tsx
@@ -142,9 +179,12 @@
 |   |   |   media-block.tsx
 |   |   |   medias-collection.tsx
 |   |   |   otp-input.tsx
+|   |   |   reel-deck-grid.tsx
 |   |   |   results-view.tsx
 |   |   |   search-form.tsx
 |   |   |   search-skeleton-boundary.tsx
+|   |   |   season-episode-tabs.tsx
+|   |   |   series-season-tabs.tsx
 |   |   |   settings-content.tsx
 |   |   |   sortable-collection-item.tsx
 |   |   |   sortable-media-item.tsx
@@ -180,6 +220,8 @@
 |   |       supabase.ts
 |   |       
 |   +---utils
+|   |   |   genre-utils.tsx
+|   |   |   
 |   |   +---supabase
 |   |   |       authentication.ts
 |   |   |       client.ts

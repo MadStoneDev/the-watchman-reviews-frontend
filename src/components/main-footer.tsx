@@ -3,7 +3,7 @@
 export default function MainFooter({ className }: { className?: string }) {
   return (
     <footer
-      className={`mt-5 lg:mt-16 pt-4 lg:pb-4 flex flex-col-reverse lg:flex-row items-center justify-between gap-3 border-t border-neutral-700 text-xs text-neutral-600/90 text-center lg:text-left ${className}`}
+      className={`mx-5 md:mx-10 mt-5 lg:mt-16 pt-4 lg:pb-4 flex flex-col-reverse lg:flex-row items-center justify-between gap-3 border-t border-neutral-700 text-xs text-neutral-600/90 text-center lg:text-left ${className}`}
     >
       <section>
         <p>© 2024 Just Reel</p>

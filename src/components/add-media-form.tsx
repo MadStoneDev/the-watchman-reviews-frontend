@@ -39,6 +39,18 @@ export default function AddMediaForm({
 
   const supabase = createClient();
 
+  const MEDIA_REFRESH_INTERVAL_DAYS = 30;
+
+  const needsRefresh = (lastFetched: string | null): boolean => {
+    if (!lastFetched) return true;
+
+    const lastFetchedDate = new Date(lastFetched);
+    const daysSinceLastFetch =
+      (Date.now() - lastFetchedDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    return daysSinceLastFetch >= MEDIA_REFRESH_INTERVAL_DAYS;
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -78,37 +90,185 @@ export default function AddMediaForm({
     try {
       const mediaType = result.media_type;
       const tableName = mediaType === "movie" ? "movies" : "series";
+      const tmdbId = result.id;
 
+      // Check if media exists and get last_fetched
       const { data: existingMedia } = await supabase
         .from(tableName)
-        .select("id")
-        .eq("tmdb_id", result.id)
-        .single();
+        .select("id, last_fetched")
+        .eq("tmdb_id", tmdbId)
+        .maybeSingle();
 
-      let mediaId: number;
+      let mediaId: string;
 
       if (existingMedia) {
         mediaId = existingMedia.id;
+
+        // Check if needs refresh (older than 30 days)
+        const shouldRefresh = needsRefresh(existingMedia.last_fetched);
+
+        if (shouldRefresh) {
+          console.log(
+            `${mediaType} data is stale (>30 days), refreshing from TMDB...`,
+          );
+
+          // Fetch updated data from TMDB
+          const tmdbEndpoint =
+            mediaType === "movie"
+              ? `https://api.themoviedb.org/3/movie/${tmdbId}`
+              : `https://api.themoviedb.org/3/tv/${tmdbId}`;
+
+          const tmdbResponse = await fetch(`${tmdbEndpoint}?language=en-US`, {
+            headers: {
+              accept: "application/json",
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+            },
+          });
+
+          if (tmdbResponse.ok) {
+            const tmdbData = await tmdbResponse.json();
+
+            if (mediaType === "movie") {
+              // Update movie with fresh data
+              await supabase
+                .from("movies")
+                .update({
+                  title: tmdbData.title,
+                  overview: tmdbData.overview || "",
+                  poster_path: tmdbData.poster_path,
+                  backdrop_path: tmdbData.backdrop_path,
+                  release_year: tmdbData.release_date
+                    ? new Date(tmdbData.release_date).getFullYear().toString()
+                    : "",
+                  runtime: tmdbData.runtime || null,
+                  popularity: tmdbData.popularity
+                    ? parseInt(tmdbData.popularity)
+                    : null,
+                  tmdb_popularity: tmdbData.popularity
+                    ? String(tmdbData.popularity)
+                    : null, // STRING field
+                  last_fetched: new Date().toISOString(),
+                })
+                .eq("id", mediaId);
+            } else {
+              // Update series with fresh data
+              await supabase
+                .from("series")
+                .update({
+                  title: tmdbData.name,
+                  overview: tmdbData.overview || "",
+                  poster_path: tmdbData.poster_path,
+                  backdrop_path: tmdbData.backdrop_path,
+                  release_year: tmdbData.first_air_date
+                    ? new Date(tmdbData.first_air_date).getFullYear().toString()
+                    : "",
+                  first_air_date: tmdbData.first_air_date || null,
+                  last_air_date: tmdbData.last_air_date || null,
+                  status: tmdbData.status || null,
+                  last_fetched: new Date().toISOString(),
+                })
+                .eq("id", mediaId);
+            }
+
+            console.log(`${mediaType} data refreshed successfully`);
+          } else {
+            console.warn(
+              `Failed to refresh ${mediaType} data from TMDB, using cached data`,
+            );
+          }
+        } else {
+          console.log(
+            `${mediaType} data is fresh (<30 days), using cached data`,
+          );
+        }
       } else {
-        const mediaData = {
-          tmdb_id: result.id,
-          title: result.title || result.name,
-          poster_path: result.poster_path,
-          release_year:
-            result.release_date?.split("-")[0] ||
-            result.first_air_date?.split("-")[0],
-        };
+        // Media doesn't exist, create it with full data from TMDB
+        console.log(`${mediaType} not in database, creating new record...`);
 
-        const { data: newMedia, error: insertError } = await supabase
-          .from(tableName)
-          .insert([mediaData])
-          .select("id")
-          .single();
+        const tmdbEndpoint =
+          mediaType === "movie"
+            ? `https://api.themoviedb.org/3/movie/${tmdbId}`
+            : `https://api.themoviedb.org/3/tv/${tmdbId}`;
 
-        if (insertError) throw insertError;
-        mediaId = newMedia.id;
+        const tmdbResponse = await fetch(`${tmdbEndpoint}?language=en-US`, {
+          headers: {
+            accept: "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+          },
+        });
+
+        if (!tmdbResponse.ok) {
+          throw new Error(`Failed to fetch ${mediaType} details from TMDB`);
+        }
+
+        const tmdbData = await tmdbResponse.json();
+
+        if (mediaType === "movie") {
+          // Upsert movie record with complete data
+          const { data: newMovie, error: movieError } = await supabase
+            .from("movies")
+            .upsert(
+              {
+                tmdb_id: tmdbData.id,
+                title: tmdbData.title,
+                overview: tmdbData.overview || "",
+                poster_path: tmdbData.poster_path,
+                backdrop_path: tmdbData.backdrop_path,
+                release_year: tmdbData.release_date
+                  ? new Date(tmdbData.release_date).getFullYear().toString()
+                  : "",
+                runtime: tmdbData.runtime || null,
+                popularity: tmdbData.popularity
+                  ? parseInt(tmdbData.popularity)
+                  : null,
+                tmdb_popularity: tmdbData.popularity
+                  ? String(tmdbData.popularity)
+                  : null,
+                last_fetched: new Date().toISOString(),
+              },
+              {
+                onConflict: "tmdb_id",
+                ignoreDuplicates: false,
+              },
+            )
+            .select("id")
+            .single();
+
+          if (movieError) throw movieError;
+          mediaId = newMovie.id;
+        } else {
+          // Upsert series record with complete data
+          const { data: newSeries, error: seriesError } = await supabase
+            .from("series")
+            .upsert(
+              {
+                tmdb_id: tmdbData.id,
+                title: tmdbData.name,
+                overview: tmdbData.overview || "",
+                poster_path: tmdbData.poster_path,
+                backdrop_path: tmdbData.backdrop_path,
+                release_year: tmdbData.first_air_date
+                  ? new Date(tmdbData.first_air_date).getFullYear().toString()
+                  : "",
+                first_air_date: tmdbData.first_air_date || null,
+                last_air_date: tmdbData.last_air_date || null,
+                status: tmdbData.status || null,
+                last_fetched: new Date().toISOString(),
+              },
+              {
+                onConflict: "tmdb_id",
+                ignoreDuplicates: false,
+              },
+            )
+            .select("id")
+            .single();
+
+          if (seriesError) throw seriesError;
+          mediaId = newSeries.id;
+        }
       }
 
+      // Get the next position for the collection
       const { data: positionData } = await supabase
         .from("medias_collections")
         .select("position")
@@ -119,6 +279,7 @@ export default function AddMediaForm({
       const nextPosition =
         positionData && positionData[0] ? positionData[0].position + 1 : 0;
 
+      // Add to collection
       const { error: collectionError } = await supabase
         .from("medias_collections")
         .insert([

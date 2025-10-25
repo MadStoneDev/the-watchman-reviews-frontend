@@ -66,6 +66,10 @@ export default async function UserCollectionsPage({
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
           },
+          {
+            label: "Reel Deck",
+            href: `/${urlProfile.username}/reel-deck`,
+          },
         ]}
         profileId={urlProfile.id}
         currentUserId={currentUserId || ""}

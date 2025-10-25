@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       collections: {
@@ -33,39 +38,99 @@ export type Database = {
         }
         Relationships: []
       }
+      episode_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          episode_id: string
+          id: string
+          parent_comment_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          episode_id: string
+          id?: string
+          parent_comment_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          episode_id?: string
+          id?: string
+          parent_comment_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episode_comments_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "episode_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "episode_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       episodes: {
         Row: {
+          air_date: string | null
           created_at: string | null
           episode_number: number
           id: string
+          last_fetched: string | null
           overview: string | null
           poster_path: string | null
           release_year: string | null
+          runtime: number | null
           season_id: string
           series_id: string
           title: string
+          tmdb_id: number | null
+          vote_average: number | null
         }
         Insert: {
+          air_date?: string | null
           created_at?: string | null
           episode_number: number
           id?: string
+          last_fetched?: string | null
           overview?: string | null
           poster_path?: string | null
           release_year?: string | null
+          runtime?: number | null
           season_id: string
           series_id: string
           title: string
+          tmdb_id?: number | null
+          vote_average?: number | null
         }
         Update: {
+          air_date?: string | null
           created_at?: string | null
           episode_number?: number
           id?: string
+          last_fetched?: string | null
           overview?: string | null
           poster_path?: string | null
           release_year?: string | null
+          runtime?: number | null
           season_id?: string
           series_id?: string
           title?: string
+          tmdb_id?: number | null
+          vote_average?: number | null
         }
         Relationships: [
           {
@@ -83,6 +148,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      genres: {
+        Row: {
+          created_at: string | null
+          icon: string | null
+          id: string
+          last_fetched: string | null
+          media_type: string
+          name: string
+          tmdb_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          last_fetched?: string | null
+          media_type: string
+          name: string
+          tmdb_id: number
+        }
+        Update: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          last_fetched?: string | null
+          media_type?: string
+          name?: string
+          tmdb_id?: number
+        }
+        Relationships: []
       }
       media_collection: {
         Row: {
@@ -192,70 +287,247 @@ export type Database = {
           },
         ]
       }
+      movie_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          movie_id: string
+          parent_comment_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          movie_id: string
+          parent_comment_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          movie_id?: string
+          parent_comment_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movie_comments_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movie_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "movie_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movie_genres: {
+        Row: {
+          created_at: string | null
+          genre_id: string
+          id: string
+          movie_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          genre_id: string
+          id?: string
+          movie_id: string
+        }
+        Update: {
+          created_at?: string | null
+          genre_id?: string
+          id?: string
+          movie_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movie_genres_genre_id_fkey"
+            columns: ["genre_id"]
+            isOneToOne: false
+            referencedRelation: "genres"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movie_genres_movie_id_fkey"
+            columns: ["movie_id"]
+            isOneToOne: false
+            referencedRelation: "movies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       movies: {
         Row: {
           backdrop_path: string | null
           created_at: string | null
           id: string
+          last_fetched: string | null
           overview: string | null
+          popularity: number | null
           poster_path: string | null
           release_year: string | null
+          runtime: number | null
           title: string
           tmdb_id: number
+          tmdb_popularity: string | null
         }
         Insert: {
           backdrop_path?: string | null
           created_at?: string | null
           id?: string
+          last_fetched?: string | null
           overview?: string | null
+          popularity?: number | null
           poster_path?: string | null
           release_year?: string | null
+          runtime?: number | null
           title: string
           tmdb_id: number
+          tmdb_popularity?: string | null
         }
         Update: {
           backdrop_path?: string | null
           created_at?: string | null
           id?: string
+          last_fetched?: string | null
           overview?: string | null
+          popularity?: number | null
           poster_path?: string | null
           release_year?: string | null
+          runtime?: number | null
           title?: string
           tmdb_id?: number
+          tmdb_popularity?: string | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
+          avatar_path: string | null
           created_at: string
           id: string
           last_username_change: string | null
+          profile_visibility: string | null
           role: number | null
           settings: Json | null
           username: string
         }
         Insert: {
+          avatar_path?: string | null
           created_at?: string
           id?: string
           last_username_change?: string | null
+          profile_visibility?: string | null
           role?: number | null
           settings?: Json | null
           username?: string
         }
         Update: {
+          avatar_path?: string | null
           created_at?: string
           id?: string
           last_username_change?: string | null
+          profile_visibility?: string | null
           role?: number | null
           settings?: Json | null
           username?: string
         }
         Relationships: []
       }
-      seasons: {
+      reel_deck: {
         Row: {
+          added_at: string | null
+          id: string
+          last_watched_at: string | null
+          media_id: string
+          media_type: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          id?: string
+          last_watched_at?: string | null
+          media_id: string
+          media_type: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          added_at?: string | null
+          id?: string
+          last_watched_at?: string | null
+          media_id?: string
+          media_type?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      season_comments: {
+        Row: {
+          content: string
           created_at: string | null
           id: string
+          parent_comment_id: string | null
+          season_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          parent_comment_id?: string | null
+          season_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          parent_comment_id?: string | null
+          season_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "season_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "season_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "season_comments_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seasons: {
+        Row: {
+          air_date: string | null
+          created_at: string | null
+          episode_count: number | null
+          id: string
+          last_fetched: string | null
           overview: string | null
           poster_path: string | null
           release_year: string | null
@@ -264,8 +536,11 @@ export type Database = {
           title: string | null
         }
         Insert: {
+          air_date?: string | null
           created_at?: string | null
+          episode_count?: number | null
           id?: string
+          last_fetched?: string | null
           overview?: string | null
           poster_path?: string | null
           release_year?: string | null
@@ -274,8 +549,11 @@ export type Database = {
           title?: string | null
         }
         Update: {
+          air_date?: string | null
           created_at?: string | null
+          episode_count?: number | null
           id?: string
+          last_fetched?: string | null
           overview?: string | null
           poster_path?: string | null
           release_year?: string | null
@@ -297,34 +575,127 @@ export type Database = {
         Row: {
           backdrop_path: string | null
           created_at: string | null
+          first_air_date: string | null
           id: string
+          last_air_date: string | null
+          last_fetched: string | null
           overview: string | null
           poster_path: string | null
           release_year: string | null
+          status: string | null
           title: string
           tmdb_id: number
         }
         Insert: {
           backdrop_path?: string | null
           created_at?: string | null
+          first_air_date?: string | null
           id?: string
+          last_air_date?: string | null
+          last_fetched?: string | null
           overview?: string | null
           poster_path?: string | null
           release_year?: string | null
+          status?: string | null
           title: string
           tmdb_id: number
         }
         Update: {
           backdrop_path?: string | null
           created_at?: string | null
+          first_air_date?: string | null
           id?: string
+          last_air_date?: string | null
+          last_fetched?: string | null
           overview?: string | null
           poster_path?: string | null
           release_year?: string | null
+          status?: string | null
           title?: string
           tmdb_id?: number
         }
         Relationships: []
+      }
+      series_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          parent_comment_id: string | null
+          series_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          parent_comment_id?: string | null
+          series_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          parent_comment_id?: string | null
+          series_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "series_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "series_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "series_comments_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      series_genres: {
+        Row: {
+          created_at: string | null
+          genre_id: string
+          id: string
+          series_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          genre_id: string
+          id?: string
+          series_id: string
+        }
+        Update: {
+          created_at?: string | null
+          genre_id?: string
+          id?: string
+          series_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "series_genres_genre_id_fkey"
+            columns: ["genre_id"]
+            isOneToOne: false
+            referencedRelation: "genres"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "series_genres_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shared_collection: {
         Row: {
@@ -363,10 +734,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      populate_media_positions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      populate_media_positions: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
@@ -377,27 +745,33 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -405,20 +779,24 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -426,20 +804,24 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -447,29 +829,41 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
