@@ -17,7 +17,7 @@ import BrowseNavigation from "@/src/components/browse-navigation";
 
 export async function generateMetadata() {
   return {
-    title: `Settings | Just Reel`,
+    title: `Settings | JustReel`,
     description: `Change your settings`,
   };
 }

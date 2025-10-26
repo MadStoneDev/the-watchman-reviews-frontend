@@ -125,14 +125,14 @@ export async function generateMetadata({
 
   if (!collection) {
     return {
-      title: `Collection | Just Reel`,
-      description: `Collections on  Just Reel`,
+      title: `Collection | JustReel`,
+      description: `Collections on  JustReel`,
     };
   }
 
   return {
-    title: `${collection.title} | Just Reel`,
-    description: `${collection.title} collection on  Just Reel`,
+    title: `${collection.title} | JustReel`,
+    description: `${collection.title} collection on  JustReel`,
   };
 }
 

@@ -1,9 +1,9 @@
 ﻿import React from "react";
 
 export const metadata = {
-  title: "Check Email - Just Reel",
+  title: "Check Email | JustReel",
   description:
-    "Welcome Back! Login to your account on  Just Reel to track shows and movies and join the community.",
+    "Welcome Back! Login to your account on  JustReel to track shows and movies and join the community.",
 };
 
 export default function CheckEmailPage() {

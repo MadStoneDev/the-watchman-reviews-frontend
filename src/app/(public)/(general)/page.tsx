@@ -5,7 +5,7 @@ import BrowseNavigation from "@/src/components/browse-navigation";
 import SpecialBlockWrapper from "@/src/components/special-block-wrapper";
 
 export const metadata: Metadata = {
-  title: "Just Reel | Guarding Your Screen, Guiding Your Choices",
+  title: "JustReel | Guarding Your Screen, Guiding Your Choices",
   description:
     "Guiding families and groups to make informed viewing choices. Get detailed content analysis of movies and TV shows, including themes, language, and values.",
 };
