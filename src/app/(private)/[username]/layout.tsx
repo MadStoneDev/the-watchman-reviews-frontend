@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: Props) {
   const { username } = await params;
 
   return {
-    title: `${username} | Just Reel`,
-    description: `Follow ${username} on  Just Reel`,
+    title: `${username} | JustReel`,
+    description: `Follow ${username} on  JustReel`,
   };
 }
 
