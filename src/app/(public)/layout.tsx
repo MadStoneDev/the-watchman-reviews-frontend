@@ -42,11 +42,6 @@ export default async function PublicLayout({
           { icon: <IconSearch />, label: "Search", href: "/search" },
           { icon: <IconHome />, label: "Home", href: "/" },
           { icon: <IconLayout2 />, label: "Browse", href: "/browse" },
-          {
-            icon: <IconChartBar />,
-            label: "How It Works",
-            href: "/how-it-works",
-          },
         ]}
         isUser={isUser}
         profile={profile}
@@ -60,7 +55,7 @@ export default async function PublicLayout({
       >
         <div className={`flex-grow`}>{children}</div>
 
-        <MainFooter className={` hidden lg:flex`} />
+        <MainFooter />
       </main>
 
       <section className={`block md:hidden p-5 origin-left w-fit scale-75`}>

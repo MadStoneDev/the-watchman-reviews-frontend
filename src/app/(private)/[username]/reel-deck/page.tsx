@@ -237,10 +237,6 @@ export default async function ReelDeckPage({
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
           },
-          {
-            label: "Reel Deck",
-            href: `/${urlProfile.username}/reel-deck`,
-          },
         ]}
         profileId={urlProfile.id}
         currentUserId={currentUserId || ""}

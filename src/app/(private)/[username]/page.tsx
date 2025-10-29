@@ -62,10 +62,6 @@ export default async function PrivatePage({
             label: "Collections",
             href: `/${profileData.username}/collections`,
           },
-          {
-            label: "Reel Deck",
-            href: `/${profileData.username}/reel-deck`,
-          },
         ]}
         profileId={profileData.id}
         currentUserId={user.claims.sub}

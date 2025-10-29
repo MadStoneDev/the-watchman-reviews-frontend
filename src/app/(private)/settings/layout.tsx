@@ -68,8 +68,6 @@ export default async function PublicLayout({
         className={`flex-grow px-5 md:px-10 xl:px-24 pt-5 md:pt-10 flex flex-col w-full max-w-[2000px] overflow-x-hidden transition-all duration-300 ease-in-out`}
       >
         <div className={`flex-grow`}>{children}</div>
-
-        <MainFooter className={`hidden lg:flex`} />
       </main>
 
       <section className={`block md:hidden p-5 origin-left w-fit scale-75`}>
