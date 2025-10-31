@@ -322,7 +322,7 @@ export default function SeriesProgressTracker({
           >
             {/* Season Header */}
             <div className="p-4">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">
                     Season {season.season_number}
@@ -333,7 +333,7 @@ export default function SeriesProgressTracker({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between sm:justify-end gap-2">
                   {/* Reset Button - Only show if season is complete and has progress */}
                   {!allWatched && hasProgress && (
                     <button
@@ -431,8 +431,16 @@ export default function SeriesProgressTracker({
                       </div>
                       {episode.air_date && (
                         <p className="text-xs text-neutral-500 mt-1">
-                          Aired:{" "}
-                          {new Date(episode.air_date).toLocaleDateString()}
+                          <span className={`font-bold`}>
+                            {new Date(episode.air_date) > new Date()
+                              ? "Airs"
+                              : "Aired"}
+                            :
+                          </span>{" "}
+                          {new Date(episode.air_date).toLocaleDateString(
+                            "en-AU",
+                            { day: "numeric", month: "long", year: "numeric" },
+                          )}
                         </p>
                       )}
                     </div>

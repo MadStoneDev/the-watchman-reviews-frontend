@@ -62,7 +62,7 @@ export default async function PublicLayout({
       />
 
       {/* Spacing */}
-      <div className={`mt-16 md:mt-0 md:min-w-[250px] min-h-[120px]`}></div>
+      <div className={`md:min-w-[250px] min-h-[70px]`}></div>
 
       <main
         className={`flex-grow px-5 md:px-10 xl:px-24 pt-5 md:pt-10 flex flex-col w-full max-w-[2000px] overflow-x-hidden transition-all duration-300 ease-in-out`}
