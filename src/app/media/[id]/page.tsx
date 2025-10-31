@@ -1,6 +1,7 @@
 ﻿import React from "react";
 
 import SingleMediaWrapper from "@/src/components/wrapper-single-media";
+import SingleMediaWrapperSimple from "@/src/components/wrapper-single-media-simple";
 
 interface SearchParams {
   params: {
@@ -79,5 +80,5 @@ export default async function MediaPage(searchParams: SearchParams) {
     console.error("Error fetching media data:", error);
   }
 
-  return mediaData && <SingleMediaWrapper mediaData={mediaData} />;
+  return mediaData && <SingleMediaWrapperSimple mediaData={mediaData} />;
 }

@@ -9,6 +9,7 @@ import {
   IconRotate,
   IconTrash,
 } from "@tabler/icons-react";
+import Image from "next/image";
 
 interface Episode {
   id: string;
@@ -129,14 +130,6 @@ export default function SeriesProgressTracker({
       return;
     }
 
-    console.log("Toggling episode:", {
-      episodeId,
-      seriesId,
-      userId,
-      currentlyWatched,
-      newState: !currentlyWatched,
-    });
-
     // Wrap the entire operation in startTransition
     startTransition(async () => {
       // Optimistic update
@@ -159,14 +152,11 @@ export default function SeriesProgressTracker({
         });
 
         const data = await response.json();
-        console.log("API response:", data);
 
         if (!response.ok) {
           console.error("API error:", data);
           throw new Error(data.error || "Failed to toggle episode");
         }
-
-        console.log("Episode toggled successfully, refreshing...");
         // Refresh to sync with server
         router.refresh();
       } catch (error) {
@@ -186,13 +176,6 @@ export default function SeriesProgressTracker({
     seasonId: string,
     markAsWatched: boolean,
   ) => {
-    console.log("Marking all episodes:", {
-      seasonId,
-      seriesId,
-      userId,
-      markAsWatched,
-    });
-
     // Wrap the entire operation in startTransition
     startTransition(async () => {
       // Optimistic update
@@ -215,14 +198,12 @@ export default function SeriesProgressTracker({
         });
 
         const data = await response.json();
-        console.log("API response:", data);
 
         if (!response.ok) {
           console.error("API error:", data);
           throw new Error(data.error || "Failed to toggle season");
         }
 
-        console.log("Season toggled successfully, refreshing...");
         // Refresh to sync with server
         router.refresh();
       } catch (error) {
@@ -431,19 +412,6 @@ export default function SeriesProgressTracker({
                         : "bg-neutral-800/50 border border-neutral-700 hover:border-neutral-600"
                     }`}
                   >
-                    {/* Checkbox */}
-                    <div
-                      className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                        episode.isWatched
-                          ? "bg-lime-400 border-lime-400"
-                          : "border-neutral-600"
-                      }`}
-                    >
-                      {episode.isWatched && (
-                        <IconCheck size={14} className="text-neutral-900" />
-                      )}
-                    </div>
-
                     {/* Episode Info */}
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2">
@@ -466,6 +434,19 @@ export default function SeriesProgressTracker({
                           Aired:{" "}
                           {new Date(episode.air_date).toLocaleDateString()}
                         </p>
+                      )}
+                    </div>
+
+                    {/* Checkbox */}
+                    <div
+                      className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                        episode.isWatched
+                          ? "bg-lime-400 border-lime-400"
+                          : "border-neutral-600"
+                      }`}
+                    >
+                      {episode.isWatched && (
+                        <IconCheck size={14} className="text-neutral-900" />
                       )}
                     </div>
                   </button>

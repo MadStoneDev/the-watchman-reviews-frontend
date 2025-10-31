@@ -3,12 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import GoBack from "@/src/components/go-back";
-import { Database } from "@/src/types/supabase";
 
-type MediaItem = Database["public"]["Tables"]["medias"]["Row"];
-type ReviewItem = Database["public"]["Tables"]["reviews"]["Row"];
-
-interface TMDBItem {
+interface MediaItem {
   id: number;
   title: string;
   tagline: string;
@@ -22,15 +18,11 @@ interface TMDBItem {
 }
 
 interface SingleMediaWrapperProps {
-  mediaData: MediaItem | null;
-  reviewData: ReviewItem | null;
-  TMDBData: TMDBItem | null;
+  mediaData: MediaItem;
 }
 
-export default function SingleMediaWrapper({
+export default function SingleMediaWrapperSimple({
   mediaData,
-  reviewData,
-  TMDBData,
 }: SingleMediaWrapperProps) {
   const breakpoints = {
     sm: 640,
@@ -66,15 +58,6 @@ export default function SingleMediaWrapper({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // If no data, show loading or error
-  if (!mediaData || !TMDBData) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-neutral-400">Loading media...</p>
-      </div>
-    );
-  }
-
   return (
     <>
       <section className="relative z-10">
@@ -87,11 +70,11 @@ export default function SingleMediaWrapper({
       <div className="absolute top-0 md:top-auto left-0 md:left-auto right-0 md:right-auto md:relative">
         {/* Backdrop Image */}
         <section className="relative md:mt-5 h-[50dvh] md:h-[500px] md:rounded-3xl transition-all duration-300 ease-in-out overflow-hidden">
-          {TMDBData.backdrop && (
+          {mediaData.backdrop && (
             <Image
               className="bg-neutral-800 object-cover"
-              src={`https://image.tmdb.org/t/p/original${TMDBData.backdrop}`}
-              alt={`${TMDBData.title} Backdrop`}
+              src={`https://image.tmdb.org/t/p/original${mediaData.backdrop}`}
+              alt={`${mediaData.title} Backdrop`}
               fill
               priority
               sizes="100vw"
@@ -105,17 +88,17 @@ export default function SingleMediaWrapper({
         {/* Title Section */}
         <section className="absolute md:relative bottom-0 left-0 right-0 mt-12 p-5 md:p-0 transition-all duration-300 ease-in-out z-10">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
-            {TMDBData.title}
+            {mediaData.title}
           </h1>
-          {TMDBData.tagline && (
-            <p className="text-lg text-neutral-400 mt-2">{TMDBData.tagline}</p>
+          {mediaData.tagline && (
+            <p className="text-lg text-neutral-400 mt-2">{mediaData.tagline}</p>
           )}
         </section>
       </div>
 
       {/* Content Section */}
       <section className="mt-6 sm:mt-12 grid lg:grid-cols-3 gap-8 transition-all duration-300 ease-in-out">
-        {/* Main Content - Overview and Review */}
+        {/* Main Content - Overview */}
         <article className="lg:col-span-2 space-y-8">
           {/* Overview */}
           <div>
@@ -123,62 +106,19 @@ export default function SingleMediaWrapper({
               Overview
             </h2>
             <p className="text-neutral-400 leading-relaxed text-base">
-              {TMDBData.overview || "No overview available."}
+              {mediaData.overview || "No overview available."}
             </p>
           </div>
-
-          {/* Review Section */}
-          {reviewData && (
-            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6">
-              <h2 className="text-xl font-semibold text-neutral-200 mb-4">
-                Review
-              </h2>
-
-              {/* Review Rating */}
-              {/*{reviewData.rating && (*/}
-              {/*    <div className="flex items-center gap-2 mb-4">*/}
-              {/*      <div className="flex items-center gap-1">*/}
-              {/*        <span className="text-yellow-500 text-xl">★</span>*/}
-              {/*        <span className="font-semibold text-lg text-neutral-200">*/}
-              {/*    {reviewData.rating}*/}
-              {/*  </span>*/}
-              {/*      </div>*/}
-              {/*      <span className="text-neutral-500">/ 10</span>*/}
-              {/*    </div>*/}
-              {/*)}*/}
-
-              {/* Review Content */}
-              {/*{reviewData.content && (*/}
-              {/*    <div className="prose prose-invert max-w-none">*/}
-              {/*      <p className="text-neutral-300 leading-relaxed whitespace-pre-wrap">*/}
-              {/*        {reviewData.content}*/}
-              {/*      </p>*/}
-              {/*    </div>*/}
-              {/*)}*/}
-
-              {/* Review Date */}
-              {reviewData.created_at && (
-                <p className="text-sm text-neutral-500 mt-4">
-                  Reviewed on{" "}
-                  {new Date(reviewData.created_at).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              )}
-            </div>
-          )}
         </article>
 
         {/* Sidebar - Media Info */}
         <article className="bg-neutral-900 rounded-lg border border-neutral-800 p-6 h-fit space-y-6">
           {/* Poster */}
-          {TMDBData.poster && (
+          {mediaData.poster && (
             <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-neutral-800">
               <Image
-                src={`https://image.tmdb.org/t/p/${posterSize}${TMDBData.poster}`}
-                alt={`${TMDBData.title} Poster`}
+                src={`https://image.tmdb.org/t/p/${posterSize}${mediaData.poster}`}
+                alt={`${mediaData.title} Poster`}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -193,28 +133,14 @@ export default function SingleMediaWrapper({
             </h2>
 
             <div className="space-y-4">
-              {/* Media Type */}
-              {mediaData.type && (
-                <div>
-                  <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
-                    Type
-                  </dt>
-                  <dd className="text-neutral-200 capitalize">
-                    {mediaData.type === "series" ? "TV Series" : "Movie"}
-                  </dd>
-                </div>
-              )}
-
               {/* Release Date */}
-              {TMDBData.date && (
+              {mediaData.date && (
                 <div>
                   <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
-                    {mediaData.type === "series"
-                      ? "First Aired"
-                      : "Release Date"}
+                    Release Date
                   </dt>
                   <dd className="text-neutral-200">
-                    {new Date(TMDBData.date).toLocaleDateString("en-US", {
+                    {new Date(mediaData.date).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
@@ -223,18 +149,18 @@ export default function SingleMediaWrapper({
                 </div>
               )}
 
-              {/* TMDB Rating */}
-              {TMDBData.rating > 0 && (
+              {/* Rating */}
+              {mediaData.rating > 0 && (
                 <div>
                   <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
-                    TMDB Rating
+                    Rating
                   </dt>
                   <dd className="text-neutral-200">
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
                         <span className="text-yellow-500 text-lg">★</span>
                         <span className="font-semibold">
-                          {TMDBData.rating.toFixed(1)}
+                          {mediaData.rating.toFixed(1)}
                         </span>
                       </div>
                       <span className="text-neutral-500">/ 10</span>
@@ -244,14 +170,14 @@ export default function SingleMediaWrapper({
               )}
 
               {/* IMDb Link */}
-              {TMDBData.imdb_id && (
+              {mediaData.imdb_id && (
                 <div>
                   <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
                     IMDb
                   </dt>
                   <dd>
                     <a
-                      href={`https://www.imdb.com/title/${TMDBData.imdb_id}`}
+                      href={`https://www.imdb.com/title/${mediaData.imdb_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300 transition-colors"
@@ -275,40 +201,38 @@ export default function SingleMediaWrapper({
                 </div>
               )}
 
-              {/* TMDB ID */}
-              {mediaData.tmdb_id && (
-                <div>
-                  <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
-                    TMDB
-                  </dt>
-                  <dd>
-                    <a
-                      href={`https://www.themoviedb.org/${mediaData.type}/${mediaData.tmdb_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300 transition-colors"
+              {/* TMDB Link */}
+              <div>
+                <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
+                  TMDB
+                </dt>
+                <dd>
+                  <a
+                    href={`https://www.themoviedb.org/movie/${mediaData.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300 transition-colors"
+                  >
+                    View on TMDB
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      View on TMDB
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                    </a>
-                  </dd>
-                </div>
-              )}
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </a>
+                </dd>
+              </div>
 
               {/* Adult Content Warning */}
-              {TMDBData.adult && (
+              {mediaData.adult && (
                 <div className="pt-4 border-t border-neutral-800">
                   <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-3">
                     <p className="text-red-400 text-xs font-medium">
