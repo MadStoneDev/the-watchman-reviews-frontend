@@ -91,15 +91,9 @@ export default function MediaBlock({
           const shouldRefresh = needsRefresh(movieData.last_fetched);
 
           if (shouldRefresh) {
-            // Fetch updated data from TMDB
+            // ✅ Fetch updated data from our secure API route
             const tmdbResponse = await fetch(
-              `https://api.themoviedb.org/3/movie/${tmdbId}?language=en-US`,
-              {
-                headers: {
-                  accept: "application/json",
-                  Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-                },
-              },
+              `/api/tmdb/movie/${tmdbId}?language=en-US`,
             );
 
             if (tmdbResponse.ok) {
@@ -135,15 +129,9 @@ export default function MediaBlock({
             //
           }
         } else {
-          // Movie doesn't exist, create it
+          // ✅ Movie doesn't exist, fetch from our secure API route
           const tmdbResponse = await fetch(
-            `https://api.themoviedb.org/3/movie/${tmdbId}?language=en-US`,
-            {
-              headers: {
-                accept: "application/json",
-                Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-              },
-            },
+            `/api/tmdb/movie/${tmdbId}?language=en-US`,
           );
 
           if (!tmdbResponse.ok) {
@@ -203,15 +191,9 @@ export default function MediaBlock({
           const shouldRefresh = needsRefresh(seriesData.last_fetched);
 
           if (shouldRefresh) {
-            // Fetch updated data from TMDB
+            // ✅ Fetch updated data from our secure API route
             const tmdbResponse = await fetch(
-              `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`,
-              {
-                headers: {
-                  accept: "application/json",
-                  Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-                },
-              },
+              `/api/tmdb/tv/${tmdbId}?language=en-US`,
             );
 
             if (tmdbResponse.ok) {
@@ -245,15 +227,9 @@ export default function MediaBlock({
             //
           }
         } else {
-          // Series doesn't exist, create it
+          // ✅ Series doesn't exist, fetch from our secure API route
           const tmdbResponse = await fetch(
-            `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`,
-            {
-              headers: {
-                accept: "application/json",
-                Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-              },
-            },
+            `/api/tmdb/tv/${tmdbId}?language=en-US`,
           );
 
           if (!tmdbResponse.ok) {

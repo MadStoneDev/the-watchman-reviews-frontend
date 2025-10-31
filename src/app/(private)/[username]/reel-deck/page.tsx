@@ -3,26 +3,39 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import ReelDeckGrid from "@/src/components/reel-deck-grid";
-import {
-  IconPlayerPlay,
-  IconPlayerPause,
-  IconCircleCheck,
-  IconClock,
-  IconChairDirector,
-  IconDeviceTv,
-} from "@tabler/icons-react";
+import ReelDeckFilters from "@/src/components/reel-deck-filters";
+import { getSeriesEpisodeCount } from "@/src/utils/tmdb-utils";
 
 interface ReelDeckPageProps {
   params: Promise<{ username: string }>;
-  searchParams: Promise<{ status?: string; type?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    type?: string;
+    sort?: string; // Add sort parameter
+  }>;
 }
+
+// Sorting options type
+type SortOption =
+  | "last-watched"
+  | "recently-aired"
+  | "type-movies-first"
+  | "type-tv-first"
+  | "title-asc"
+  | "title-desc"
+  | "rating"
+  | "added-date";
 
 export default async function ReelDeckPage({
   params,
   searchParams,
 }: ReelDeckPageProps) {
   const { username } = await params;
-  const { status: filterStatus, type: filterType } = await searchParams;
+  const {
+    status: filterStatus,
+    type: filterType,
+    sort: sortOption = "last-watched", // Default to last watched
+  } = await searchParams;
   const supabase = await createClient();
 
   // Get current user
@@ -49,7 +62,6 @@ export default async function ReelDeckPage({
 
   // Only allow users to view their own reel deck
   if (!isCurrentUser) {
-    // Redirect to their own reel deck
     const { data: ownProfile } = await supabase
       .from("profiles")
       .select("username")
@@ -108,22 +120,126 @@ export default async function ReelDeckPage({
           .single();
 
         if (series) {
+          // Get episode watch progress for this series
+          const { data: episodeWatches } = await supabase
+            .from("episode_watches")
+            .select("*")
+            .eq("user_id", currentUserId)
+            .eq("series_id", item.media_id);
+
+          // Get total episodes (will fetch from TMDB if needed)
+          const totalEpisodes = await getSeriesEpisodeCount(
+            series.id,
+            series.tmdb_id,
+          );
+
+          // For "recently aired" sorting, get the latest episode air date
+          let latestEpisodeAirDate = null;
+          if (sortOption === "recently-aired") {
+            const { data: latestEpisode } = await supabase
+              .from("episodes")
+              .select("air_date")
+              .eq("series_id", series.id)
+              .not("air_date", "is", null)
+              .order("air_date", { ascending: false })
+              .limit(1)
+              .single();
+
+            latestEpisodeAirDate = latestEpisode?.air_date || null;
+          }
+
           seriesWithDetails.push({
             ...series,
             reelDeckItem: item,
+            watchedEpisodes: episodeWatches?.length || 0,
+            totalEpisodes: totalEpisodes,
+            latestEpisodeAirDate, // Add this for sorting
           });
         }
       }
     }
   }
 
-  const allMediaWithDetails = [...moviesWithDetails, ...seriesWithDetails].sort(
-    (a, b) => {
-      const aTime = a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
-      const bTime = b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
-      return new Date(bTime).getTime() - new Date(aTime).getTime();
-    },
-  );
+  // Combine and sort based on selected option
+  const allMediaWithDetails = [...moviesWithDetails, ...seriesWithDetails];
+
+  // Apply sorting
+  allMediaWithDetails.sort((a, b) => {
+    switch (sortOption as SortOption) {
+      case "last-watched":
+        // Sort by last watched or added date (default behavior)
+        const aTime = a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
+        const bTime = b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
+        return new Date(bTime).getTime() - new Date(aTime).getTime();
+
+      case "recently-aired":
+        // Sort by most recent air date (movies by release date, TV by latest episode)
+        const aAirDate =
+          "latestEpisodeAirDate" in a
+            ? a.latestEpisodeAirDate || a.first_air_date || a.release_year
+            : a.release_date || a.release_year;
+        const bAirDate =
+          "latestEpisodeAirDate" in b
+            ? b.latestEpisodeAirDate || b.first_air_date || b.release_year
+            : b.release_date || b.release_year;
+
+        if (!aAirDate && !bAirDate) return 0;
+        if (!aAirDate) return 1;
+        if (!bAirDate) return -1;
+        return new Date(bAirDate).getTime() - new Date(aAirDate).getTime();
+
+      case "type-movies-first":
+        // Movies first, then TV shows, then by last watched within each type
+        if (a.reelDeckItem.media_type !== b.reelDeckItem.media_type) {
+          return a.reelDeckItem.media_type === "movie" ? -1 : 1;
+        }
+        const aTimeType1 =
+          a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
+        const bTimeType1 =
+          b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
+        return new Date(bTimeType1).getTime() - new Date(aTimeType1).getTime();
+
+      case "type-tv-first":
+        // TV shows first, then movies, then by last watched within each type
+        if (a.reelDeckItem.media_type !== b.reelDeckItem.media_type) {
+          return a.reelDeckItem.media_type === "tv" ? -1 : 1;
+        }
+        const aTimeType2 =
+          a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
+        const bTimeType2 =
+          b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
+        return new Date(bTimeType2).getTime() - new Date(aTimeType2).getTime();
+
+      case "title-asc":
+        // Sort alphabetically A-Z
+        return a.title.localeCompare(b.title);
+
+      case "title-desc":
+        // Sort alphabetically Z-A
+        return b.title.localeCompare(a.title);
+
+      case "rating":
+        // Sort by rating (highest first)
+        const aRating = a.vote_average || 0;
+        const bRating = b.vote_average || 0;
+        return bRating - aRating;
+
+      case "added-date":
+        // Sort by when added to reel deck (newest first)
+        return (
+          new Date(b.reelDeckItem.added_at).getTime() -
+          new Date(a.reelDeckItem.added_at).getTime()
+        );
+
+      default:
+        // Fallback to last watched
+        const aDefault =
+          a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
+        const bDefault =
+          b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
+        return new Date(bDefault).getTime() - new Date(aDefault).getTime();
+    }
+  });
 
   // Count all items (for base counts regardless of type filter)
   const { data: allReelDeckItems } = await supabase
@@ -159,72 +275,6 @@ export default async function ReelDeckPage({
     tv: currentStatusItems.filter((item) => item.media_type === "tv").length,
   };
 
-  const STATUS_FILTERS = [
-    { value: "", label: "All", count: statusCounts.all, icon: null },
-    {
-      value: "watching",
-      label: "Watching",
-      count: statusCounts.watching,
-      icon: IconPlayerPlay,
-    },
-    {
-      value: "completed",
-      label: "Completed",
-      count: statusCounts.completed,
-      icon: IconCircleCheck,
-    },
-    {
-      value: "paused",
-      label: "On Hold",
-      count: statusCounts.paused,
-      icon: IconPlayerPause,
-    },
-    {
-      value: "plan_to_watch",
-      label: "Plan to Watch",
-      count: statusCounts.plan_to_watch,
-      icon: IconClock,
-    },
-  ];
-
-  const TYPE_FILTERS = [
-    { value: "", label: "All", count: typeCounts.all, icon: null },
-    {
-      value: "movie",
-      label: "Movies",
-      count: typeCounts.movie,
-      icon: IconChairDirector,
-    },
-    {
-      value: "tv",
-      label: "TV Shows",
-      count: typeCounts.tv,
-      icon: IconDeviceTv,
-    },
-  ];
-
-  // Build URL for filter links
-  const buildFilterUrl = (status?: string, type?: string) => {
-    const params = new URLSearchParams();
-    if (status) params.set("status", status);
-    if (type) params.set("type", type);
-    const queryString = params.toString();
-    return `/${username}/reel-deck${queryString ? `?${queryString}` : ""}`;
-  };
-
-  // Get current filter label for display
-  const getCurrentFilterLabel = () => {
-    const statusLabel =
-      STATUS_FILTERS.find((f) => f.value === filterStatus)?.label || "All";
-    const typeLabel =
-      TYPE_FILTERS.find((f) => f.value === filterType)?.label || "";
-
-    if (filterType) {
-      return `${statusLabel} ${typeLabel}`;
-    }
-    return statusLabel;
-  };
-
   return (
     <>
       <BrowseNavigation
@@ -242,137 +292,67 @@ export default async function ReelDeckPage({
         currentUserId={currentUserId || ""}
       />
 
-      <section className="mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out">
-        <h1 className="max-w-3xl text-2xl sm:text-3xl md:text-4xl font-bold">
-          My Reel Deck
-        </h1>
-        <p className="text-neutral-400 mt-2">
-          Track what you're watching, have watched, and want to watch
-        </p>
-      </section>
+      <div className="flex gap-6 mt-14 lg:mt-20 mb-6">
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          <section className="mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+              My Reel Deck
+            </h1>
+            <p className="text-neutral-400 mt-2">
+              Track what you're watching, have watched, and want to watch
+            </p>
+          </section>
 
-      {/* Primary Filter: Status */}
-      <div className="mb-4">
-        <h2 className="text-sm font-medium text-neutral-400 mb-2">Status</h2>
-        <div className="flex flex-wrap gap-2">
-          {STATUS_FILTERS.map((filter) => {
-            const Icon = filter.icon;
-            const isActive =
-              filterStatus === filter.value ||
-              (!filterStatus && filter.value === "");
-
-            return (
-              <a
-                key={filter.value}
-                href={buildFilterUrl(filter.value, filterType)}
-                className={`px-4 py-2 rounded-lg transition-all font-medium text-sm flex items-center gap-2 ${
-                  isActive
-                    ? "bg-lime-400 text-neutral-900"
-                    : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
-                }`}
-              >
-                {Icon && <Icon size={18} />}
-                <span>{filter.label}</span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs ${
-                    isActive
-                      ? "bg-neutral-900/20 text-neutral-900"
-                      : "bg-neutral-700 text-neutral-400"
-                  }`}
-                >
-                  {filter.count}
-                </span>
-              </a>
-            );
-          })}
+          {/* Media Grid */}
+          {allMediaWithDetails.length === 0 ? (
+            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-12 text-center">
+              <div className="max-w-md mx-auto">
+                <h2 className="text-xl font-semibold mb-2">No items found</h2>
+                <p className="text-neutral-400 mb-6">
+                  {filterStatus || filterType
+                    ? "Try adjusting your filters or clear them to see all items"
+                    : "Start adding movies and TV shows to track your watching progress!"}
+                </p>
+                <div className="flex gap-3 justify-center">
+                  {(filterStatus ||
+                    filterType ||
+                    sortOption !== "last-watched") && (
+                    <a
+                      href={`/${username}/reel-deck`}
+                      className="inline-flex px-6 py-3 bg-neutral-800 text-neutral-200 hover:bg-neutral-700 rounded-lg font-medium transition-colors"
+                    >
+                      Clear Filters
+                    </a>
+                  )}
+                  <a
+                    href="/search"
+                    className="inline-flex px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium transition-colors"
+                  >
+                    Browse Media
+                  </a>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <ReelDeckGrid
+              items={allMediaWithDetails}
+              username={username}
+              userId={currentUserId}
+            />
+          )}
         </div>
+
+        {/* Floating Sidebar Filters */}
+        <ReelDeckFilters
+          username={username}
+          filterStatus={filterStatus}
+          filterType={filterType}
+          sortOption={sortOption as SortOption} // Pass sort option
+          statusCounts={statusCounts}
+          typeCounts={typeCounts}
+        />
       </div>
-
-      {/* Secondary Filter: Media Type */}
-      <div className="mb-8">
-        <h2 className="text-sm font-medium text-neutral-400 mb-2">
-          Media Type
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {TYPE_FILTERS.map((filter) => {
-            const Icon = filter.icon;
-            const isActive =
-              filterType === filter.value ||
-              (!filterType && filter.value === "");
-
-            return (
-              <a
-                key={filter.value}
-                href={buildFilterUrl(filterStatus, filter.value)}
-                className={`px-3 py-1.5 rounded-lg transition-all text-sm flex items-center gap-2 ${
-                  isActive
-                    ? "bg-neutral-700 text-white border border-neutral-600"
-                    : "bg-neutral-800 text-neutral-400 hover:bg-neutral-750 border border-neutral-800"
-                }`}
-              >
-                {Icon && <Icon size={16} />}
-                <span>{filter.label}</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded text-xs ${
-                    isActive
-                      ? "bg-neutral-800 text-neutral-300"
-                      : "bg-neutral-700 text-neutral-500"
-                  }`}
-                >
-                  {filter.count}
-                </span>
-              </a>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Current Filter Display */}
-      {(filterStatus || filterType) && (
-        <div className="mb-6 flex items-center gap-2 text-sm">
-          <span className="text-neutral-500">Showing:</span>
-          <span className="font-medium text-neutral-200">
-            {getCurrentFilterLabel()}
-          </span>
-          <a
-            href={`/${username}/reel-deck`}
-            className="text-lime-400 hover:text-lime-300 transition-colors ml-2"
-          >
-            Clear filters
-          </a>
-        </div>
-      )}
-
-      {/* Media Grid */}
-      {allMediaWithDetails.length === 0 ? (
-        <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-12 text-center">
-          <IconClock size={64} className="mx-auto mb-4 text-neutral-600" />
-          <h2 className="text-xl font-semibold mb-2">No items found</h2>
-          <p className="text-neutral-400 mb-6">
-            {filterStatus || filterType
-              ? `You don't have any ${getCurrentFilterLabel().toLowerCase()} items in your Reel Deck`
-              : "Start adding movies and TV shows to track your watching progress!"}
-          </p>
-          <div className="flex gap-3 justify-center">
-            {(filterStatus || filterType) && (
-              <a
-                href={`/${username}/reel-deck`}
-                className="inline-flex px-6 py-3 bg-neutral-800 text-neutral-200 hover:bg-neutral-700 rounded-lg font-medium transition-colors"
-              >
-                Clear Filters
-              </a>
-            )}
-            <a
-              href="/search"
-              className="inline-flex px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium transition-colors"
-            >
-              Browse Media
-            </a>
-          </div>
-        </div>
-      ) : (
-        <ReelDeckGrid items={allMediaWithDetails} username={username} />
-      )}
     </>
   );
 }

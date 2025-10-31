@@ -50,12 +50,12 @@ export default function MainNavigation({
       className={`fixed lg:top-0 bottom-0 left-0 right-0 lg:right-auto px-5 pb-3 lg:pb-5 pt-3 lg:pt-10 min-h-[70px] lg:min-h-auto lg:min-w-[250px] bg-neutral-800 z-50`}
     >
       <section
-        className={`flex flex-row lg:flex-col gap-10 lg:gap-0 justify-center lg:justify-start items-center lg:items-start w-full h-full`}
+        className={`flex flex-row lg:flex-col gap-5 md:gap-10 lg:gap-0 justify-center lg:justify-start items-center lg:items-start w-full h-full`}
       >
         <Logo className={`hidden lg:block`} />
 
         <article
-          className={`lg:flex-grow lg:mt-20 flex lg:flex-col justify-center lg:justify-start items-center lg:items-start gap-10 lg:gap-14`}
+          className={`lg:flex-grow lg:mt-20 flex lg:flex-col justify-center lg:justify-start items-center lg:items-start gap-5 md:gap-10 lg:gap-14`}
         >
           {items.map(({ icon, label, href }) => (
             <Link
@@ -80,7 +80,7 @@ export default function MainNavigation({
             <Link
               href={`/${profile?.username}/reel-deck`}
               className={`flex gap-6 max-w-fit ${
-                pathname === `/reel-deck`
+                pathname.includes(`reel-deck`)
                   ? "text-lime-400"
                   : "text-neutral-500 hover:text-neutral-200"
               } font-bold transition-all duration-300 ease-in-out`}

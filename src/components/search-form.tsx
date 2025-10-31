@@ -3,8 +3,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import axios from "axios";
-
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 
@@ -80,29 +78,25 @@ export default ({
       setAnimateMessage(true);
     }
 
-    const options = {
-      method: "GET",
-      url: `https://api.themoviedb.org/3/search/multi`,
-      params: {
-        query: cleanSearchTerm(searchString),
-        include_adult: false,
-        language: `en-US`,
-        page: page,
-      },
-      headers: {
-        accept: "application/json",
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-      },
-    };
-
     try {
-      const response = await axios.request(options);
-      const totalPagesFromResponse = response.data.total_pages || 1;
+      // ✅ NEW: Use our secure API route instead of calling TMDB directly
+      const response = await fetch(
+        `/api/tmdb/search?query=${cleanSearchTerm(
+          searchString,
+        )}&page=${page}&language=en-US`,
+      );
+
+      if (!response.ok) {
+        throw new Error(`Search failed with status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const totalPagesFromResponse = data.total_pages || 1;
 
       setTotalPages(totalPagesFromResponse);
       setCurrentPage(page);
 
-      const searchResults: MediaSearchResult[] = response.data.results
+      const searchResults: MediaSearchResult[] = data.results
         .filter(
           (item: any) =>
             item.media_type === "movie" || item.media_type === "tv",
@@ -153,7 +147,7 @@ export default ({
 
       return { results: searchResults, totalPages: totalPagesFromResponse };
     } catch (error) {
-      console.error(`Error fetching search results: ${error}`);
+      console.error(`Error fetching search results:`, error);
       onLoading?.(false);
       setMessage("Error fetching results. Please try again.");
       setAnimateMessage(false);

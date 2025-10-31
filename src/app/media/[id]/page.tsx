@@ -1,7 +1,5 @@
 ﻿import React from "react";
 
-import axios from "axios";
-
 import SingleMediaWrapper from "@/src/components/wrapper-single-media";
 
 interface SearchParams {
@@ -42,51 +40,44 @@ export default async function MediaPage(searchParams: SearchParams) {
   const mediaId = searchParams.params.id.slice(1);
   let mediaData: FullMediaItem | null = null;
 
-  // Functions
-  const options =
+  // ✅ UPDATED: Server-side page can call TMDB directly with secure env var
+  const url =
     mediaType === "movie"
-      ? {
-          method: "GET",
-          url: `https://api.themoviedb.org/3/movie/${mediaId}`,
-          params: {
-            language: `en-US`,
-          },
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-          },
-        }
-      : {
-          method: "GET",
-          url: `https://api.themoviedb.org/3/tv/${mediaId}`,
-          params: {
-            language: `en-US`,
-          },
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-          },
-        };
+      ? `https://api.themoviedb.org/3/movie/${mediaId}?language=en-US`
+      : `https://api.themoviedb.org/3/tv/${mediaId}?language=en-US`;
 
-  await axios
-    .request(options)
-    .then(function (response) {
-      mediaData = {
-        id: response.data.id,
-        title: response.data.title || response.data.name,
-        tagline: response.data.tagline,
-        backdrop: response.data.backdrop_path,
-        poster: response.data.poster_path,
-        imdb_id: response.data.imdb_id,
-        overview: response.data.overview,
-        date: response.data.release_date || response.data.first_air_date,
-        rating: response.data.vote_average,
-        adult: response.data.adult,
-      };
-    })
-    .catch(function (error) {
-      console.error(error);
+  try {
+    const response = await fetch(url, {
+      headers: {
+        accept: "application/json",
+        // ✅ FIXED: Use TMDB_API_TOKEN (server-only) instead of NEXT_PUBLIC_TMDB_API_TOKEN
+        Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
+      },
+      // Add caching for better performance
+      next: { revalidate: 86400 }, // Cache for 1 day
     });
+
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    mediaData = {
+      id: data.id,
+      title: data.title || data.name,
+      tagline: data.tagline,
+      backdrop: data.backdrop_path,
+      poster: data.poster_path,
+      imdb_id: data.imdb_id,
+      overview: data.overview,
+      date: data.release_date || data.first_air_date,
+      rating: data.vote_average,
+      adult: data.adult,
+    };
+  } catch (error) {
+    console.error("Error fetching media data:", error);
+  }
 
   return mediaData && <SingleMediaWrapper mediaData={mediaData} />;
 }

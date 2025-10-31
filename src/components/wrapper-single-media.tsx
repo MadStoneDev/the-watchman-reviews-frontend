@@ -1,19 +1,15 @@
 ﻿"use client";
 
 import React, { useEffect, useState } from "react";
-
-import { Database } from "@/src/types/supabase";
-
+import Image from "next/image";
 import GoBack from "@/src/components/go-back";
 
-interface TMDBItem {
+interface MediaItem {
   id: number;
   title: string;
   tagline: string;
   backdrop: string;
   poster: string;
-  numberOfSeasons?: number;
-  seasons?: any[];
   imdb_id: string;
   overview: string;
   date: string;
@@ -21,17 +17,10 @@ interface TMDBItem {
   adult: boolean;
 }
 
-type MediaItem = Database["public"]["Tables"]["medias"]["Row"];
-type ReviewItem = Database["public"]["Tables"]["reviews"]["Row"];
-
 export default function SingleMediaWrapper({
   mediaData,
-  reviewData,
-  TMDBData,
 }: {
-  mediaData?: MediaItem | null;
-  reviewData?: ReviewItem | null;
-  TMDBData?: TMDBItem | null;
+  mediaData: MediaItem;
 }) {
   const breakpoints = {
     sm: 640,
@@ -69,69 +58,162 @@ export default function SingleMediaWrapper({
 
   return (
     <>
-      <section className={`relative z-10`}>
+      <section className="relative z-10">
         <GoBack />
       </section>
 
       {/* Spacing */}
-      <div className={`block md:hidden h-[40dvh]`}></div>
+      <div className="block md:hidden h-[40dvh]"></div>
 
-      <div
-        className={`absolute top-0 md:top-auto left-0 md:left-auto right-0 md:right-auto md:relative`}
-      >
-        <section
-          className={`relative md:mt-5 h-[50dvh] md:h-[500px] md:rounded-3xl transition-all duration-300 ease-in-out overflow-hidden`}
-        >
-          {TMDBData && mediaData && (
-            <img
-              className={`bg-neutral-800 w-full h-full object-cover`}
-              src={`https://image.tmdb.org/t/p/original${TMDBData.backdrop}`}
-              alt={`${mediaData.title} Poster`}
+      <div className="absolute top-0 md:top-auto left-0 md:left-auto right-0 md:right-auto md:relative">
+        {/* Backdrop Image */}
+        <section className="relative md:mt-5 h-[50dvh] md:h-[500px] md:rounded-3xl transition-all duration-300 ease-in-out overflow-hidden">
+          {mediaData.backdrop && (
+            <Image
+              className="bg-neutral-800 object-cover"
+              src={`https://image.tmdb.org/t/p/original${mediaData.backdrop}`}
+              alt={`${mediaData.title} Backdrop`}
+              fill
+              priority
+              sizes="100vw"
             />
           )}
 
+          {/* Gradient Overlay */}
           <div className="md:hidden absolute inset-0 bg-gradient-to-b from-black via-transparent to-black opacity-100"></div>
         </section>
 
-        <section
-          className={`absolute md:relative bottom-0 left-0 right-0 mt-12 p-5 md:p-0 transition-all duration-300 ease-in-out z-10`}
-        >
-          <h1 className={`text-2xl sm:3xl md:text-4xl font-bold`}>
-            {mediaData?.title}
+        {/* Title Section */}
+        <section className="absolute md:relative bottom-0 left-0 right-0 mt-12 p-5 md:p-0 transition-all duration-300 ease-in-out z-10">
+          <h1 className="text-2xl sm:3xl md:text-4xl font-bold">
+            {mediaData.title}
           </h1>
-          {/*<h3 className={`text-lg text-neutral-500`}>*/}
-          {/*  {TMDBData?.genres.map(({ id, name }) => name).join(", ")}*/}
-          {/*</h3>*/}
+          {mediaData.tagline && (
+            <p className="text-lg text-neutral-400 mt-2">{mediaData.tagline}</p>
+          )}
         </section>
       </div>
 
-      <section
-        className={`mt-6 sm:mt-12 grid lg:grid-cols-2 gap-16 text-sm text-neutral-500 transition-all duration-300 ease-in-out`}
-      >
-        <article className={`grid gap-6`}>
-          <p className={``}>
-            Cras in neque. Sed lacinia, felis ut sodales pretium, justo sapien
-            hendrerit est, et convallis nisi quam sit amet erat. Suspendisse
-            consequat nibh a mauris. Curabitur libero ligula, faucibus at,
-            mollis ornare, mattis et, libero.
-          </p>
-          <p>
-            Aliquam pulvinar congue pede. Fusce condimentum turpis vel dolor. Ut
-            blandit. Sed elementum justo quis sem. Sed eu orci eu ante iaculis
-            accumsan. Sed suscipit dolor quis mi. Curabitur ultrices nonummy
-            lacus. Morbi ipsum ipsum, adipiscing eget, tincidunt vitae, pharetra
-            at, tellus. Nulla gravida, arcu eget dictum eleifend, velit ligula
-            suscipit nibh, sagittis imperdiet metus nunc non pede. Aenean congue
-            pede in nisi tristique interdum. Sed commodo, ipsum ac dignissim
-            ullamcorper, odio nulla venenatis nisi, in porta dolor neque
-            venenatis lacus. Pellentesque fermentum. Mauris sit amet ligula ut
-            tellus gravida mattis. Vestibulum ante ipsum primis in faucibus orci
-            luctus et ultrices posuere cubilia Curae;
-          </p>
+      {/* Content Section */}
+      <section className="mt-6 sm:mt-12 grid lg:grid-cols-3 gap-8 text-sm text-neutral-400 transition-all duration-300 ease-in-out">
+        {/* Main Content - Overview */}
+        <article className="lg:col-span-2 space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold text-neutral-200 mb-3">
+              Overview
+            </h2>
+            <p className="text-neutral-400 leading-relaxed text-base">
+              {mediaData.overview || "No overview available."}
+            </p>
+          </div>
         </article>
 
-        <article className={`bg-neutral-200 p-6 rounded-3xl`}></article>
+        {/* Sidebar - Media Info */}
+        <article className="bg-neutral-900 rounded-lg border border-neutral-800 p-6 h-fit">
+          <h2 className="text-lg font-semibold text-neutral-200 mb-4">
+            Details
+          </h2>
+
+          <div className="space-y-4">
+            {/* Release Date */}
+            {mediaData.date && (
+              <div>
+                <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
+                  Release Date
+                </dt>
+                <dd className="text-neutral-200">
+                  {new Date(mediaData.date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </dd>
+              </div>
+            )}
+
+            {/* Rating */}
+            {mediaData.rating > 0 && (
+              <div>
+                <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
+                  Rating
+                </dt>
+                <dd className="text-neutral-200">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-yellow-500 text-lg">★</span>
+                      <span className="font-semibold">
+                        {mediaData.rating.toFixed(1)}
+                      </span>
+                    </div>
+                    <span className="text-neutral-500">/ 10</span>
+                  </div>
+                </dd>
+              </div>
+            )}
+
+            {/* IMDb Link */}
+            {mediaData.imdb_id && (
+              <div>
+                <dt className="text-neutral-500 text-xs font-medium uppercase tracking-wider mb-1">
+                  IMDb
+                </dt>
+                <dd>
+                  <a
+                    href={`https://www.imdb.com/title/${mediaData.imdb_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300 transition-colors"
+                  >
+                    View on IMDb
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </a>
+                </dd>
+              </div>
+            )}
+
+            {/* Adult Content Warning */}
+            {mediaData.adult && (
+              <div className="pt-4 border-t border-neutral-800">
+                <div className="bg-red-900/20 border border-red-800/50 rounded-lg p-3">
+                  <p className="text-red-400 text-xs font-medium">
+                    ⚠️ Adult Content
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </article>
       </section>
+
+      {/* Poster (if you want to show it somewhere) */}
+      {mediaData.poster && (
+        <section className="mt-12">
+          <h2 className="text-xl font-semibold text-neutral-200 mb-4">
+            Poster
+          </h2>
+          <div className="relative w-64 aspect-[2/3] rounded-lg overflow-hidden border-2 border-neutral-800">
+            <Image
+              src={`https://image.tmdb.org/t/p/${posterSize}${mediaData.poster}`}
+              alt={`${mediaData.title} Poster`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 185px, (max-width: 1024px) 342px, 500px"
+            />
+          </div>
+        </section>
+      )}
     </>
   );
 }

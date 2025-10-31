@@ -83,6 +83,48 @@ export type Database = {
           },
         ]
       }
+      episode_watches: {
+        Row: {
+          created_at: string | null
+          episode_id: string
+          id: string
+          series_id: string
+          user_id: string
+          watched_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          episode_id: string
+          id?: string
+          series_id: string
+          user_id: string
+          watched_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          episode_id?: string
+          id?: string
+          series_id?: string
+          user_id?: string
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episode_watches_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "episode_watches_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       episodes: {
         Row: {
           air_date: string | null

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/src/utils/supabase/client";
-import axios from "axios";
 import { Tables } from "@/database.types";
 import { IconCalendar, IconMovie } from "@tabler/icons-react";
 
@@ -57,20 +56,17 @@ export default function SeriesSeasonTabs({
   const fetchSeasonsFromTMDB = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/tv/${seriesTmdbId}`,
-        {
-          params: {
-            language: "en-US",
-          },
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-          },
-        },
+      // ✅ NEW: Use our secure API route instead of calling TMDB directly
+      const response = await fetch(
+        `/api/tmdb/tv/${seriesTmdbId}?language=en-US`,
       );
 
-      const tmdbSeasons = response.data.seasons;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch series data: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const tmdbSeasons = data.seasons;
 
       // Prepare season records for upsert
       const seasonsToUpsert = tmdbSeasons.map((season: any) => ({

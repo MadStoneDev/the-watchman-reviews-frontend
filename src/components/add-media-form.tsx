@@ -58,16 +58,11 @@ export default function AddMediaForm({
     setIsLoading(true);
     setHasSearched(true);
     try {
+      // ✅ Use our secure API route
       const response = await fetch(
-        `https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(
+        `/api/tmdb/search?query=${encodeURIComponent(
           searchQuery,
-        )}&include_adult=false&language=en-US&page=1`,
-        {
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-          },
-        },
+        )}&page=1&language=en-US`,
       );
 
       const data = await response.json();
@@ -113,17 +108,13 @@ export default function AddMediaForm({
           );
 
           // Fetch updated data from TMDB
+          // ✅ Use our secure API route
           const tmdbEndpoint =
             mediaType === "movie"
-              ? `https://api.themoviedb.org/3/movie/${tmdbId}`
-              : `https://api.themoviedb.org/3/tv/${tmdbId}`;
+              ? `/api/tmdb/movie/${tmdbId}`
+              : `/api/tmdb/tv/${tmdbId}`;
 
-          const tmdbResponse = await fetch(`${tmdbEndpoint}?language=en-US`, {
-            headers: {
-              accept: "application/json",
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-            },
-          });
+          const tmdbResponse = await fetch(`${tmdbEndpoint}?language=en-US`);
 
           if (tmdbResponse.ok) {
             const tmdbData = await tmdbResponse.json();
@@ -185,17 +176,13 @@ export default function AddMediaForm({
         // Media doesn't exist, create it with full data from TMDB
         console.log(`${mediaType} not in database, creating new record...`);
 
+        // ✅ Use our secure API route
         const tmdbEndpoint =
           mediaType === "movie"
-            ? `https://api.themoviedb.org/3/movie/${tmdbId}`
-            : `https://api.themoviedb.org/3/tv/${tmdbId}`;
+            ? `/api/tmdb/movie/${tmdbId}`
+            : `/api/tmdb/tv/${tmdbId}`;
 
-        const tmdbResponse = await fetch(`${tmdbEndpoint}?language=en-US`, {
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-          },
-        });
+        const tmdbResponse = await fetch(`${tmdbEndpoint}?language=en-US`);
 
         if (!tmdbResponse.ok) {
           throw new Error(`Failed to fetch ${mediaType} details from TMDB`);

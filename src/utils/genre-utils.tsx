@@ -66,7 +66,7 @@ export async function refreshGenres(
       params: { language: "en-US" },
       headers: {
         accept: "application/json",
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+        Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
       },
     });
 
@@ -191,7 +191,7 @@ export async function syncMovieGenres(
         params: { language: "en-US" },
         headers: {
           accept: "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+          Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
         },
       },
     );
@@ -278,7 +278,7 @@ export async function syncSeriesGenres(
         params: { language: "en-US" },
         headers: {
           accept: "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
+          Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
         },
       },
     );

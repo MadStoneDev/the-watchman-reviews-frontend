@@ -334,28 +334,13 @@ export default function UserCollectionsBlock({
       recordId: number,
     ): Promise<string | null> => {
       try {
-        const options = {
-          method: "GET",
-          url:
-            mediaType === "movie"
-              ? `https://api.themoviedb.org/3/movie/${tmdbId}`
-              : `https://api.themoviedb.org/3/tv/${tmdbId}`,
-          params: {
-            language: "en-US",
-          },
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-          },
-        };
+        // ✅ Use our secure API route
+        const endpoint =
+          mediaType === "movie"
+            ? `/api/tmdb/movie/${tmdbId}`
+            : `/api/tmdb/tv/${tmdbId}`;
 
-        const response = await fetch(
-          options.url + "?" + new URLSearchParams(options.params),
-          {
-            method: options.method,
-            headers: options.headers,
-          },
-        );
+        const response = await fetch(`${endpoint}?language=en-US`);
 
         if (!response.ok) {
           throw new Error(`TMDB API error: ${response.status}`);

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/client";
-import axios from "axios";
 import { Tables } from "@/database.types";
 import { IconCalendar, IconClock, IconStar } from "@tabler/icons-react";
 
@@ -59,20 +58,17 @@ export default function SeasonEpisodeTabs({
   const fetchEpisodesFromTMDB = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/tv/${seriesTmdbId}/season/${seasonNumber}`,
-        {
-          params: {
-            language: "en-US",
-          },
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TMDB_API_TOKEN}`,
-          },
-        },
+      // ✅ NEW: Use our secure API route instead of calling TMDB directly
+      const response = await fetch(
+        `/api/tmdb/tv/${seriesTmdbId}/season/${seasonNumber}?language=en-US`,
       );
 
-      const tmdbEpisodes = response.data.episodes;
+      if (!response.ok) {
+        throw new Error(`Failed to fetch season data: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const tmdbEpisodes = data.episodes;
 
       // Prepare episode records for upsert
       const episodesToUpsert = tmdbEpisodes.map((episode: any) => ({
@@ -81,7 +77,7 @@ export default function SeasonEpisodeTabs({
         episode_number: episode.episode_number,
         title: episode.name,
         overview: episode.overview,
-        poster_path: episode.still_path,
+        poster_path: episode.poster_path,
         release_year: episode.air_date
           ? new Date(episode.air_date).getFullYear().toString()
           : null,

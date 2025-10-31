@@ -56,17 +56,21 @@
 |   |   |       |       page.tsx
 |   |   |       |       
 |   |   |       +---reel-deck
-|   |   |       |       page.tsx
-|   |   |       |       
+|   |   |       |   |   page.tsx
+|   |   |       |   |   
+|   |   |       |   \---series
+|   |   |       |       \---[seriesId]
+|   |   |       |               page.tsx
+|   |   |       |               
 |   |   |       \---settings
 |   |   |               page.tsx
 |   |   |               
 |   |   +---(public)
 |   |   |   |   layout.tsx
-|   |   |   |   page.tsx
 |   |   |   |   
 |   |   |   +---(general)
 |   |   |   |   |   layout.tsx
+|   |   |   |   |   page.tsx
 |   |   |   |   |   
 |   |   |   |   +---(policies)
 |   |   |   |   |   +---privacy-policy
@@ -150,6 +154,33 @@
 |   |   |           page.tsx
 |   |   |           
 |   |   +---api
+|   |   |   +---reel-deck
+|   |   |   |   +---toggle-episode
+|   |   |   |   |       route.ts
+|   |   |   |   |       
+|   |   |   |   \---toggle-season
+|   |   |   |           route.ts
+|   |   |   |           
+|   |   |   \---tmdb
+|   |   |       +---genres
+|   |   |       |   \---[type]
+|   |   |       |           route.ts
+|   |   |       |           
+|   |   |       +---movie
+|   |   |       |   \---[tmdbId]
+|   |   |       |           route.ts
+|   |   |       |           
+|   |   |       +---search
+|   |   |       |       route.ts
+|   |   |       |       
+|   |   |       \---tv
+|   |   |           \---[tmdbId]
+|   |   |               |   route.ts
+|   |   |               |   
+|   |   |               \---season
+|   |   |                   \---[seasonNumber]
+|   |   |                           route.ts
+|   |   |                           
 |   |   +---fonts
 |   |   |       GeistMonoVF.woff
 |   |   |       GeistVF.woff
@@ -179,11 +210,13 @@
 |   |   |   media-block.tsx
 |   |   |   medias-collection.tsx
 |   |   |   otp-input.tsx
+|   |   |   reel-deck-filters.tsx
 |   |   |   reel-deck-grid.tsx
 |   |   |   results-view.tsx
 |   |   |   search-form.tsx
 |   |   |   search-skeleton-boundary.tsx
 |   |   |   season-episode-tabs.tsx
+|   |   |   series-progress-tracker.tsx
 |   |   |   series-season-tabs.tsx
 |   |   |   settings-content.tsx
 |   |   |   sortable-collection-item.tsx
@@ -221,6 +254,7 @@
 |   |       
 |   +---utils
 |   |   |   genre-utils.tsx
+|   |   |   tmdb-utils.ts
 |   |   |   
 |   |   +---supabase
 |   |   |       authentication.ts
