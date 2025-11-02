@@ -68,8 +68,6 @@ export default function MediaBlock({
 
   // Handle navigation to detail page
   const handleViewDetails = async () => {
-    if (!isUser) return;
-
     try {
       setLoading(true);
       const mediaType = data.mediaType;
@@ -205,7 +203,7 @@ export default function MediaBlock({
                 .update({
                   title: tmdbSeries.name,
                   overview: tmdbSeries.overview || "",
-                  poster_path: tmdbSeries.poster_path,
+                  poster_path: tmdbSeries.still_path,
                   backdrop_path: tmdbSeries.backdrop_path,
                   release_year: tmdbSeries.first_air_date
                     ? new Date(tmdbSeries.first_air_date)
@@ -246,7 +244,7 @@ export default function MediaBlock({
                 tmdb_id: tmdbSeries.id,
                 title: tmdbSeries.name,
                 overview: tmdbSeries.overview || "",
-                poster_path: tmdbSeries.poster_path,
+                poster_path: tmdbSeries.still_path,
                 backdrop_path: tmdbSeries.backdrop_path,
                 release_year: tmdbSeries.first_air_date
                   ? new Date(tmdbSeries.first_air_date).getFullYear().toString()
@@ -493,16 +491,26 @@ export default function MediaBlock({
         >
           <div className="flex justify-between items-center gap-2 mb-2 z-30">
             {/* View Details Button */}
-            {isUser && (
-              <button
-                onClick={handleViewDetails}
-                disabled={loading}
-                className="flex-1 py-1 px-3 bg-neutral-700/80 text-neutral-200 hover:bg-neutral-700 rounded-lg transition-colors flex items-center justify-center gap-1"
-                title="View details"
-              >
-                <IconBubbleText size={24} />
-              </button>
-            )}
+            <button
+              onClick={handleViewDetails}
+              disabled={loading}
+              className="flex-1 py-1 px-3 bg-neutral-700/80 text-neutral-200 hover:bg-neutral-700 rounded-lg transition-colors flex items-center justify-center gap-1"
+              title="View details"
+            >
+              <IconBubbleText size={24} />
+            </button>
+
+            {/* Add to Reel Deck Button */}
+            {/*{isUser && (*/}
+            {/*  <button*/}
+            {/*    onClick={handleViewDetails}*/}
+            {/*    disabled={loading}*/}
+            {/*    className="flex-1 py-1 px-3 bg-red-500 text-neutral-200 hover:bg-red-600 rounded-lg transition-colors flex items-center justify-center gap-1"*/}
+            {/*    title="View details"*/}
+            {/*  >*/}
+            {/*    <IconDeviceTv size={24} />*/}
+            {/*  </button>*/}
+            {/*)}*/}
 
             {/* Add to Collection Button */}
             {isUser && (

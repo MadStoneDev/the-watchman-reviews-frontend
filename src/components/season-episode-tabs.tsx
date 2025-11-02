@@ -77,7 +77,7 @@ export default function SeasonEpisodeTabs({
         episode_number: episode.episode_number,
         title: episode.name,
         overview: episode.overview,
-        poster_path: episode.poster_path,
+        poster_path: episode.still_path,
         release_year: episode.air_date
           ? new Date(episode.air_date).getFullYear().toString()
           : null,
