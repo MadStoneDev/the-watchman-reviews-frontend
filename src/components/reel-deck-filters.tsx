@@ -66,15 +66,15 @@ export default function ReelDeckFilters({
       if (value) {
         params.set(key, value);
 
-        // Save sort preference to localStorage
-        if (key === "sort") {
+        // Save sort preference to localStorage (only on client)
+        if (key === "sort" && typeof window !== "undefined") {
           localStorage.setItem(STORAGE_KEY, value);
         }
       } else {
         params.delete(key);
 
-        // Clear sort preference if removing sort
-        if (key === "sort") {
+        // Clear sort preference if removing sort (only on client)
+        if (key === "sort" && typeof window !== "undefined") {
           localStorage.removeItem(STORAGE_KEY);
         }
       }
@@ -327,7 +327,11 @@ export default function ReelDeckFilters({
           <Link
             href={`/${username}/reel-deck`}
             className="block text-center px-4 py-2 text-sm text-neutral-400 hover:text-lime-400 transition-colors"
-            onClick={() => localStorage.removeItem(STORAGE_KEY)}
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                localStorage.removeItem(STORAGE_KEY);
+              }
+            }}
           >
             Clear all filters
           </Link>
