@@ -196,7 +196,7 @@ export default function CollectionItem({
                 .update({
                   title: tmdbSeries.name,
                   overview: tmdbSeries.overview || "",
-                  poster_path: tmdbSeries.still_path,
+                  poster_path: tmdbSeries.poster_path,
                   backdrop_path: tmdbSeries.backdrop_path,
                   release_year: tmdbSeries.first_air_date
                     ? new Date(tmdbSeries.first_air_date)
@@ -237,7 +237,7 @@ export default function CollectionItem({
                 tmdb_id: tmdbSeries.id,
                 title: tmdbSeries.name,
                 overview: tmdbSeries.overview || "",
-                poster_path: tmdbSeries.still_path,
+                poster_path: tmdbSeries.poster_path,
                 backdrop_path: tmdbSeries.backdrop_path,
                 release_year: tmdbSeries.first_air_date
                   ? new Date(tmdbSeries.first_air_date).getFullYear().toString()
