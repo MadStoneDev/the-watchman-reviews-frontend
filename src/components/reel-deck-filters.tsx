@@ -43,6 +43,8 @@ export default function ReelDeckFilters({
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  console.log("");
+
   // Load saved sort preference on mount
   useEffect(() => {
     // Only apply saved preference if no sort parameter in URL
