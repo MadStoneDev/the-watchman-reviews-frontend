@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
 import React, { useState } from "react";
 import { createClient } from "@/src/utils/supabase/client";
 
@@ -13,7 +14,6 @@ import {
   IconCheck,
   IconX,
   IconExternalLink,
-  IconEye,
   IconPlaylistAdd,
   IconBubbleText,
 } from "@tabler/icons-react";

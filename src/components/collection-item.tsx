@@ -10,13 +10,9 @@ import {
   IconDeviceTv,
   IconChairDirector,
   IconEye,
-  IconEyeOff,
-  IconUsersGroup,
   IconGripVertical,
   IconExternalLink,
-  IconCheck,
-  IconX,
-  IconChecks,
+  IconBubbleText,
   IconCopyX,
   IconCopyCheck,
   IconSquareX,
@@ -25,6 +21,7 @@ import {
 
 import { MediaItem } from "@/src/lib/types";
 import { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
+import { useRouter } from "next/navigation";
 
 interface CollectionMediaItemProps {
   data: MediaItem & {
@@ -47,6 +44,11 @@ export default function CollectionItem({
   dragHandleProps,
   dragAttributes,
 }: CollectionMediaItemProps) {
+  // Hooks
+  const router = useRouter();
+
+  // States
+  const [loading, setLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
@@ -54,6 +56,228 @@ export default function CollectionItem({
   const [isUpdatingWatch, setIsUpdatingWatch] = useState(false);
 
   const supabase = createClient();
+
+  const MEDIA_REFRESH_INTERVAL_DAYS = 30;
+
+  // Functions
+  const handleViewDetails = async () => {
+    try {
+      setLoading(true);
+      const mediaType = data.mediaType;
+      const tmdbId = data.tmdbId;
+      let dbMediaId: string | null = null;
+
+      if (mediaType === "movie") {
+        // Check if movie exists and get last_fetched
+        const { data: movieData } = await supabase
+          .from("movies")
+          .select("id, last_fetched")
+          .eq("tmdb_id", tmdbId)
+          .maybeSingle();
+
+        if (movieData) {
+          dbMediaId = movieData.id;
+
+          // Check if movie needs refresh (older than 30 days)
+          const shouldRefresh = needsRefresh(movieData.last_fetched);
+
+          if (shouldRefresh) {
+            // ✅ Fetch updated data from our secure API route
+            const tmdbResponse = await fetch(
+              `/api/tmdb/movie/${tmdbId}?language=en-US`,
+            );
+
+            if (tmdbResponse.ok) {
+              const tmdbMovie = await tmdbResponse.json();
+
+              // Update movie record with fresh data
+              await supabase
+                .from("movies")
+                .update({
+                  title: tmdbMovie.title,
+                  overview: tmdbMovie.overview || "",
+                  poster_path: tmdbMovie.poster_path,
+                  backdrop_path: tmdbMovie.backdrop_path,
+                  release_year: tmdbMovie.release_date
+                    ? new Date(tmdbMovie.release_date).getFullYear().toString()
+                    : "",
+                  runtime: tmdbMovie.runtime || null,
+                  popularity: tmdbMovie.popularity
+                    ? parseInt(tmdbMovie.popularity)
+                    : null,
+                  tmdb_popularity: tmdbMovie.popularity
+                    ? String(tmdbMovie.popularity)
+                    : null, // STRING field
+                  last_fetched: new Date().toISOString(),
+                })
+                .eq("id", dbMediaId);
+            } else {
+              console.warn(
+                `Failed to refresh movie data from TMDB, using cached data`,
+              );
+            }
+          } else {
+            //
+          }
+        } else {
+          // ✅ Movie doesn't exist, fetch from our secure API route
+          const tmdbResponse = await fetch(
+            `/api/tmdb/movie/${tmdbId}?language=en-US`,
+          );
+
+          if (!tmdbResponse.ok) {
+            throw new Error("Failed to fetch movie details from TMDB");
+          }
+
+          const tmdbMovie = await tmdbResponse.json();
+
+          // Upsert movie record with complete data
+          const { data: newMovie, error: movieError } = await supabase
+            .from("movies")
+            .upsert(
+              {
+                tmdb_id: tmdbMovie.id,
+                title: tmdbMovie.title,
+                overview: tmdbMovie.overview || "",
+                poster_path: tmdbMovie.poster_path,
+                backdrop_path: tmdbMovie.backdrop_path,
+                release_year: tmdbMovie.release_date
+                  ? new Date(tmdbMovie.release_date).getFullYear().toString()
+                  : "",
+                runtime: tmdbMovie.runtime || null,
+                popularity: tmdbMovie.popularity
+                  ? parseInt(tmdbMovie.popularity)
+                  : null,
+                tmdb_popularity: tmdbMovie.popularity
+                  ? String(tmdbMovie.popularity)
+                  : null, // STRING field
+                last_fetched: new Date().toISOString(),
+              },
+              {
+                onConflict: "tmdb_id",
+                ignoreDuplicates: false,
+              },
+            )
+            .select("id")
+            .single();
+
+          if (movieError) throw movieError;
+          dbMediaId = newMovie.id;
+        }
+
+        // Navigate to movie page
+        router.push(`/movies/${dbMediaId}`);
+      } else if (mediaType === "tv") {
+        // Check if series exists and get last_fetched
+        const { data: seriesData } = await supabase
+          .from("series")
+          .select("id, last_fetched")
+          .eq("tmdb_id", tmdbId)
+          .maybeSingle();
+
+        if (seriesData) {
+          dbMediaId = seriesData.id;
+
+          // Check if series needs refresh (older than 30 days)
+          const shouldRefresh = needsRefresh(seriesData.last_fetched);
+
+          if (shouldRefresh) {
+            // ✅ Fetch updated data from our secure API route
+            const tmdbResponse = await fetch(
+              `/api/tmdb/tv/${tmdbId}?language=en-US`,
+            );
+
+            if (tmdbResponse.ok) {
+              const tmdbSeries = await tmdbResponse.json();
+
+              // Update series record with fresh data
+              await supabase
+                .from("series")
+                .update({
+                  title: tmdbSeries.name,
+                  overview: tmdbSeries.overview || "",
+                  poster_path: tmdbSeries.still_path,
+                  backdrop_path: tmdbSeries.backdrop_path,
+                  release_year: tmdbSeries.first_air_date
+                    ? new Date(tmdbSeries.first_air_date)
+                        .getFullYear()
+                        .toString()
+                    : "",
+                  first_air_date: tmdbSeries.first_air_date || null,
+                  last_air_date: tmdbSeries.last_air_date || null,
+                  status: tmdbSeries.status || null,
+                  last_fetched: new Date().toISOString(),
+                })
+                .eq("id", dbMediaId);
+            } else {
+              console.warn(
+                `Failed to refresh series data from TMDB, using cached data`,
+              );
+            }
+          } else {
+            //
+          }
+        } else {
+          // ✅ Series doesn't exist, fetch from our secure API route
+          const tmdbResponse = await fetch(
+            `/api/tmdb/tv/${tmdbId}?language=en-US`,
+          );
+
+          if (!tmdbResponse.ok) {
+            throw new Error("Failed to fetch series details from TMDB");
+          }
+
+          const tmdbSeries = await tmdbResponse.json();
+
+          // Upsert series record with complete data
+          const { data: newSeries, error: seriesError } = await supabase
+            .from("series")
+            .upsert(
+              {
+                tmdb_id: tmdbSeries.id,
+                title: tmdbSeries.name,
+                overview: tmdbSeries.overview || "",
+                poster_path: tmdbSeries.still_path,
+                backdrop_path: tmdbSeries.backdrop_path,
+                release_year: tmdbSeries.first_air_date
+                  ? new Date(tmdbSeries.first_air_date).getFullYear().toString()
+                  : "",
+                first_air_date: tmdbSeries.first_air_date || null,
+                last_air_date: tmdbSeries.last_air_date || null,
+                status: tmdbSeries.status || null,
+                last_fetched: new Date().toISOString(),
+              },
+              {
+                onConflict: "tmdb_id",
+                ignoreDuplicates: false,
+              },
+            )
+            .select("id")
+            .single();
+
+          if (seriesError) throw seriesError;
+          dbMediaId = newSeries.id;
+        }
+
+        // Navigate to series page
+        router.push(`/series/${dbMediaId}`);
+      }
+    } catch (err) {
+      console.error("Error navigating to details:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const needsRefresh = (lastFetched: string | null): boolean => {
+    if (!lastFetched) return true;
+
+    const lastFetchedDate = new Date(lastFetched);
+    const daysSinceLastFetch =
+      (Date.now() - lastFetchedDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    return daysSinceLastFetch >= MEDIA_REFRESH_INTERVAL_DAYS;
+  };
 
   // Check if this media is marked as watched by the current user
   useEffect(() => {
@@ -391,10 +615,11 @@ export default function CollectionItem({
 
       {/* Content */}
       <div className="p-3">
-        <Link
-          href={`https://www.themoviedb.org/${data.mediaType}/${data.tmdbId}`}
-          target="_blank"
+        <button
+          onClick={handleViewDetails}
+          disabled={loading}
           className="group/link flex items-start justify-between gap-1 mb-1"
+          title="View details"
         >
           <h3
             className={`text-sm font-medium line-clamp-2 group-hover/link:text-lime-400 transition-colors ${
@@ -403,11 +628,11 @@ export default function CollectionItem({
           >
             {data.title}
           </h3>
-          <IconExternalLink
-            size={18}
+          <IconBubbleText
+            size={20}
             className="text-neutral-600 group-hover/link:text-lime-400 transition-colors shrink-0 mt-0.5"
           />
-        </Link>
+        </button>
         {data.releaseYear && (
           <p
             className={`text-xs ${

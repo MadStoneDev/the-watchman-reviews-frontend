@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import CollectionItem from "./collection-item";
+import { useSortable } from "@dnd-kit/sortable";
+
 import { MediaItem } from "@/src/lib/types";
+import CollectionItem from "./collection-item";
 
 interface SortableCollectionItemProps {
   item: MediaItem & { collectionEntryId?: string };

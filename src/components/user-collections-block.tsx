@@ -4,10 +4,10 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@/src/utils/supabase/client";
 
 import { IconSquarePlus } from "@tabler/icons-react";
+import { UserCollectionRow } from "@/src/components/user-collection-row";
 
 import { Tables } from "@/database.types";
 import { MediaCollection } from "@/src/lib/types";
-import { UserCollectionRow } from "@/src/components/user-collection-row";
 
 type Profile = Tables<`profiles`>;
 

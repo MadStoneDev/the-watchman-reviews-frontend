@@ -1,7 +1,6 @@
 ﻿import type { Metadata } from "next";
 import React, { Suspense } from "react";
 
-import { User } from "@supabase/supabase-js";
 import { MediaCollection } from "@/src/lib/types";
 import { createClient } from "@/src/utils/supabase/server";
 
