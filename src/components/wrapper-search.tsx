@@ -1,12 +1,12 @@
 ﻿"use client";
 
-import React, { useState, useCallback } from "react";
-
+import React, { useState, useCallback, useEffect } from "react";
 import { Popcorn } from "lucide-react";
 
 import SearchForm from "@/src/components/search-form";
 import MediaBlock from "@/src/components/media-block";
 import LoadMoreButton from "@/src/components/load-more-button";
+import { perfLog } from "@/src/utils/perf";
 
 import { Tables } from "@/database.types";
 import { MediaCollection, MediaSearchResult } from "@/src/lib/types";
@@ -26,18 +26,20 @@ export default function SearchWrapper({
   ownedCollections?: MediaCollection[];
   sharedCollections?: MediaCollection[];
 }) {
-  // States
   const [searchResults, setSearchResults] = useState<MediaSearchResult[]>([]);
   const [hasMoreResults, setHasMoreResults] = useState(false);
+  // ✅ Fixed: Added parentheses and proper typing
   const [loadMoreFunction, setLoadMoreFunction] = useState<
-    null | (() => Promise<void>)
+    (() => Promise<void>) | null
   >(null);
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("Start Searching!");
   const [animateMessage, setAnimateMessage] = useState(false);
 
-  // Functions
+  useEffect(() => {
+    perfLog("✅ SearchWrapper mounted");
+  }, []);
+
   const sortSearchResults = (results: MediaSearchResult[]) => {
     if (!results.length) return results;
     return [...results].sort((a, b) => (a.popularity > b.popularity ? -1 : 1));
@@ -50,9 +52,14 @@ export default function SearchWrapper({
     }
 
     const sortedResults = sortSearchResults(results);
-
     setSearchResults((prev) =>
       isNewSearch ? sortedResults : [...prev, ...sortedResults],
+    );
+
+    perfLog(
+      `🎬 Rendered ${sortedResults.length} results (${
+        isNewSearch ? "new" : "appended"
+      })`,
     );
   };
 
@@ -101,7 +108,7 @@ export default function SearchWrapper({
           } text-neutral-200`}
         >
           <Popcorn size={40} strokeWidth={1.5} />
-          <p className={`text-sm italic`}>{message}</p>
+          <p className="text-sm italic">{message}</p>
         </section>
       )}
 

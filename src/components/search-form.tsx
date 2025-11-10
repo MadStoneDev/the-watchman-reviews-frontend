@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
-
 import { IconSearch } from "@tabler/icons-react";
 import { MediaSearchResult } from "@/src/lib/types";
+import { perfLog, startTimer, logTimer } from "@/src/utils/perf";
 
 export default ({
   onSearch,
@@ -25,34 +25,23 @@ export default ({
     loadMoreFn: () => Promise<void>,
   ) => void;
 }) => {
-  // Hooks
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // States
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [currentSearchTerm, setCurrentSearchTerm] = useState("");
   const [totalPages, setTotalPages] = useState(0);
 
-  // Functions
   const cleanSearchTerm = (term: string): string => {
-    // Remove non-alphanumeric characters except spaces
     let cleaned = term.replace(/[^\w\s]/g, "");
-
-    // Replace multiple spaces with a single space
     cleaned = cleaned.replace(/\s+/g, " ");
-
-    // Trim leading and trailing whitespace
     cleaned = cleaned.trim();
-
-    // URL encode the cleaned term
     return encodeURIComponent(cleaned);
   };
 
   const getYear = (dateString: string) => {
     if (!dateString) return null;
-
     try {
       const date = new Date(dateString);
       return date.getFullYear().toString() || "";
@@ -68,6 +57,13 @@ export default ({
   ) => {
     if (searchString.length < 3) return;
 
+    const fetchStart = startTimer();
+    perfLog(
+      `🔍 ${
+        isNewSearch ? "New search" : "Load more"
+      }: "${searchString}" (page ${page})`,
+    );
+
     onLoading?.(true);
 
     if (isNewSearch) {
@@ -79,23 +75,27 @@ export default ({
     }
 
     try {
-      // ✅ NEW: Use our secure API route instead of calling TMDB directly
+      const apiStart = startTimer();
       const response = await fetch(
         `/api/tmdb/search?query=${cleanSearchTerm(
           searchString,
         )}&page=${page}&language=en-US`,
       );
+      logTimer("📡 TMDB API response", apiStart);
 
       if (!response.ok) {
         throw new Error(`Search failed with status: ${response.status}`);
       }
 
+      const parseStart = startTimer();
       const data = await response.json();
-      const totalPagesFromResponse = data.total_pages || 1;
+      logTimer("🔄 JSON parse", parseStart);
 
+      const totalPagesFromResponse = data.total_pages || 1;
       setTotalPages(totalPagesFromResponse);
       setCurrentPage(page);
 
+      const mapStart = startTimer();
       const searchResults: MediaSearchResult[] = data.results
         .filter(
           (item: any) =>
@@ -117,13 +117,12 @@ export default ({
             popularity: item.popularity,
           }),
         );
+      logTimer("🗺️  Map results", mapStart);
 
       if (isNewSearch) {
-        // Only update URL for initial searches
         router.push(`/search?q=${encodeURIComponent(searchString)}`);
       }
 
-      // Remove the timeout to improve image loading speed
       onSearch(searchResults, isNewSearch);
       onLoading?.(false);
 
@@ -135,7 +134,6 @@ export default ({
       }
 
       const hasMorePages = page < totalPagesFromResponse;
-
       const loadMoreFn = hasMorePages
         ? async (): Promise<void> => {
             const nextPage = page + 1;
@@ -145,6 +143,11 @@ export default ({
 
       onMoreResultsAvailable(hasMorePages, loadMoreFn);
 
+      logTimer("✅ Total fetch operation", fetchStart);
+      perfLog(
+        `📊 Results: ${searchResults.length} items, page ${page}/${totalPagesFromResponse}`,
+      );
+
       return { results: searchResults, totalPages: totalPagesFromResponse };
     } catch (error) {
       console.error(`Error fetching search results:`, error);
@@ -152,6 +155,7 @@ export default ({
       setMessage("Error fetching results. Please try again.");
       setAnimateMessage(false);
       onMoreResultsAvailable(false, async (): Promise<void> => {});
+      logTimer("❌ Fetch failed", fetchStart);
       return { results: [], totalPages: 0 };
     }
   };
@@ -159,15 +163,16 @@ export default ({
   const handleSearch = async (searchString: string) => {
     setCurrentSearchTerm(searchString);
     setCurrentPage(1);
-
     onSearch([], true);
-
     await fetchSearchResults(searchString, 1, true);
   };
 
   useEffect(() => {
+    perfLog("🎯 SearchForm mounted");
+
     if (searchParams.has("q")) {
       const searchQuery = searchParams.get("q") as string;
+      perfLog(`🔄 Auto-search triggered: "${searchQuery}"`);
 
       setSearch(searchQuery);
       setCurrentSearchTerm(searchQuery);
@@ -176,29 +181,25 @@ export default ({
   }, []);
 
   return (
-    <>
-      <section
-        className={`flex flex-row gap-3 transition-all duration-300 ease-in-out`}
-      >
-        <Input
-          type="search"
-          placeholder="Search"
-          className={`outline-none ring-none border-none bg-neutral-800 hover:bg-neutral-600 focus:bg-neutral-600 transition-all duration-300 ease-in-out`}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyUp={(e) => e.key === "Enter" && handleSearch(search)}
-        />
+    <section className="flex flex-row gap-3 transition-all duration-300 ease-in-out">
+      <Input
+        type="search"
+        placeholder="Search"
+        className="outline-none ring-none border-none bg-neutral-800 hover:bg-neutral-600 focus:bg-neutral-600 transition-all duration-300 ease-in-out"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        onKeyUp={(e) => e.key === "Enter" && handleSearch(search)}
+      />
 
-        <Button
-          type="button"
-          variant={"secondary"}
-          onClick={async () => await handleSearch(search)}
-          className={`flex items-center gap-1 bg-lime-400 hover:bg-lime-400 hover:scale-110 text-neutral-900 transition-all duration-300 ease-in-out`}
-        >
-          <IconSearch size={20} strokeWidth={1.5} />
-          <p className={`hidden sm:block`}>Search</p>
-        </Button>
-      </section>
-    </>
+      <Button
+        type="button"
+        variant={"secondary"}
+        onClick={async () => await handleSearch(search)}
+        className="flex items-center gap-1 bg-lime-400 hover:bg-lime-400 hover:scale-110 text-neutral-900 transition-all duration-300 ease-in-out"
+      >
+        <IconSearch size={20} strokeWidth={1.5} />
+        <p className="hidden sm:block">Search</p>
+      </Button>
+    </section>
   );
 };
