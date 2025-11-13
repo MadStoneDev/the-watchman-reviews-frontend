@@ -3,39 +3,15 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import ReelDeckGrid from "@/src/components/reel-deck-grid";
-import ReelDeckFilters from "@/src/components/reel-deck-filters";
 import { getSeriesEpisodeCount } from "@/src/utils/tmdb-utils";
+import Link from "next/link";
 
 interface ReelDeckPageProps {
   params: Promise<{ username: string }>;
-  searchParams: Promise<{
-    status?: string;
-    type?: string;
-    sort?: string; // Add sort parameter
-  }>;
 }
 
-// Sorting options type
-type SortOption =
-  | "last-watched"
-  | "recently-aired"
-  | "type-movies-first"
-  | "type-tv-first"
-  | "title-asc"
-  | "title-desc"
-  | "rating"
-  | "added-date";
-
-export default async function ReelDeckPage({
-  params,
-  searchParams,
-}: ReelDeckPageProps) {
+export default async function ReelDeckPage({ params }: ReelDeckPageProps) {
   const { username } = await params;
-  const {
-    status: filterStatus,
-    type: filterType,
-    sort: sortOption = "last-watched", // Default to last watched
-  } = await searchParams;
   const supabase = await createClient();
 
   // Get current user
@@ -74,28 +50,17 @@ export default async function ReelDeckPage({
     notFound();
   }
 
-  // Fetch reel deck items with filters
-  let query = supabase
+  // Fetch all reel deck items
+  const { data: reelDeckItems } = await supabase
     .from("reel_deck")
     .select("*")
     .eq("user_id", currentUserId)
     .order("last_watched_at", { ascending: false });
 
-  // Apply status filter
-  if (filterStatus) {
-    query = query.eq("status", filterStatus);
-  }
-
-  // Apply media type filter
-  if (filterType) {
-    query = query.eq("media_type", filterType);
-  }
-
-  const { data: reelDeckItems } = await query;
-
   // Fetch full media details for each item
   const moviesWithDetails = [];
   const seriesWithDetails = [];
+  const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
 
   if (reelDeckItems) {
     for (const item of reelDeckItems) {
@@ -133,147 +98,133 @@ export default async function ReelDeckPage({
             series.tmdb_id,
           );
 
-          // For "recently aired" sorting, get the latest episode air date
-          let latestEpisodeAirDate = null;
-          if (sortOption === "recently-aired") {
-            const { data: latestEpisode } = await supabase
-              .from("episodes")
-              .select("air_date")
-              .eq("series_id", series.id)
-              .not("air_date", "is", null)
-              .order("air_date", { ascending: false })
-              .limit(1)
-              .single();
+          // Get the latest aired episode
+          const { data: latestAiredEpisode } = await supabase
+            .from("episodes")
+            .select("air_date")
+            .eq("series_id", series.id)
+            .not("air_date", "is", null)
+            .lte("air_date", today)
+            .order("air_date", { ascending: false })
+            .limit(1)
+            .single();
 
-            latestEpisodeAirDate = latestEpisode?.air_date || null;
-          }
+          // Get the next upcoming episode
+          const { data: nextUpcomingEpisode } = await supabase
+            .from("episodes")
+            .select("air_date")
+            .eq("series_id", series.id)
+            .not("air_date", "is", null)
+            .gt("air_date", today)
+            .order("air_date", { ascending: true })
+            .limit(1)
+            .single();
+
+          // Count aired episodes
+          const { count: airedEpisodesCount } = await supabase
+            .from("episodes")
+            .select("*", { count: "exact", head: true })
+            .eq("series_id", series.id)
+            .not("air_date", "is", null)
+            .lte("air_date", today);
 
           seriesWithDetails.push({
             ...series,
             reelDeckItem: item,
             watchedEpisodes: episodeWatches?.length || 0,
             totalEpisodes: totalEpisodes,
-            latestEpisodeAirDate, // Add this for sorting
+            latestAiredEpisodeDate: latestAiredEpisode?.air_date || null,
+            nextUpcomingEpisodeDate: nextUpcomingEpisode?.air_date || null,
+            airedEpisodesCount: airedEpisodesCount || 0,
           });
         }
       }
     }
   }
 
-  // Combine and sort based on selected option
+  // Combine all media
   const allMediaWithDetails = [...moviesWithDetails, ...seriesWithDetails];
 
-  // Apply sorting
-  allMediaWithDetails.sort((a, b) => {
-    switch (sortOption as SortOption) {
-      case "last-watched":
-        // Sort by last watched or added date (default behavior)
-        const aTime = a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
-        const bTime = b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
-        return new Date(bTime).getTime() - new Date(aTime).getTime();
+  // Categorize into Next Up, Upcoming, and Completed
+  const nextUpItems: typeof allMediaWithDetails = [];
+  const upcomingItems: typeof allMediaWithDetails = [];
+  const completedItems: typeof allMediaWithDetails = [];
 
-      case "recently-aired":
-        // Sort by most recent air date (movies by release date, TV by latest episode)
-        const aAirDate =
-          "latestEpisodeAirDate" in a
-            ? a.latestEpisodeAirDate || a.first_air_date || a.release_year
-            : a.release_date || a.release_year;
-        const bAirDate =
-          "latestEpisodeAirDate" in b
-            ? b.latestEpisodeAirDate || b.first_air_date || b.release_year
-            : b.release_date || b.release_year;
+  allMediaWithDetails.forEach((item) => {
+    // Check if completed
+    const isCompleted =
+      item.reelDeckItem.status === "completed" ||
+      ("watchedEpisodes" in item &&
+        "totalEpisodes" in item &&
+        item.watchedEpisodes >= item.totalEpisodes &&
+        item.totalEpisodes > 0 &&
+        !item.nextUpcomingEpisodeDate); // No future episodes
 
-        if (!aAirDate && !bAirDate) return 0;
-        if (!aAirDate) return 1;
-        if (!bAirDate) return -1;
-        return new Date(bAirDate).getTime() - new Date(aAirDate).getTime();
+    if (isCompleted) {
+      completedItems.push(item);
+      return;
+    }
 
-      case "type-movies-first":
-        // Movies first, then TV shows, then by last watched within each type
-        if (a.reelDeckItem.media_type !== b.reelDeckItem.media_type) {
-          return a.reelDeckItem.media_type === "movie" ? -1 : 1;
-        }
-        const aTimeType1 =
-          a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
-        const bTimeType1 =
-          b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
-        return new Date(bTimeType1).getTime() - new Date(aTimeType1).getTime();
+    // For TV shows
+    if ("watchedEpisodes" in item) {
+      const isCaughtUp =
+        item.watchedEpisodes >= (item.airedEpisodesCount || 0) &&
+        item.airedEpisodesCount > 0;
 
-      case "type-tv-first":
-        // TV shows first, then movies, then by last watched within each type
-        if (a.reelDeckItem.media_type !== b.reelDeckItem.media_type) {
-          return a.reelDeckItem.media_type === "tv" ? -1 : 1;
-        }
-        const aTimeType2 =
-          a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
-        const bTimeType2 =
-          b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
-        return new Date(bTimeType2).getTime() - new Date(aTimeType2).getTime();
-
-      case "title-asc":
-        // Sort alphabetically A-Z
-        return a.title.localeCompare(b.title);
-
-      case "title-desc":
-        // Sort alphabetically Z-A
-        return b.title.localeCompare(a.title);
-
-      case "rating":
-        // Sort by rating (highest first)
-        const aRating = a.vote_average || 0;
-        const bRating = b.vote_average || 0;
-        return bRating - aRating;
-
-      case "added-date":
-        // Sort by when added to reel deck (newest first)
-        return (
-          new Date(b.reelDeckItem.added_at).getTime() -
-          new Date(a.reelDeckItem.added_at).getTime()
-        );
-
-      default:
-        // Fallback to last watched
-        const aDefault =
-          a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
-        const bDefault =
-          b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
-        return new Date(bDefault).getTime() - new Date(aDefault).getTime();
+      if (isCaughtUp && item.nextUpcomingEpisodeDate) {
+        // Caught up on aired episodes, but has upcoming episodes
+        upcomingItems.push(item);
+      } else {
+        // Has unwatched aired episodes
+        nextUpItems.push(item);
+      }
+    } else {
+      // Movies that aren't completed go to Next Up
+      nextUpItems.push(item);
     }
   });
 
-  // Count all items (for base counts regardless of type filter)
-  const { data: allReelDeckItems } = await supabase
-    .from("reel_deck")
-    .select("*")
-    .eq("user_id", currentUserId);
+  // Sort Next Up by latest aired episode (most recent first)
+  nextUpItems.sort((a, b) => {
+    const aDate =
+      "latestAiredEpisodeDate" in a
+        ? a.latestAiredEpisodeDate || a.first_air_date || a.release_year
+        : a.release_date || a.release_year;
+    const bDate =
+      "latestAiredEpisodeDate" in b
+        ? b.latestAiredEpisodeDate || b.first_air_date || b.release_year
+        : b.release_date || b.release_year;
 
-  // Calculate counts by status (all types)
-  const statusCounts = {
-    all: allReelDeckItems?.length || 0,
-    watching:
-      allReelDeckItems?.filter((item) => item.status === "watching").length ||
-      0,
-    completed:
-      allReelDeckItems?.filter((item) => item.status === "completed").length ||
-      0,
-    paused:
-      allReelDeckItems?.filter((item) => item.status === "paused").length || 0,
-    plan_to_watch:
-      allReelDeckItems?.filter((item) => item.status === "plan_to_watch")
-        .length || 0,
-  };
+    if (!aDate && !bDate) return 0;
+    if (!aDate) return 1;
+    if (!bDate) return -1;
+    return new Date(bDate).getTime() - new Date(aDate).getTime();
+  });
 
-  // Calculate counts by type (within current status)
-  const currentStatusItems = filterStatus
-    ? allReelDeckItems?.filter((item) => item.status === filterStatus) || []
-    : allReelDeckItems || [];
+  // Sort Upcoming by next episode air date (soonest first)
+  upcomingItems.sort((a, b) => {
+    const aDate =
+      "nextUpcomingEpisodeDate" in a ? a.nextUpcomingEpisodeDate : null;
+    const bDate =
+      "nextUpcomingEpisodeDate" in b ? b.nextUpcomingEpisodeDate : null;
 
-  const typeCounts = {
-    all: currentStatusItems.length,
-    movie: currentStatusItems.filter((item) => item.media_type === "movie")
-      .length,
-    tv: currentStatusItems.filter((item) => item.media_type === "tv").length,
-  };
+    if (!aDate && !bDate) return 0;
+    if (!aDate) return 1;
+    if (!bDate) return -1;
+    return new Date(aDate).getTime() - new Date(bDate).getTime();
+  });
+
+  // Sort Completed by last watched date (most recent first)
+  completedItems.sort((a, b) => {
+    const aTime = a.reelDeckItem.last_watched_at || a.reelDeckItem.added_at;
+    const bTime = b.reelDeckItem.last_watched_at || b.reelDeckItem.added_at;
+    return new Date(bTime).getTime() - new Date(aTime).getTime();
+  });
+
+  // Limit items for preview (show first 12 items)
+  const nextUpPreview = nextUpItems.slice(0, 12);
+  const upcomingPreview = upcomingItems.slice(0, 12);
+  const completedPreview = completedItems.slice(0, 12);
 
   return (
     <>
@@ -292,66 +243,102 @@ export default async function ReelDeckPage({
         currentUserId={currentUserId || ""}
       />
 
-      <div className="flex gap-6 mt-14 lg:mt-20 mb-6">
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          <section className="mb-8">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
-              My Reel Deck
-            </h1>
-            <p className="text-neutral-400 mt-2">
-              Track what you're watching, have watched, and want to watch
-            </p>
-          </section>
+      <div className="mt-14 lg:mt-20 mb-6">
+        {/* Page Header */}
+        <section className="mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+            My Reel Deck
+          </h1>
+          <p className="text-neutral-400 mt-2">
+            Track what you're watching, have watched, and want to watch
+          </p>
+        </section>
 
-          {/* Media Grid */}
-          {allMediaWithDetails.length === 0 ? (
-            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-12 text-center">
-              <div className="max-w-md mx-auto">
-                <h2 className="text-xl font-semibold mb-2">No items found</h2>
-                <p className="text-neutral-400 mb-6">
-                  {filterStatus || filterType
-                    ? "Try adjusting your filters or clear them to see all items"
-                    : "Start adding movies and TV shows to track your watching progress!"}
-                </p>
-                <div className="flex gap-3 justify-center">
-                  {(filterStatus ||
-                    filterType ||
-                    sortOption !== "last-watched") && (
-                    <a
-                      href={`/${username}/reel-deck`}
-                      className="inline-flex px-6 py-3 bg-neutral-800 text-neutral-200 hover:bg-neutral-700 rounded-lg font-medium transition-colors"
-                    >
-                      Clear Filters
-                    </a>
-                  )}
-                  <a
-                    href="/search"
-                    className="inline-flex px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium transition-colors"
-                  >
-                    Browse Media
-                  </a>
-                </div>
-              </div>
+        {/* Next Up Section */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold">Next Up</h2>
+            {nextUpItems.length > 12 && (
+              <Link
+                href={`/${username}/reel-deck/next-up`}
+                className="text-lime-400 hover:text-lime-500 text-sm font-medium transition-colors"
+              >
+                View All ({nextUpItems.length})
+              </Link>
+            )}
+          </div>
+          {nextUpPreview.length === 0 ? (
+            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-8 text-center">
+              <p className="text-neutral-400">
+                No unwatched content. Check out your upcoming shows or browse
+                for new content!
+              </p>
             </div>
           ) : (
             <ReelDeckGrid
-              items={allMediaWithDetails}
+              items={nextUpPreview}
               username={username}
               userId={currentUserId}
             />
           )}
-        </div>
+        </section>
 
-        {/* Floating Sidebar Filters */}
-        <ReelDeckFilters
-          username={username}
-          filterStatus={filterStatus}
-          filterType={filterType}
-          sortOption={sortOption as SortOption} // Pass sort option
-          statusCounts={statusCounts}
-          typeCounts={typeCounts}
-        />
+        {/* Upcoming Section */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold">Upcoming</h2>
+            {upcomingItems.length > 12 && (
+              <Link
+                href={`/${username}/reel-deck/upcoming`}
+                className="text-lime-400 hover:text-lime-500 text-sm font-medium transition-colors"
+              >
+                View All ({upcomingItems.length})
+              </Link>
+            )}
+          </div>
+          {upcomingPreview.length === 0 ? (
+            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-8 text-center">
+              <p className="text-neutral-400">
+                No upcoming episodes. All your shows have aired content to catch
+                up on!
+              </p>
+            </div>
+          ) : (
+            <ReelDeckGrid
+              items={upcomingPreview}
+              username={username}
+              userId={currentUserId}
+            />
+          )}
+        </section>
+
+        {/* Completed Section */}
+        <section className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold">Completed</h2>
+            {completedItems.length > 12 && (
+              <Link
+                href={`/${username}/reel-deck/completed`}
+                className="text-lime-400 hover:text-lime-500 text-sm font-medium transition-colors"
+              >
+                View All ({completedItems.length})
+              </Link>
+            )}
+          </div>
+          {completedPreview.length === 0 ? (
+            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-8 text-center">
+              <p className="text-neutral-400">
+                No completed content yet. Keep watching!
+              </p>
+            </div>
+          ) : (
+            <ReelDeckGrid
+              items={completedPreview}
+              username={username}
+              userId={currentUserId}
+            />
+          )}
+        </section>
       </div>
     </>
   );

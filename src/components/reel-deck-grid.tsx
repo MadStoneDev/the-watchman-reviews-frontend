@@ -103,7 +103,7 @@ export default function ReelDeckGrid({
   };
 
   return (
-    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-7 gap-4">
       {items.map((item) => {
         const statusConfig =
           STATUS_CONFIG[
@@ -133,7 +133,7 @@ export default function ReelDeckGrid({
           >
             {/* Poster */}
             <Link href={detailUrl} className="block">
-              <div className="relative aspect-[2/3] bg-neutral-800">
+              <div className="relative aspect-[2/3] bg-neutral-800 overflow-hidden">
                 {item.poster_path ? (
                   <Image
                     src={`https://image.tmdb.org/t/p/w500${item.poster_path}`}
@@ -189,9 +189,6 @@ export default function ReelDeckGrid({
                     </p>
                   </div>
                 )}
-
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </Link>
 

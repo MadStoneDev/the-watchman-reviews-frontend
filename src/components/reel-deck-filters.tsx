@@ -35,7 +35,7 @@ export default function ReelDeckFilters({
   username,
   filterStatus,
   filterType,
-  sortOption = "last-watched",
+  sortOption = "next-up",
   statusCounts,
   typeCounts,
 }: ReelDeckFiltersProps) {
@@ -50,7 +50,7 @@ export default function ReelDeckFilters({
     // Only apply saved preference if no sort parameter in URL
     if (!searchParams?.get("sort")) {
       const savedSort = localStorage.getItem(STORAGE_KEY);
-      if (savedSort && savedSort !== "last-watched") {
+      if (savedSort && savedSort !== "next-up") {
         // Apply saved preference
         const params = new URLSearchParams(searchParams?.toString() || "");
         params.set("sort", savedSort);
@@ -235,6 +235,17 @@ export default function ReelDeckFilters({
 
           <div className="space-y-2">
             <Link
+              href={buildFilterUrl({ sort: "next-up" })}
+              className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
+                sortOption === "next-up"
+                  ? "bg-lime-400 text-neutral-900 font-medium"
+                  : "text-neutral-300 hover:bg-neutral-800"
+              }`}
+            >
+              Next Up
+            </Link>
+
+            <Link
               href={buildFilterUrl({ sort: "last-watched" })}
               className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
                 sortOption === "last-watched"
@@ -325,7 +336,7 @@ export default function ReelDeckFilters({
         </div>
 
         {/* Clear All Filters */}
-        {(filterStatus || filterType || sortOption !== "last-watched") && (
+        {(filterStatus || filterType || sortOption !== "next-up") && (
           <Link
             href={`/${username}/reel-deck`}
             className="block text-center px-4 py-2 text-sm text-neutral-400 hover:text-lime-400 transition-colors"

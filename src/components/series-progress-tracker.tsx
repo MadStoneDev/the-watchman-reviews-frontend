@@ -8,6 +8,8 @@ import {
   IconCheck,
   IconRotate,
   IconTrash,
+  IconClock,
+  IconCalendar,
 } from "@tabler/icons-react";
 import Image from "next/image";
 
@@ -17,6 +19,7 @@ interface Episode {
   title: string;
   isWatched: boolean;
   air_date: string | null;
+  hasAired: boolean;
 }
 
 interface Season {
@@ -120,7 +123,13 @@ export default function SeriesProgressTracker({
   const handleEpisodeToggle = async (
     episodeId: string,
     currentlyWatched: boolean,
+    hasAired: boolean,
   ) => {
+    // Prevent marking unaired episodes as watched
+    if (!hasAired && !currentlyWatched) {
+      return;
+    }
+
     const season = optimisticSeasons.find((s) =>
       s.episodes.some((ep) => ep.id === episodeId),
     );
@@ -292,6 +301,34 @@ export default function SeriesProgressTracker({
     }
   };
 
+  const formatAirDate = (airDate: string | null) => {
+    if (!airDate) return "TBA";
+    const date = new Date(airDate);
+    return date.toLocaleDateString("en-AU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const getRelativeAirDate = (airDate: string | null) => {
+    if (!airDate) return null;
+    const date = new Date(airDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return null; // Already aired
+    if (diffDays === 0) return "Airs today";
+    if (diffDays === 1) return "Airs tomorrow";
+    if (diffDays <= 7) return `Airs in ${diffDays} days`;
+    if (diffDays <= 30) return `Airs in ${Math.ceil(diffDays / 7)} weeks`;
+    return `Airs ${formatAirDate(airDate)}`;
+  };
+
   return (
     <div className="space-y-4">
       {/* Reset All Button - Only show if there's any progress */}
@@ -400,65 +437,108 @@ export default function SeriesProgressTracker({
                   isOpen ? "py-4 max-h-[999px]" : "max-h-0"
                 } transition-all duration-200 ease-in-out overflow-y-auto`}
               >
-                {season.episodes.map((episode) => (
-                  <button
-                    key={episode.id}
-                    onClick={() =>
-                      handleEpisodeToggle(episode.id, episode.isWatched)
-                    }
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
-                      episode.isWatched
-                        ? "bg-lime-400/10 border border-lime-400/20"
-                        : "bg-neutral-800/50 border border-neutral-700 hover:border-neutral-600"
-                    }`}
-                  >
-                    {/* Episode Info */}
-                    <div className="flex-1 text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-neutral-400">
-                          Episode {episode.episode_number}
-                        </span>
-                        <span className="text-neutral-600">•</span>
-                        <span
-                          className={`text-sm ${
-                            episode.isWatched
-                              ? "text-lime-400"
-                              : "text-neutral-300"
-                          }`}
-                        >
-                          {episode.title}
-                        </span>
-                      </div>
-                      {episode.air_date && (
-                        <p className="text-xs text-neutral-500 mt-1">
-                          <span className={`font-bold`}>
-                            {new Date(episode.air_date) > new Date()
-                              ? "Airs"
-                              : "Aired"}
-                            :
-                          </span>{" "}
-                          {new Date(episode.air_date).toLocaleDateString(
-                            "en-AU",
-                            { day: "numeric", month: "long", year: "numeric" },
-                          )}
-                        </p>
-                      )}
-                    </div>
+                {season.episodes.map((episode) => {
+                  const relativeAirDate = getRelativeAirDate(episode.air_date);
+                  const isDisabled = !episode.hasAired && !episode.isWatched;
 
-                    {/* Checkbox */}
-                    <div
-                      className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                        episode.isWatched
-                          ? "bg-lime-400 border-lime-400"
-                          : "border-neutral-600"
+                  return (
+                    <button
+                      key={episode.id}
+                      onClick={() =>
+                        handleEpisodeToggle(
+                          episode.id,
+                          episode.isWatched,
+                          episode.hasAired,
+                        )
+                      }
+                      disabled={isDisabled}
+                      title={
+                        isDisabled
+                          ? `Episode hasn't aired yet (${formatAirDate(
+                              episode.air_date,
+                            )})`
+                          : episode.isWatched
+                            ? "Mark as unwatched"
+                            : "Mark as watched"
+                      }
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        isDisabled
+                          ? "bg-neutral-800/30 cursor-not-allowed opacity-60"
+                          : episode.isWatched
+                            ? "bg-lime-400/10 border border-lime-400/20"
+                            : "bg-neutral-800/50 border border-neutral-700 hover:border-neutral-600"
                       }`}
                     >
-                      {episode.isWatched && (
-                        <IconCheck size={14} className="text-neutral-900" />
-                      )}
-                    </div>
-                  </button>
-                ))}
+                      {/* Episode Info */}
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`text-sm font-medium ${
+                              isDisabled
+                                ? "text-neutral-500"
+                                : "text-neutral-400"
+                            }`}
+                          >
+                            Episode {episode.episode_number}
+                          </span>
+                          <span className="text-neutral-600">•</span>
+                          <span
+                            className={`text-sm ${
+                              episode.isWatched
+                                ? "text-lime-400"
+                                : isDisabled
+                                  ? "text-neutral-500"
+                                  : "text-neutral-300"
+                            }`}
+                          >
+                            {episode.title}
+                          </span>
+                          {relativeAirDate && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center gap-1">
+                              <IconCalendar size={12} />
+                              {relativeAirDate}
+                            </span>
+                          )}
+                        </div>
+                        {episode.air_date && (
+                          <p
+                            className={`text-xs mt-1 ${
+                              isDisabled
+                                ? "text-neutral-600"
+                                : "text-neutral-500"
+                            }`}
+                          >
+                            <span className="font-bold">
+                              {new Date(episode.air_date) > new Date()
+                                ? "Airs"
+                                : "Aired"}
+                              :
+                            </span>{" "}
+                            {formatAirDate(episode.air_date)}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Checkbox */}
+                      <div
+                        className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                          episode.isWatched
+                            ? "bg-lime-400 border-lime-400"
+                            : isDisabled
+                              ? "border-neutral-600"
+                              : "border-neutral-600"
+                        }`}
+                      >
+                        {episode.isWatched && (
+                          <IconCheck size={14} className="text-neutral-900" />
+                        )}
+                        {!episode.isWatched && isDisabled && (
+                          <IconClock size={14} className="text-neutral-600" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

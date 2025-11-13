@@ -89,31 +89,38 @@ export default async function SeriesProgressPage({
   );
 
   // Transform data for the progress tracker component
-  const seasonsForTracker = seasonsWithEpisodes.map((season) => ({
-    id: season.id,
-    season_number: season.season_number,
-    title: season.title,
-    poster_path: season.poster_path,
-    episodes: season.episodes.map((episode) => ({
-      id: episode.id,
-      episode_number: episode.episode_number,
-      title: episode.title,
-      isWatched: watchedEpisodeIds.has(episode.id),
-      air_date: episode.air_date,
-    })),
-    watchedCount: season.episodes.filter((ep) => watchedEpisodeIds.has(ep.id))
-      .length,
-    totalCount: season.episodes.length,
-    percentage:
-      season.episodes.length > 0
-        ? Math.round(
-            (season.episodes.filter((ep) => watchedEpisodeIds.has(ep.id))
-              .length /
-              season.episodes.length) *
-              100,
-          )
-        : 0,
-  }));
+  const today = new Date().toISOString().split("T")[0];
+
+  const seasonsForTracker = seasonsWithEpisodes
+    .map((season) => ({
+      id: season.id,
+      season_number: season.season_number,
+      title: season.title,
+      poster_path: season.poster_path,
+      episodes: season.episodes
+        .map((episode) => ({
+          id: episode.id,
+          episode_number: episode.episode_number,
+          title: episode.title,
+          isWatched: watchedEpisodeIds.has(episode.id),
+          air_date: episode.air_date,
+          hasAired: episode.air_date ? episode.air_date <= today : false,
+        }))
+        .reverse(), // Latest episodes first
+      watchedCount: season.episodes.filter((ep) => watchedEpisodeIds.has(ep.id))
+        .length,
+      totalCount: season.episodes.length,
+      percentage:
+        season.episodes.length > 0
+          ? Math.round(
+              (season.episodes.filter((ep) => watchedEpisodeIds.has(ep.id))
+                .length /
+                season.episodes.length) *
+                100,
+            )
+          : 0,
+    }))
+    .reverse(); // Latest seasons first
 
   const watchedCount = watchedEpisodeIds.size;
   const overallPercentage =

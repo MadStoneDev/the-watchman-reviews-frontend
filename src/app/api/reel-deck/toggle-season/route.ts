@@ -41,11 +41,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get today's date for comparison
+    const today = new Date().toISOString().split("T")[0];
+
     // Get all episodes for this season
-    const { data: episodes, error: episodesError } = await supabase
+    // If marking as watched, only get aired episodes
+    let query = supabase
       .from("episodes")
-      .select("id")
+      .select("id, air_date")
       .eq("season_id", seasonId);
+
+    // ✅ NEW: When marking as watched, only include aired episodes
+    if (markAsWatched) {
+      query = query.or(`air_date.is.null,air_date.lte.${today}`);
+    }
+
+    const { data: episodes, error: episodesError } = await query;
 
     if (episodesError) {
       console.error("Error fetching episodes:", episodesError);
@@ -63,10 +74,14 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`Found ${episodes.length} episodes for season ${seasonId}`);
+    console.log(
+      `Found ${episodes.length} ${
+        markAsWatched ? "aired" : ""
+      } episodes for season ${seasonId}`,
+    );
 
     if (markAsWatched) {
-      // Mark all episodes as watched - bulk insert/update
+      // Mark all AIRED episodes as watched - bulk insert/update
       const episodeWatches = episodes.map((ep) => ({
         user_id: userId,
         episode_id: ep.id,
@@ -91,7 +106,17 @@ export async function POST(request: Request) {
         );
       }
 
-      console.log(`Successfully marked ${episodes.length} episodes as watched`);
+      // Update reel_deck last_watched_at
+      await supabase
+        .from("reel_deck")
+        .update({ last_watched_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("media_id", seriesId)
+        .eq("media_type", "tv");
+
+      console.log(
+        `Successfully marked ${episodes.length} aired episodes as watched`,
+      );
     } else {
       // Mark all episodes as unwatched - bulk delete
       const episodeIds = episodes.map((ep) => ep.id);
