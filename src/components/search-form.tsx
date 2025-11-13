@@ -181,7 +181,7 @@ export default ({
   }, []);
 
   return (
-    <section className="flex flex-row gap-3 transition-all duration-300 ease-in-out">
+    <section className="flex flex-row items-center gap-3 transition-all duration-300 ease-in-out">
       <Input
         type="search"
         placeholder="Search"
@@ -196,6 +196,7 @@ export default ({
         variant={"secondary"}
         onClick={async () => await handleSearch(search)}
         className="flex items-center gap-1 bg-lime-400 hover:bg-lime-400 hover:scale-110 text-neutral-900 transition-all duration-300 ease-in-out"
+        size={"lg"}
       >
         <IconSearch size={20} strokeWidth={1.5} />
         <p className="hidden sm:block">Search</p>

@@ -13,22 +13,30 @@ import { MediaCollection, MediaSearchResult } from "@/src/lib/types";
 
 type Profile = Tables<`profiles`>;
 
+// Add the ReelDeckItem type
+export interface ReelDeckItem {
+  media_id: string;
+  media_type: "movie" | "tv";
+  status: string;
+}
+
 export default function SearchWrapper({
   admin = false,
   isUser,
   profile,
   ownedCollections = [],
   sharedCollections = [],
+  reelDeckItems = [],
 }: {
   admin?: boolean;
   isUser?: boolean;
   profile?: Profile | null;
   ownedCollections?: MediaCollection[];
   sharedCollections?: MediaCollection[];
+  reelDeckItems?: ReelDeckItem[];
 }) {
   const [searchResults, setSearchResults] = useState<MediaSearchResult[]>([]);
   const [hasMoreResults, setHasMoreResults] = useState(false);
-  // ✅ Fixed: Added parentheses and proper typing
   const [loadMoreFunction, setLoadMoreFunction] = useState<
     (() => Promise<void>) | null
   >(null);
@@ -66,16 +74,8 @@ export default function SearchWrapper({
   const handleMoreResultsAvailable = useCallback(
     (hasMore: boolean, loadMoreFn: () => Promise<void>) => {
       setHasMoreResults(hasMore);
-
       if (hasMore && loadMoreFn) {
-        setLoadMoreFunction(() => async () => {
-          setLoading(true);
-          try {
-            await loadMoreFn();
-          } finally {
-            setLoading(false);
-          }
-        });
+        setLoadMoreFunction(() => loadMoreFn);
       } else {
         setLoadMoreFunction(null);
       }
@@ -85,7 +85,12 @@ export default function SearchWrapper({
 
   const handleLoadMore = async () => {
     if (loadMoreFunction) {
-      await loadMoreFunction();
+      setLoading(true);
+      try {
+        await loadMoreFunction();
+      } finally {
+        setLoading(false);
+      }
     } else {
       console.error("Load more function is not available");
     }
@@ -130,6 +135,7 @@ export default function SearchWrapper({
                 admin={admin}
                 ownedCollections={ownedCollections}
                 sharedCollections={sharedCollections}
+                reelDeckItems={reelDeckItems}
               />
             ))}
           </section>

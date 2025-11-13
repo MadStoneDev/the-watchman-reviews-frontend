@@ -1,6 +1,7 @@
 |   .env.local
 |   .gitignore
 |   components.json
+|   data.sql
 |   database.types.ts
 |   directory_structure.txt
 |   middleware.ts
@@ -10,6 +11,7 @@
 |   package.json
 |   postcss.config.mjs
 |   README.md
+|   supabase_backup.sql
 |   tailwind.config.ts
 |   tsconfig.json
 |   
@@ -56,12 +58,25 @@
 |   |   |       |       page.tsx
 |   |   |       |       
 |   |   |       +---reel-deck
+|   |   |       |   |   loading.tsx
 |   |   |       |   |   page.tsx
 |   |   |       |   |   
-|   |   |       |   \---series
-|   |   |       |       \---[seriesId]
-|   |   |       |               page.tsx
-|   |   |       |               
+|   |   |       |   +---completed
+|   |   |       |   |       loading.tsx
+|   |   |       |   |       page.tsx
+|   |   |       |   |       
+|   |   |       |   +---next-up
+|   |   |       |   |       loading.tsx
+|   |   |       |   |       page.tsx
+|   |   |       |   |       
+|   |   |       |   +---series
+|   |   |       |   |   \---[seriesId]
+|   |   |       |   |           page.tsx
+|   |   |       |   |           
+|   |   |       |   \---upcoming
+|   |   |       |           loading.tsx
+|   |   |       |           page.tsx
+|   |   |       |           
 |   |   |       \---settings
 |   |   |               page.tsx
 |   |   |               
@@ -155,6 +170,12 @@
 |   |   |           
 |   |   +---api
 |   |   |   +---reel-deck
+|   |   |   |   +---reset-season
+|   |   |   |   |       route.ts
+|   |   |   |   |       
+|   |   |   |   +---reset-series
+|   |   |   |   |       route.ts
+|   |   |   |   |       
 |   |   |   |   +---toggle-episode
 |   |   |   |   |       route.ts
 |   |   |   |   |       
@@ -211,6 +232,7 @@
 |   |   |   medias-collection.tsx
 |   |   |   otp-input.tsx
 |   |   |   reel-deck-filters.tsx
+|   |   |   reel-deck-grid-skeleton.tsx
 |   |   |   reel-deck-grid.tsx
 |   |   |   results-view.tsx
 |   |   |   search-form.tsx
@@ -227,6 +249,7 @@
 |   |   |   user-collection-row.tsx
 |   |   |   user-collections-block.tsx
 |   |   |   wrapper-search.tsx
+|   |   |   wrapper-single-media-simple.tsx
 |   |   |   wrapper-single-media.tsx
 |   |   |   
 |   |   +---auth
@@ -254,6 +277,7 @@
 |   |       
 |   +---utils
 |   |   |   genre-utils.tsx
+|   |   |   perf.ts
 |   |   |   tmdb-utils.ts
 |   |   |   
 |   |   +---supabase
@@ -283,4 +307,11 @@
     |   
     \---.temp
             cli-latest
+            gotrue-version
+            pooler-url
+            postgres-version
+            project-ref
+            rest-version
+            storage-migration
+            storage-version
             

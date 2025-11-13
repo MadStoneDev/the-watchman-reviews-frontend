@@ -1,9 +1,9 @@
-﻿import React from "react";
+﻿import React, { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/src/utils/supabase/server";
-import { ensureSeriesDataPopulated } from "@/src/utils/tmdb-utils";
+import { ensureSeasonMetadata } from "@/src/utils/tmdb-utils";
 import SeriesProgressTracker from "@/src/components/series-progress-tracker";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import {
@@ -34,10 +34,10 @@ export default async function SeriesProgressPage({
     redirect("/auth/portal");
   }
 
-  // Get profile for the username in the URL
+  // Get profile for the username in the URL - only needed fields
   const { data: urlProfile } = await supabase
     .from("profiles")
-    .select()
+    .select("id, username")
     .eq("username", username)
     .single();
 
@@ -46,7 +46,7 @@ export default async function SeriesProgressPage({
   }
 
   // Check if this is the current user's profile
-  const isCurrentUser = currentUserId === urlProfile?.id;
+  const isCurrentUser = currentUserId === urlProfile.id;
 
   // Only allow users to view their own reel deck
   if (!isCurrentUser) {
@@ -62,10 +62,10 @@ export default async function SeriesProgressPage({
     notFound();
   }
 
-  // Get series data
+  // Get series data - only needed fields
   const { data: series, error: seriesError } = await supabase
     .from("series")
-    .select("*")
+    .select("id, title, tmdb_id, poster_path, release_year, status, overview")
     .eq("id", seriesId)
     .single();
 
@@ -73,14 +73,25 @@ export default async function SeriesProgressPage({
     notFound();
   }
 
-  // ✅ FIX: Ensure ALL season and episode data is populated from TMDB
-  const { seasons: seasonsWithEpisodes, totalEpisodes } =
-    await ensureSeriesDataPopulated(seriesId, series.tmdb_id);
+  // OPTIMIZATION 1: Only ensure season metadata exists (not full episodes)
+  // Episodes will be loaded progressively per season
+  await ensureSeasonMetadata(seriesId, series.tmdb_id);
 
-  // Get user's watched episodes
+  // Get seasons with basic info only
+  const { data: seasons } = await supabase
+    .from("seasons")
+    .select("id, season_number, title, poster_path, episode_count")
+    .eq("series_id", seriesId)
+    .order("season_number", { ascending: true });
+
+  if (!seasons || seasons.length === 0) {
+    notFound();
+  }
+
+  // OPTIMIZATION 2: Get all watched episodes in a single query
   const { data: watchedEpisodes } = await supabase
     .from("episode_watches")
-    .select("episode_id")
+    .select("episode_id, series_id")
     .eq("user_id", currentUserId)
     .eq("series_id", seriesId);
 
@@ -88,37 +99,25 @@ export default async function SeriesProgressPage({
     watchedEpisodes?.map((w) => w.episode_id) || [],
   );
 
-  // Transform data for the progress tracker component
-  const today = new Date().toISOString().split("T")[0];
+  // Calculate totals from episode_count (faster than counting episodes)
+  const totalEpisodes = seasons.reduce(
+    (sum, s) => sum + (s.episode_count || 0),
+    0,
+  );
 
-  const seasonsForTracker = seasonsWithEpisodes
+  // For initial display, show season structure without episodes
+  // Episodes will be loaded progressively by the client component
+  const seasonsForTracker = seasons
     .map((season) => ({
       id: season.id,
       season_number: season.season_number,
       title: season.title,
       poster_path: season.poster_path,
-      episodes: season.episodes
-        .map((episode) => ({
-          id: episode.id,
-          episode_number: episode.episode_number,
-          title: episode.title,
-          isWatched: watchedEpisodeIds.has(episode.id),
-          air_date: episode.air_date,
-          hasAired: episode.air_date ? episode.air_date <= today : false,
-        }))
-        .reverse(), // Latest episodes first
-      watchedCount: season.episodes.filter((ep) => watchedEpisodeIds.has(ep.id))
-        .length,
-      totalCount: season.episodes.length,
-      percentage:
-        season.episodes.length > 0
-          ? Math.round(
-              (season.episodes.filter((ep) => watchedEpisodeIds.has(ep.id))
-                .length /
-                season.episodes.length) *
-                100,
-            )
-          : 0,
+      episodes: [], // Start empty - will be loaded by SeriesProgressTracker
+      watchedCount: 0, // Will be calculated when episodes load
+      totalCount: season.episode_count || 0,
+      percentage: 0,
+      isLoading: true, // Flag to show loading state
     }))
     .reverse(); // Latest seasons first
 
@@ -165,6 +164,7 @@ export default async function SeriesProgressPage({
                   width={192}
                   height={288}
                   className="object-cover w-full h-full"
+                  priority
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -183,13 +183,6 @@ export default async function SeriesProgressPage({
                   <div className="flex items-center gap-2">
                     <IconCalendar size={18} />
                     <span>{series.release_year}</span>
-                  </div>
-                )}
-
-                {series.vote_average && (
-                  <div className="flex items-center gap-2">
-                    <IconStar size={18} className="text-yellow-500" />
-                    <span>{series.vote_average.toFixed(1)}</span>
                   </div>
                 )}
 
@@ -223,7 +216,7 @@ export default async function SeriesProgressPage({
 
               {/* Overview */}
               {series.overview && (
-                <p className="text-neutral-400 leading-relaxed">
+                <p className="text-neutral-400 leading-relaxed line-clamp-4">
                   {series.overview}
                 </p>
               )}
@@ -239,18 +232,19 @@ export default async function SeriesProgressPage({
           </div>
         </div>
 
-        {/* Progress Tracker */}
+        {/* Progress Tracker - Episodes load progressively */}
         {seasonsForTracker.length > 0 ? (
           <SeriesProgressTracker
             seasons={seasonsForTracker}
             seriesId={seriesId}
             userId={currentUserId}
             username={username}
+            initialWatchedIds={Array.from(watchedEpisodeIds)}
           />
         ) : (
           <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-12 text-center">
             <p className="text-neutral-400">
-              No episode data available for this series.
+              No season data available for this series.
             </p>
           </div>
         )}

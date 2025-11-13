@@ -14,6 +14,13 @@ export const metadata: Metadata = {
     "Helping you make informed viewing choices. Get detailed content analysis of movies and TV shows, including themes, language, and values.",
 };
 
+// New type for reel deck items
+export interface ReelDeckItem {
+  media_id: string;
+  media_type: "movie" | "tv";
+  status: string;
+}
+
 export default async function SearchPage() {
   const pageStart = startTimer();
   const supabase = await createClient();
@@ -28,26 +35,27 @@ export default async function SearchPage() {
 
   // Parallel queries
   const parallelStart = startTimer();
-  const [profileResult, ownedResult, sharedResult] = await Promise.all([
-    // ✅ Profile query - proper promise handling
-    measureQuery("👤 Profile query", async () => {
-      if (!userId) return { data: null, error: null };
-      return supabase.from("profiles").select("*").eq("id", userId).single();
-    }),
+  const [profileResult, ownedResult, sharedResult, reelDeckResult] =
+    await Promise.all([
+      // Profile query
+      measureQuery("👤 Profile query", async () => {
+        if (!userId) return { data: null, error: null };
+        return supabase.from("profiles").select("*").eq("id", userId).single();
+      }),
 
-    // ✅ Owned collections - proper promise handling
-    measureQuery("📦 Owned collections", async () => {
-      if (!userId) return { data: null, error: null };
-      return supabase.from("collections").select("*").eq("owner", userId);
-    }),
+      // Owned collections
+      measureQuery("📦 Owned collections", async () => {
+        if (!userId) return { data: null, error: null };
+        return supabase.from("collections").select("*").eq("owner", userId);
+      }),
 
-    // ✅ Shared collections - proper promise handling
-    measureQuery("🤝 Shared collections", async () => {
-      if (!userId) return { data: null, error: null };
-      return supabase
-        .from("shared_collection")
-        .select(
-          `
+      // Shared collections
+      measureQuery("🤝 Shared collections", async () => {
+        if (!userId) return { data: null, error: null };
+        return supabase
+          .from("shared_collection")
+          .select(
+            `
           collection_id,
           collections:collection_id (
             id,
@@ -56,10 +64,19 @@ export default async function SearchPage() {
             is_public
           )
         `,
-        )
-        .eq("user_id", userId);
-    }),
-  ]);
+          )
+          .eq("user_id", userId);
+      }),
+
+      // ✅ NEW: Reel deck items
+      measureQuery("🎬 Reel deck items", async () => {
+        if (!userId) return { data: null, error: null };
+        return supabase
+          .from("reel_deck")
+          .select("media_id, media_type, status")
+          .eq("user_id", userId);
+      }),
+    ]);
 
   logTimer("⚡ Total parallel queries", parallelStart);
 
@@ -69,6 +86,7 @@ export default async function SearchPage() {
   // Process collections
   let ownedCollections: MediaCollection[] = [];
   let sharedCollections: MediaCollection[] = [];
+  let reelDeckItems: ReelDeckItem[] = [];
 
   if (ownedResult.data) {
     ownedCollections = ownedResult.data.map((collection) => ({
@@ -93,6 +111,10 @@ export default async function SearchPage() {
       }));
   }
 
+  if (reelDeckResult.data) {
+    reelDeckItems = reelDeckResult.data;
+  }
+
   logTimer("📊 Total server-side data fetch", pageStart);
 
   return (
@@ -105,6 +127,7 @@ export default async function SearchPage() {
           profile={profile}
           ownedCollections={ownedCollections}
           sharedCollections={sharedCollections}
+          reelDeckItems={reelDeckItems}
         />
       </Suspense>
     </section>

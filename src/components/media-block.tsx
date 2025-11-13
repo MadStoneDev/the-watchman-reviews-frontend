@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createClient } from "@/src/utils/supabase/client";
 
 import {
@@ -27,6 +27,11 @@ interface MediaBlockProps {
   admin?: boolean;
   ownedCollections?: MediaCollection[];
   sharedCollections?: MediaCollection[];
+  reelDeckItems?: Array<{
+    media_id: string;
+    media_type: "movie" | "tv";
+    status: string;
+  }>;
 }
 
 export default function MediaBlock({
@@ -36,12 +41,16 @@ export default function MediaBlock({
   admin = false,
   ownedCollections = [],
   sharedCollections = [],
+  reelDeckItems = [],
 }: MediaBlockProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+
   const [isHovered, setIsHovered] = useState(false);
+
+  const [reelDeckStatus, setReelDeckStatus] = useState<string | null>(null);
 
   const [showCollections, setShowCollections] = useState(false);
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
@@ -277,6 +286,17 @@ export default function MediaBlock({
     }
   };
 
+  const getReelDeckStatus = () => {
+    if (!mediaDbId) return null;
+
+    const reelDeckItem = reelDeckItems.find(
+      (item) =>
+        item.media_id === mediaDbId && item.media_type === data.mediaType,
+    );
+
+    return reelDeckItem?.status || null;
+  };
+
   const handleShowCollections = async () => {
     if (!isUser) return;
 
@@ -456,6 +476,143 @@ export default function MediaBlock({
     }
   };
 
+  const handleReelDeckToggle = async () => {
+    if (!isUser) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const mediaType = data.mediaType;
+      const tmdbId = data.tmdbId;
+      const releaseYear = data.releaseYear || "";
+      let dbMediaId = mediaDbId;
+
+      // Check if media exists in database
+      if (!dbMediaId) {
+        if (mediaType === "movie") {
+          const { data: movieData } = await supabase
+            .from("movies")
+            .select("id")
+            .eq("tmdb_id", tmdbId)
+            .maybeSingle();
+
+          if (movieData) {
+            dbMediaId = movieData.id;
+            setMediaDbId(dbMediaId);
+            setExistsInDb(true);
+          }
+        } else if (mediaType === "tv") {
+          const { data: seriesData } = await supabase
+            .from("series")
+            .select("id")
+            .eq("tmdb_id", tmdbId)
+            .maybeSingle();
+
+          if (seriesData) {
+            dbMediaId = seriesData.id;
+            setMediaDbId(dbMediaId);
+            setExistsInDb(true);
+          }
+        }
+      }
+
+      // If media doesn't exist, create it
+      if (!dbMediaId) {
+        if (mediaType === "movie") {
+          const { data: newMovie, error: movieError } = await supabase
+            .from("movies")
+            .insert({
+              title: data.title,
+              overview: data.overview || "",
+              poster_path: data.posterPath,
+              backdrop_path: data.backdropPath,
+              tmdb_id: data.tmdbId,
+              release_year: releaseYear.toString(),
+            })
+            .select("id")
+            .single();
+
+          if (movieError) throw movieError;
+          dbMediaId = newMovie.id;
+          setMediaDbId(newMovie.id);
+          setExistsInDb(true);
+        } else if (mediaType === "tv") {
+          const { data: newSeries, error: seriesError } = await supabase
+            .from("series")
+            .insert({
+              title: data.title,
+              overview: data.overview || "",
+              poster_path: data.posterPath,
+              backdrop_path: data.backdropPath,
+              tmdb_id: data.tmdbId,
+              release_year: releaseYear.toString(),
+            })
+            .select("id")
+            .single();
+
+          if (seriesError) throw seriesError;
+          dbMediaId = newSeries.id;
+          setMediaDbId(newSeries.id);
+          setExistsInDb(true);
+        }
+      }
+
+      if (!dbMediaId) {
+        throw new Error("Failed to get or create media record");
+      }
+
+      // Check if already in reel deck
+      const currentStatus = reelDeckItems.find(
+        (item) => item.media_id === dbMediaId && item.media_type === mediaType,
+      )?.status;
+
+      if (currentStatus) {
+        // Remove from reel deck
+        const { error } = await supabase
+          .from("reel_deck")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("media_id", dbMediaId)
+          .eq("media_type", mediaType);
+
+        if (error) throw error;
+        setReelDeckStatus(null);
+      } else {
+        // Add to reel deck with "watching" status
+        const { error: insertError } = await supabase.from("reel_deck").insert({
+          user_id: user.id,
+          media_id: dbMediaId,
+          media_type: mediaType,
+          status: "watching",
+        });
+
+        if (insertError) throw insertError;
+        setReelDeckStatus("watching");
+      }
+    } catch (error: unknown) {
+      console.error("Error toggling reel deck:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to update reel deck",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update reel deck status when mediaDbId changes
+  useEffect(() => {
+    if (mediaDbId) {
+      setReelDeckStatus(getReelDeckStatus());
+    }
+  }, [mediaDbId, reelDeckItems]);
+
   return (
     <article
       className={`group/media relative bg-neutral-900 h-full rounded-lg overflow-hidden border border-neutral-800 hover:border-neutral-700 transition-all duration-300`}
@@ -501,16 +658,26 @@ export default function MediaBlock({
             </button>
 
             {/* Add to Reel Deck Button */}
-            {/*{isUser && (*/}
-            {/*  <button*/}
-            {/*    onClick={handleViewDetails}*/}
-            {/*    disabled={loading}*/}
-            {/*    className="flex-1 py-1 px-3 bg-red-500 text-neutral-200 hover:bg-red-600 rounded-lg transition-colors flex items-center justify-center gap-1"*/}
-            {/*    title="View details"*/}
-            {/*  >*/}
-            {/*    <IconDeviceTv size={24} />*/}
-            {/*  </button>*/}
-            {/*)}*/}
+            {isUser && (
+              <button
+                onClick={handleReelDeckToggle}
+                disabled={loading}
+                className={`flex-1 py-1 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 ${
+                  reelDeckStatus
+                    ? "bg-lime-400 text-neutral-900 hover:bg-lime-500"
+                    : "bg-red-500 text-neutral-200 hover:bg-red-600"
+                }`}
+                title={
+                  reelDeckStatus ? "Remove from Reel Deck" : "Add to Reel Deck"
+                }
+              >
+                {reelDeckStatus ? (
+                  <IconCheck size={24} />
+                ) : (
+                  <IconDeviceTv size={24} />
+                )}
+              </button>
+            )}
 
             {/* Add to Collection Button */}
             {isUser && (

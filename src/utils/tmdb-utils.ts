@@ -43,9 +43,151 @@ interface EpisodeData {
 }
 
 /**
- * Ensures a series has seasons and episodes populated from TMDB
- * Returns the seasons with their episodes
- * This fetches FULL episode data (for progress tracker)
+ * OPTIMIZATION 1: New function to only ensure season metadata exists
+ * Does NOT fetch episodes - those will be loaded progressively
+ * Much faster initial page load
+ */
+export async function ensureSeasonMetadata(
+  seriesId: string,
+  tmdbId: number,
+): Promise<void> {
+  const supabase = await createClient();
+
+  console.log(`🔍 Ensuring season metadata for series ${seriesId}`);
+
+  // Check if we have seasons
+  const { data: existingSeasons } = await supabase
+    .from("seasons")
+    .select("id, season_number, last_fetched, episode_count")
+    .eq("series_id", seriesId);
+
+  // Check if we need to fetch from TMDB
+  const needsFetch =
+    !existingSeasons ||
+    existingSeasons.length === 0 ||
+    existingSeasons.some((s) => needsRefresh(s.last_fetched));
+
+  if (needsFetch) {
+    console.log(`   📡 Fetching season metadata from TMDB...`);
+    await ensureSeasonDataWithCounts(seriesId, tmdbId);
+    console.log(`   ✅ Season metadata updated`);
+  } else {
+    console.log(
+      `   ✅ Season metadata is fresh (${existingSeasons.length} seasons)`,
+    );
+  }
+}
+
+/**
+ * OPTIMIZATION 2: Load episodes for a specific season only
+ * Called by the API endpoint for progressive loading
+ */
+export async function loadSeasonEpisodes(
+  seriesId: string,
+  seasonNumber: number,
+  tmdbId: number,
+): Promise<EpisodeData[]> {
+  const supabase = await createClient();
+
+  console.log(`📺 Loading episodes for Season ${seasonNumber}`);
+
+  // Get the season
+  const { data: season } = await supabase
+    .from("seasons")
+    .select("id, tmdb_id, episode_count")
+    .eq("series_id", seriesId)
+    .eq("season_number", seasonNumber)
+    .single();
+
+  if (!season) {
+    throw new Error(`Season ${seasonNumber} not found`);
+  }
+
+  // Check if we already have all episodes for this season
+  const { data: existingEpisodes, count } = await supabase
+    .from("episodes")
+    .select("*", { count: "exact" })
+    .eq("season_id", season.id)
+    .order("episode_number", { ascending: true });
+
+  const expectedCount = season.episode_count || 0;
+  const actualCount = count || 0;
+
+  // If we have all episodes, return them
+  if (expectedCount > 0 && actualCount >= expectedCount) {
+    console.log(`   ✅ Already have all ${actualCount} episodes cached`);
+    return existingEpisodes || [];
+  }
+
+  // Fetch from TMDB
+  console.log(
+    `   📡 Fetching from TMDB (have ${actualCount}/${expectedCount})...`,
+  );
+
+  try {
+    const url = `https://api.themoviedb.org/3/tv/${tmdbId}/season/${seasonNumber}?language=en-US`;
+
+    const response = await fetch(url, {
+      headers: {
+        accept: "application/json",
+        Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
+      },
+      // Add caching for better performance
+      next: { revalidate: 3600 }, // Cache for 1 hour
+    });
+
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+
+    const seasonData = await response.json();
+
+    if (!seasonData.episodes || seasonData.episodes.length === 0) {
+      console.log(`   ⚠️  No episodes found in TMDB response`);
+      return existingEpisodes || [];
+    }
+
+    // Prepare episodes for upsert
+    const episodesToUpsert = seasonData.episodes.map((ep: any) => ({
+      series_id: seriesId,
+      season_id: season.id,
+      season_number: seasonNumber,
+      episode_number: ep.episode_number,
+      tmdb_id: ep.id,
+      title: ep.name || `Episode ${ep.episode_number}`,
+      overview: ep.overview,
+      poster_path: ep.still_path,
+      air_date: ep.air_date,
+      runtime: ep.runtime,
+    }));
+
+    // Upsert episodes
+    const { data: upsertedEpisodes, error } = await supabase
+      .from("episodes")
+      .upsert(episodesToUpsert, {
+        onConflict: "series_id,season_number,episode_number",
+        ignoreDuplicates: false,
+      })
+      .select("*")
+      .order("episode_number", { ascending: true });
+
+    if (error) {
+      console.error(`   ❌ Error upserting episodes:`, error);
+      throw error;
+    }
+
+    console.log(`   ✅ Loaded ${upsertedEpisodes?.length || 0} episodes`);
+    return upsertedEpisodes || [];
+  } catch (error) {
+    console.error(`   ❌ Error loading season episodes:`, error);
+    // Return cached episodes if available
+    return existingEpisodes || [];
+  }
+}
+
+/**
+ * Original function - now simplified to use the optimized approach
+ * Kept for backward compatibility
  */
 export async function ensureSeriesDataPopulated(
   seriesId: string,
@@ -56,280 +198,12 @@ export async function ensureSeriesDataPopulated(
 }> {
   const supabase = await createClient();
 
-  console.log("═══════════════════════════════════════════════════");
-  console.log(`🔍 STARTING ensureSeriesDataPopulated`);
-  console.log(`   Series ID: ${seriesId}`);
-  console.log(`   TMDB ID: ${tmdbId}`);
-  console.log(
-    `   Environment Token Available: ${!!process.env.TMDB_API_TOKEN}`,
-  );
-  if (process.env.TMDB_API_TOKEN) {
-    console.log(
-      `   Token Preview: ${process.env.TMDB_API_TOKEN.substring(0, 15)}...`,
-    );
-  }
-  console.log("═══════════════════════════════════════════════════");
+  console.log(`🔍 ensureSeriesDataPopulated for series ${seriesId}`);
 
-  // Check if we have seasons
-  const { data: existingSeasons } = await supabase
-    .from("seasons")
-    .select("id, season_number, last_fetched, episode_count")
-    .eq("series_id", seriesId)
-    .order("season_number", { ascending: true });
+  // Ensure season metadata exists
+  await ensureSeasonMetadata(seriesId, tmdbId);
 
-  console.log(`📊 Found ${existingSeasons?.length || 0} seasons in database`);
-
-  if (existingSeasons && existingSeasons.length > 0) {
-    for (const season of existingSeasons) {
-      const { count } = await supabase
-        .from("episodes")
-        .select("*", { count: "exact", head: true })
-        .eq("season_id", season.id);
-
-      console.log(
-        `   Season ${season.season_number}: ${count || 0}/${
-          season.episode_count || "?"
-        } episodes (last_fetched: ${
-          season.last_fetched
-            ? new Date(season.last_fetched).toLocaleDateString()
-            : "never"
-        })`,
-      );
-    }
-  }
-
-  // ✅ FIX: Check if EACH season has the CORRECT NUMBER of episodes
-  let needsEpisodeFetch = false;
-
-  if (!existingSeasons || existingSeasons.length === 0) {
-    needsEpisodeFetch = true;
-    console.log(
-      `❌ No seasons found for series ${seriesId}, will fetch from TMDB`,
-    );
-  } else {
-    // Check if any season needs refresh
-    if (existingSeasons.some((s) => needsRefresh(s.last_fetched))) {
-      needsEpisodeFetch = true;
-      console.log(
-        `⏰ Some seasons need refresh (older than ${MEDIA_REFRESH_INTERVAL_DAYS} days)`,
-      );
-    } else {
-      // First get all seasons with their episode_count
-      const { data: seasonsWithCounts } = await supabase
-        .from("seasons")
-        .select("id, season_number, episode_count")
-        .eq("series_id", seriesId);
-
-      if (seasonsWithCounts) {
-        // Check if each season has the correct number of episodes
-        for (const season of seasonsWithCounts) {
-          // Count actual episodes in database
-          const { count } = await supabase
-            .from("episodes")
-            .select("*", { count: "exact", head: true })
-            .eq("season_id", season.id);
-
-          const actualCount = count || 0;
-          const expectedCount = season.episode_count || 0;
-
-          if (actualCount === 0) {
-            needsEpisodeFetch = true;
-            console.log(
-              `❌ Season ${season.season_number} has NO episodes (expected ${expectedCount})`,
-            );
-            break;
-          } else if (expectedCount > 0 && actualCount < expectedCount) {
-            needsEpisodeFetch = true;
-            console.log(
-              `❌ Season ${season.season_number} incomplete: ${actualCount}/${expectedCount} episodes`,
-            );
-            break;
-          } else {
-            console.log(
-              `   ✅ Season ${season.season_number}: ${actualCount}/${expectedCount} episodes (complete)`,
-            );
-          }
-        }
-      }
-    }
-  }
-
-  if (needsEpisodeFetch) {
-    console.log("═══════════════════════════════════════════════════");
-    console.log(`🚀 FETCHING episodes from TMDB for series ${seriesId}...`);
-    console.log("═══════════════════════════════════════════════════");
-
-    try {
-      // First, ensure we have seasons with episode counts
-      await ensureSeasonDataWithCounts(seriesId, tmdbId);
-
-      // Get the seasons we just populated
-      const { data: seasons } = await supabase
-        .from("seasons")
-        .select("*")
-        .eq("series_id", seriesId)
-        .order("season_number", { ascending: true });
-
-      if (!seasons) {
-        throw new Error("Failed to get seasons after populating");
-      }
-
-      console.log(
-        `📝 Processing ${seasons.length} seasons for episode data...`,
-      );
-
-      // Now fetch detailed episode data for each season
-      for (const season of seasons) {
-        // Check if this season already has the correct number of episodes
-        const { count } = await supabase
-          .from("episodes")
-          .select("*", { count: "exact", head: true })
-          .eq("season_id", season.id);
-
-        const actualCount = count || 0;
-        const expectedCount = season.episode_count || 0;
-
-        // Skip if we already have the correct number of episodes for this season
-        if (expectedCount > 0 && actualCount >= expectedCount) {
-          console.log(
-            `   ✅ Season ${season.season_number}: Already has all ${actualCount} episodes, skipping`,
-          );
-          continue;
-        } else if (actualCount > 0 && expectedCount === 0) {
-          // We have episodes but don't know the expected count - assume it's complete
-          console.log(
-            `   ✅ Season ${season.season_number}: Has ${actualCount} episodes (expected count unknown), skipping`,
-          );
-          continue;
-        }
-
-        console.log("");
-        console.log(`   ┌─────────────────────────────────────────────`);
-        console.log(`   │ 🌐 FETCHING Season ${season.season_number}`);
-        console.log(`   │ Current: ${actualCount} episodes`);
-        console.log(`   │ Expected: ${expectedCount} episodes`);
-        console.log(`   └─────────────────────────────────────────────`);
-
-        const url = `https://api.themoviedb.org/3/tv/${tmdbId}/season/${season.season_number}?language=en-US`;
-        console.log(`   📡 Calling TMDB API: ${url}`);
-
-        const seasonResponse = await fetch(url, {
-          headers: {
-            accept: "application/json",
-            Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
-          },
-        });
-
-        console.log(
-          `   📥 Response: ${seasonResponse.status} ${seasonResponse.statusText}`,
-        );
-
-        console.log(
-          `   📥 Response: ${seasonResponse.status} ${seasonResponse.statusText}`,
-        );
-
-        if (!seasonResponse.ok) {
-          let errorDetails = `Status ${seasonResponse.status}`;
-          try {
-            const errorText = await seasonResponse.text();
-            errorDetails += ` - ${errorText.substring(0, 200)}`;
-          } catch (e) {
-            // Ignore error parsing error
-          }
-          console.error(
-            `   ❌ TMDB API Error for Season ${season.season_number}: ${errorDetails}`,
-          );
-          continue;
-        }
-
-        const seasonData = await seasonResponse.json();
-        const episodeCount = seasonData.episodes?.length || 0;
-        console.log(`   📦 Received ${episodeCount} episodes from TMDB`);
-
-        // Upsert episodes for this season
-        if (seasonData.episodes && seasonData.episodes.length > 0) {
-          const episodesToUpsert = seasonData.episodes.map((ep: any) => ({
-            series_id: seriesId,
-            season_id: season.id,
-            season_number: season.season_number,
-            episode_number: ep.episode_number,
-            tmdb_id: ep.id,
-            title: ep.name,
-            overview: ep.overview,
-            poster_path: ep.poster_path,
-            air_date: ep.air_date,
-            runtime: ep.runtime,
-          }));
-
-          console.log(
-            `   💾 Upserting ${episodesToUpsert.length} episodes to database...`,
-          );
-          console.log(
-            `   📝 Episodes: ${episodesToUpsert
-              .map((e: any) => `E${e.episode_number}`)
-              .join(", ")}`,
-          );
-
-          const { error: episodesError, data: upsertResult } = await supabase
-            .from("episodes")
-            .upsert(episodesToUpsert, {
-              onConflict: "series_id,season_number,episode_number",
-              ignoreDuplicates: false,
-            })
-            .select("id, episode_number");
-
-          if (episodesError) {
-            console.error(
-              `   ❌ Database Error:`,
-              JSON.stringify(episodesError, null, 2),
-            );
-            console.error(`   ❌ Error Code: ${episodesError.code}`);
-            console.error(`   ❌ Error Message: ${episodesError.message}`);
-            console.error(`   ❌ Error Details:`, episodesError.details);
-          } else {
-            console.log(
-              `   ✅ Successfully upserted ${episodesToUpsert.length} episodes`,
-            );
-            if (upsertResult && upsertResult.length > 0) {
-              console.log(
-                `   ✅ Confirmed ${upsertResult.length} episodes in database`,
-              );
-            }
-          }
-        } else {
-          console.warn(
-            `   ⚠️  No episodes array in TMDB response for Season ${season.season_number}`,
-          );
-          console.warn(
-            `   ⚠️  Response keys:`,
-            Object.keys(seasonData).join(", "),
-          );
-        }
-      }
-
-      console.log("");
-      console.log(`✅ Episode fetching complete for series ${seriesId}`);
-      console.log("═══════════════════════════════════════════════════");
-    } catch (error) {
-      console.error("═══════════════════════════════════════════════════");
-      console.error("❌ CRITICAL ERROR in ensureSeriesDataPopulated:");
-      console.error("═══════════════════════════════════════════════════");
-      console.error(error);
-      if (error instanceof Error) {
-        console.error("Error name:", error.name);
-        console.error("Error message:", error.message);
-        console.error("Error stack:", error.stack);
-      }
-      console.error("═══════════════════════════════════════════════════");
-    }
-  } else {
-    console.log(
-      `✅ All seasons have complete episode data for series ${seriesId}, using cached data`,
-    );
-  }
-
-  // Fetch all seasons and episodes from the database
-  console.log(`\n📊 Fetching final data from database...`);
+  // Get all seasons
   const { data: seasons } = await supabase
     .from("seasons")
     .select("*")
@@ -337,44 +211,33 @@ export async function ensureSeriesDataPopulated(
     .order("season_number", { ascending: true });
 
   if (!seasons || seasons.length === 0) {
-    console.log(`❌ ERROR: No seasons found in final database query`);
     return { seasons: [], totalEpisodes: 0 };
   }
 
-  console.log(`📊 Found ${seasons.length} seasons in database`);
-
-  // Fetch episodes for all seasons
+  // Load episodes for all seasons
   const seasonsWithEpisodes = await Promise.all(
     seasons.map(async (season) => {
-      const { data: episodes } = await supabase
-        .from("episodes")
-        .select("*")
-        .eq("season_id", season.id)
-        .order("episode_number", { ascending: true });
-
-      const episodeCount = episodes?.length || 0;
-      console.log(
-        `   Season ${season.season_number}: ${episodeCount} episodes loaded from database`,
+      const episodes = await loadSeasonEpisodes(
+        seriesId,
+        season.season_number,
+        tmdbId,
       );
 
       return {
         ...season,
-        episodes: episodes || [],
+        episodes,
       };
     }),
   );
 
-  // Calculate total episodes from actual episode count
   const totalEpisodes = seasonsWithEpisodes.reduce(
     (total, season) => total + season.episodes.length,
     0,
   );
 
-  console.log("");
   console.log(
-    `✅ FINAL RESULT: Returning ${totalEpisodes} total episodes across ${seasonsWithEpisodes.length} seasons`,
+    `✅ Loaded ${totalEpisodes} total episodes for ${seasons.length} seasons`,
   );
-  console.log("═══════════════════════════════════════════════════\n");
 
   return { seasons: seasonsWithEpisodes, totalEpisodes };
 }
@@ -403,7 +266,6 @@ export async function getSeriesEpisodeCount(
     seasons.some((s) => needsRefresh(s.last_fetched));
 
   if (needsFetch) {
-    // Fetch series data to get episode counts
     await ensureSeasonDataWithCounts(seriesId, tmdbId);
 
     // Re-fetch seasons after populating
@@ -414,14 +276,13 @@ export async function getSeriesEpisodeCount(
 
     if (!updatedSeasons) return 0;
 
-    // Sum up episode counts
     return updatedSeasons.reduce(
       (total, season) => total + (season.episode_count || 0),
       0,
     );
   }
 
-  // Use cached data - sum up episode counts
+  // Use cached data
   return seasons.reduce(
     (total, season) => total + (season.episode_count || 0),
     0,
@@ -438,36 +299,25 @@ async function ensureSeasonDataWithCounts(
 ): Promise<void> {
   const supabase = await createClient();
 
-  console.log(
-    `   🔄 Fetching season metadata (with episode counts) for series ${seriesId} from TMDB...`,
-  );
+  console.log(`   🔄 Fetching season metadata from TMDB...`);
 
   try {
-    // Fetch series details from TMDB - includes episode_count per season
     const url = `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`;
-    console.log(`   📡 Calling TMDB API: ${url}`);
 
-    const seriesResponse = await fetch(url, {
+    const response = await fetch(url, {
       headers: {
         accept: "application/json",
         Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
       },
+      // Add caching
+      next: { revalidate: 86400 }, // Cache for 24 hours
     });
 
-    console.log(
-      `   📥 Response: ${seriesResponse.status} ${seriesResponse.statusText}`,
-    );
-
-    if (!seriesResponse.ok) {
-      throw new Error(
-        `Failed to fetch series from TMDB (Status: ${seriesResponse.status})`,
-      );
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
     }
 
-    const seriesData = await seriesResponse.json();
-    console.log(
-      `   📦 Received data for ${seriesData.seasons?.length || 0} seasons`,
-    );
+    const seriesData = await response.json();
 
     // Update series last_fetched
     await supabase
@@ -475,48 +325,32 @@ async function ensureSeasonDataWithCounts(
       .update({ last_fetched: new Date().toISOString() })
       .eq("id", seriesId);
 
-    // Upsert seasons with episode counts from the series call
-    let seasonsUpserted = 0;
-    for (const tmdbSeason of seriesData.seasons) {
-      console.log(
-        `   💾 Upserting Season ${tmdbSeason.season_number} (${tmdbSeason.episode_count} episodes)...`,
-      );
+    // Upsert seasons with episode counts
+    const seasonsToUpsert = seriesData.seasons.map((tmdbSeason: any) => ({
+      series_id: seriesId,
+      season_number: tmdbSeason.season_number,
+      tmdb_id: tmdbSeason.id,
+      title: tmdbSeason.name,
+      overview: tmdbSeason.overview,
+      poster_path: tmdbSeason.poster_path,
+      air_date: tmdbSeason.air_date,
+      episode_count: tmdbSeason.episode_count,
+      last_fetched: new Date().toISOString(),
+    }));
 
-      const { error } = await supabase.from("seasons").upsert(
-        {
-          series_id: seriesId,
-          season_number: tmdbSeason.season_number,
-          tmdb_id: tmdbSeason.id,
-          title: tmdbSeason.name,
-          overview: tmdbSeason.overview,
-          poster_path: tmdbSeason.poster_path,
-          air_date: tmdbSeason.air_date,
-          episode_count: tmdbSeason.episode_count, // Use episode_count from series call!
-          last_fetched: new Date().toISOString(),
-        },
-        {
-          onConflict: "series_id,season_number",
-          ignoreDuplicates: false,
-        },
-      );
+    const { error } = await supabase.from("seasons").upsert(seasonsToUpsert, {
+      onConflict: "series_id,season_number",
+      ignoreDuplicates: false,
+    });
 
-      if (error) {
-        console.error(
-          `   ❌ Error upserting Season ${tmdbSeason.season_number}:`,
-          error,
-        );
-      } else {
-        seasonsUpserted++;
-      }
+    if (error) {
+      console.error(`   ❌ Error upserting seasons:`, error);
+      throw error;
     }
 
-    console.log(
-      `   ✅ Successfully populated ${seasonsUpserted} seasons with episode counts for series ${seriesId}`,
-    );
+    console.log(`   ✅ Upserted ${seasonsToUpsert.length} seasons`);
   } catch (error) {
     console.error("   ❌ Error in ensureSeasonDataWithCounts:", error);
-    if (error instanceof Error) {
-      console.error("   Error message:", error.message);
-    }
+    throw error;
   }
 }
