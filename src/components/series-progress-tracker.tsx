@@ -249,7 +249,11 @@ export default function SeriesProgressTracker({
       return; // Already loaded or loading
     }
 
-    setLoadingSeasons((prev) => new Set([...prev, seasonId]));
+    setLoadingSeasons((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(seasonId);
+      return newSet;
+    });
 
     try {
       // Fetch episodes for this season only
@@ -298,7 +302,11 @@ export default function SeriesProgressTracker({
         }),
       );
 
-      setLoadedSeasons((prev) => new Set([...prev, seasonId]));
+      setLoadedSeasons((prev) => {
+        const newSet = new Set(prev);
+        newSet.add(seasonId);
+        return newSet;
+      });
     } catch (error) {
       console.error("Error loading episodes:", error);
     } finally {
@@ -444,7 +452,11 @@ export default function SeriesProgressTracker({
       return;
     }
 
-    setResettingSeasons((prev) => new Set([...prev, seasonId]));
+    setResettingSeasons((prev) => {
+      const newSet = new Set(prev);
+      newSet.add(seasonId);
+      return newSet;
+    });
 
     try {
       const response = await fetch("/api/reel-deck/reset-season", {
