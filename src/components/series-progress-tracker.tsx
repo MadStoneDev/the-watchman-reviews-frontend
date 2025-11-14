@@ -177,7 +177,7 @@ export default function SeriesProgressTracker({
         let newEpisodes = season.episodes;
 
         if (allEpisodes) {
-          // FIX 1: Only mark AIRED episodes as watched
+          // Only mark AIRED episodes as watched
           newEpisodes = season.episodes.map((ep) => ({
             ...ep,
             isWatched: ep.hasAired ? watched : ep.isWatched,
@@ -205,40 +205,72 @@ export default function SeriesProgressTracker({
     },
   );
 
-  // FIX 2: Determine which season to open by default - most recent with progress or just most recent
+  // Determine which season to open by default based on watch progress
   const getDefaultOpenSeason = () => {
-    // Find first season (most recent) that's in progress
-    const inProgressSeason = optimisticSeasons.find(
-      (s) => s.percentage < 100 && s.percentage > 0,
-    );
-    if (inProgressSeason) return inProgressSeason.season_number;
+    // Since seasons array is reversed (latest first), iterate from end to start for chronological order
+    let lastCompletedIndex = -1;
 
-    // Find first unwatched season
-    const incompleteSeason = optimisticSeasons.find((s) => s.percentage === 0);
-    if (incompleteSeason) return incompleteSeason.season_number;
+    for (let i = optimisticSeasons.length - 1; i >= 0; i--) {
+      const season = optimisticSeasons[i];
 
-    // FIX: Return the FIRST season in the array (which is the LATEST season since array is reversed)
-    return optimisticSeasons[0]?.season_number || 1;
+      // If this season has progress but isn't complete, open it (they're currently watching it)
+      if (season.percentage > 0 && season.percentage < 100) {
+        return season.season_number;
+      }
+
+      // If this season is fully watched, keep track of it
+      if (season.percentage === 100) {
+        lastCompletedIndex = i;
+      }
+    }
+
+    // If we found completed seasons, open the next unwatched season after the last completed one
+    if (lastCompletedIndex !== -1 && lastCompletedIndex > 0) {
+      // Next season is at lastCompletedIndex - 1 (since array is reversed)
+      return optimisticSeasons[lastCompletedIndex - 1]?.season_number;
+    }
+
+    // If all seasons are complete, open the latest season
+    if (lastCompletedIndex === 0) {
+      return optimisticSeasons[0]?.season_number || 1;
+    }
+
+    // If nothing has been watched, open season 1 (last item in reversed array)
+    return optimisticSeasons[optimisticSeasons.length - 1]?.season_number || 1;
   };
 
-  const [openSeasons, setOpenSeasons] = useState<Set<number>>(
-    new Set([getDefaultOpenSeason()]),
-  );
+  const [openSeasons, setOpenSeasons] = useState<Set<number>>(new Set());
   const [resettingSeasons, setResettingSeasons] = useState<Set<string>>(
     new Set(),
   );
   const [resettingSeries, setResettingSeries] = useState(false);
+  const [hasOpenedDefaultSeason, setHasOpenedDefaultSeason] = useState(false);
 
-  // OPTIMIZATION 3: Load episodes for the default open season on mount
+  // OPTIMIZATION 3: Load all episodes progressively on mount
   useEffect(() => {
-    const defaultSeason = optimisticSeasons.find(
-      (s) => s.season_number === getDefaultOpenSeason(),
-    );
-    if (defaultSeason && !loadedSeasons.has(defaultSeason.id)) {
-      loadEpisodesForSeason(defaultSeason.id, defaultSeason.season_number);
-    }
+    // Load episodes for all seasons progressively
+    optimisticSeasons.forEach((season) => {
+      if (!loadedSeasons.has(season.id) && !loadingSeasons.has(season.id)) {
+        loadEpisodesForSeason(season.id, season.season_number);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Open the appropriate season once all episodes have loaded
+  useEffect(() => {
+    // Wait until all seasons have loaded their episodes
+    const allSeasonsLoaded = optimisticSeasons.every(
+      (season) => loadedSeasons.has(season.id) || season.episodes.length > 0,
+    );
+
+    if (allSeasonsLoaded && !hasOpenedDefaultSeason) {
+      const defaultSeason = getDefaultOpenSeason();
+      setOpenSeasons(new Set([defaultSeason]));
+      setHasOpenedDefaultSeason(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedSeasons, hasOpenedDefaultSeason]);
 
   // OPTIMIZATION 4: Progressive episode loading
   const loadEpisodesForSeason = async (
@@ -319,17 +351,6 @@ export default function SeriesProgressTracker({
   };
 
   const toggleSeason = (seasonNumber: number) => {
-    const season = optimisticSeasons.find(
-      (s) => s.season_number === seasonNumber,
-    );
-
-    if (!season) return;
-
-    // Load episodes if not already loaded
-    if (!loadedSeasons.has(season.id) && !loadingSeasons.has(season.id)) {
-      loadEpisodesForSeason(season.id, seasonNumber);
-    }
-
     setOpenSeasons((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(seasonNumber)) {
@@ -420,7 +441,7 @@ export default function SeriesProgressTracker({
             seriesId,
             userId,
             markAsWatched,
-            // FIX 1: Tell API to only mark aired episodes
+            // Tell API to only mark aired episodes
             airedOnly: markAsWatched,
           }),
         });
@@ -672,7 +693,7 @@ export default function SeriesProgressTracker({
                   isOpen ? "py-4 max-h-[999px]" : "max-h-0"
                 } transition-all duration-200 ease-in-out overflow-y-auto`}
               >
-                {/* FIX 3: Show loading state while episodes are being fetched */}
+                {/* Show loading state while episodes are being fetched */}
                 {isOpen && isLoading && (
                   <div className="flex items-center justify-center py-8 text-neutral-400">
                     <IconLoader2 size={24} className="animate-spin mr-2" />
