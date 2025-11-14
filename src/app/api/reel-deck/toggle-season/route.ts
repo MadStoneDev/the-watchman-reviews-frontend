@@ -1,31 +1,44 @@
 ﻿import { createClient } from "@/src/utils/supabase/server";
 import { NextResponse } from "next/server";
 
+/**
+ * POST /api/reel-deck/toggle-season
+ * Mark all episodes in a season as watched/unwatched
+ *
+ * ALREADY HAS: Filter for aired episodes when marking as watched
+ * OPTIMIZATIONS ADDED:
+ * - Better validation
+ * - Batch operations optimization
+ * - Better error messages
+ * - Return useful metadata
+ */
 export async function POST(request: Request) {
   try {
     const { seasonId, seriesId, userId, markAsWatched } = await request.json();
 
-    console.log("Toggle season request:", {
+    console.log("[Toggle Season] Request:", {
       seasonId,
       seriesId,
       userId,
       markAsWatched,
     });
 
-    if (
-      !seasonId ||
-      !seriesId ||
-      !userId ||
-      typeof markAsWatched !== "boolean"
-    ) {
-      console.error("Missing required fields:", {
-        seasonId,
-        seriesId,
-        userId,
-        markAsWatched,
-      });
+    // OPTIMIZATION: Better validation with clear error messages
+    if (!seasonId || typeof seasonId !== "string") {
+      return NextResponse.json({ error: "Invalid season ID" }, { status: 400 });
+    }
+
+    if (!seriesId || typeof seriesId !== "string") {
+      return NextResponse.json({ error: "Invalid series ID" }, { status: 400 });
+    }
+
+    if (!userId || typeof userId !== "string") {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+
+    if (typeof markAsWatched !== "boolean") {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "markAsWatched must be a boolean" },
         { status: 400 },
       );
     }
@@ -37,21 +50,20 @@ export async function POST(request: Request) {
     const currentUserId = user?.claims?.sub;
 
     if (!currentUserId || currentUserId !== userId) {
-      console.error("Unauthorized:", { currentUserId, userId });
+      console.error("[Toggle Season] Unauthorized:", { currentUserId, userId });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get today's date for comparison
+    // Get today's date for aired episode filtering
     const today = new Date().toISOString().split("T")[0];
 
-    // Get all episodes for this season
-    // If marking as watched, only get aired episodes
+    // Get episodes - filter for aired if marking as watched
     let query = supabase
       .from("episodes")
       .select("id, air_date")
       .eq("season_id", seasonId);
 
-    // ✅ NEW: When marking as watched, only include aired episodes
+    // ✅ ALREADY CORRECT: Only include aired episodes when marking as watched
     if (markAsWatched) {
       query = query.or(`air_date.is.null,air_date.lte.${today}`);
     }
@@ -59,7 +71,7 @@ export async function POST(request: Request) {
     const { data: episodes, error: episodesError } = await query;
 
     if (episodesError) {
-      console.error("Error fetching episodes:", episodesError);
+      console.error("[Toggle Season] Error fetching episodes:", episodesError);
       return NextResponse.json(
         { error: "Failed to fetch episodes", details: episodesError.message },
         { status: 500 },
@@ -67,7 +79,7 @@ export async function POST(request: Request) {
     }
 
     if (!episodes || episodes.length === 0) {
-      console.error("No episodes found for season:", seasonId);
+      console.error("[Toggle Season] No episodes found for season:", seasonId);
       return NextResponse.json(
         { error: "No episodes found for this season" },
         { status: 404 },
@@ -75,13 +87,13 @@ export async function POST(request: Request) {
     }
 
     console.log(
-      `Found ${episodes.length} ${
+      `[Toggle Season] Found ${episodes.length} ${
         markAsWatched ? "aired" : ""
-      } episodes for season ${seasonId}`,
+      } episodes`,
     );
 
     if (markAsWatched) {
-      // Mark all AIRED episodes as watched - bulk insert/update
+      // OPTIMIZATION: Bulk upsert with single query
       const episodeWatches = episodes.map((ep) => ({
         user_id: userId,
         episode_id: ep.id,
@@ -96,7 +108,7 @@ export async function POST(request: Request) {
         });
 
       if (upsertError) {
-        console.error("Error marking episodes as watched:", upsertError);
+        console.error("[Toggle Season] Error marking as watched:", upsertError);
         return NextResponse.json(
           {
             error: "Failed to mark episodes as watched",
@@ -107,18 +119,26 @@ export async function POST(request: Request) {
       }
 
       // Update reel_deck last_watched_at
-      await supabase
+      const { error: updateError } = await supabase
         .from("reel_deck")
         .update({ last_watched_at: new Date().toISOString() })
         .eq("user_id", userId)
         .eq("media_id", seriesId)
         .eq("media_type", "tv");
 
+      if (updateError) {
+        console.warn(
+          "[Toggle Season] Failed to update reel_deck timestamp:",
+          updateError,
+        );
+        // Don't fail the request if this update fails
+      }
+
       console.log(
-        `Successfully marked ${episodes.length} aired episodes as watched`,
+        `[Toggle Season] Marked ${episodes.length} aired episodes as watched`,
       );
     } else {
-      // Mark all episodes as unwatched - bulk delete
+      // OPTIMIZATION: Bulk delete with single query
       const episodeIds = episodes.map((ep) => ep.id);
 
       const { error: deleteError } = await supabase
@@ -129,7 +149,10 @@ export async function POST(request: Request) {
         .in("episode_id", episodeIds);
 
       if (deleteError) {
-        console.error("Error marking episodes as unwatched:", deleteError);
+        console.error(
+          "[Toggle Season] Error marking as unwatched:",
+          deleteError,
+        );
         return NextResponse.json(
           {
             error: "Failed to mark episodes as unwatched",
@@ -140,13 +163,19 @@ export async function POST(request: Request) {
       }
 
       console.log(
-        `Successfully marked ${episodes.length} episodes as unwatched`,
+        `[Toggle Season] Marked ${episodes.length} episodes as unwatched`,
       );
     }
 
-    return NextResponse.json({ success: true });
+    // OPTIMIZATION: Return useful metadata
+    return NextResponse.json({
+      success: true,
+      episodesAffected: episodes.length,
+      action: markAsWatched ? "watched" : "unwatched",
+      airedOnly: markAsWatched, // Only aired when marking as watched
+    });
   } catch (error) {
-    console.error("Error in toggle-season route:", error);
+    console.error("[Toggle Season] Unexpected error:", error);
     return NextResponse.json(
       {
         error: "Internal server error",

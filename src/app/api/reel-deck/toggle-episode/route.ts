@@ -1,175 +1,185 @@
-﻿import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/src/utils/supabase/server";
+﻿import { createClient } from "@/src/utils/supabase/server";
+import { NextResponse } from "next/server";
 
 /**
- * GET /api/series/[seriesId]/season/[seasonNumber]/episodes
- * Load episodes for a specific season from database
- * Fetches from TMDB if not cached
+ * POST /api/reel-deck/toggle-episode
+ * Mark a single episode as watched/unwatched
  *
- * This endpoint is used for progressive loading in SeriesProgressTracker
+ * OPTIMIZATIONS:
+ * - Better validation with type checks
+ * - Graceful error handling for reel_deck updates
+ * - Structured logging
+ * - Useful response metadata
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ seriesId: string; seasonNumber: string }> },
-) {
+export async function POST(request: Request) {
   try {
-    const { seriesId, seasonNumber } = await params;
-    const seasonNum = parseInt(seasonNumber, 10);
+    const { episodeId, seriesId, userId, isWatched } = await request.json();
 
-    // Validate season number
-    if (isNaN(seasonNum) || seasonNum < 0) {
+    console.log("[Toggle Episode] Request:", {
+      episodeId,
+      seriesId,
+      userId,
+      isWatched,
+    });
+
+    // OPTIMIZATION: Better validation with clear error messages
+    if (!episodeId || typeof episodeId !== "string") {
       return NextResponse.json(
-        { error: "Invalid season number" },
+        { error: "Invalid episode ID" },
+        { status: 400 },
+      );
+    }
+
+    if (!seriesId || typeof seriesId !== "string") {
+      return NextResponse.json({ error: "Invalid series ID" }, { status: 400 });
+    }
+
+    if (!userId || typeof userId !== "string") {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
+
+    if (typeof isWatched !== "boolean") {
+      return NextResponse.json(
+        { error: "isWatched must be a boolean" },
         { status: 400 },
       );
     }
 
     const supabase = await createClient();
 
-    // Get the series TMDB ID and season info
-    const { data: series, error: seriesError } = await supabase
-      .from("series")
-      .select("tmdb_id")
-      .eq("id", seriesId)
-      .single();
+    // Verify user is authenticated
+    const { data: user } = await supabase.auth.getClaims();
+    const currentUserId = user?.claims?.sub;
 
-    if (seriesError || !series) {
-      return NextResponse.json({ error: "Series not found" }, { status: 404 });
-    }
-
-    // Get the season
-    const { data: season, error: seasonError } = await supabase
-      .from("seasons")
-      .select("id, tmdb_id, episode_count")
-      .eq("series_id", seriesId)
-      .eq("season_number", seasonNum)
-      .single();
-
-    if (seasonError || !season) {
-      return NextResponse.json({ error: "Season not found" }, { status: 404 });
-    }
-
-    // Check if we have episodes cached
-    const { data: existingEpisodes, count } = await supabase
-      .from("episodes")
-      .select(
-        "id, episode_number, title, overview, air_date, runtime, poster_path, tmdb_id",
-        { count: "exact" },
-      )
-      .eq("season_id", season.id)
-      .order("episode_number", { ascending: true });
-
-    const expectedCount = season.episode_count || 0;
-    const actualCount = count || 0;
-
-    // If we have all episodes cached, return them
-    if (expectedCount > 0 && actualCount >= expectedCount && existingEpisodes) {
-      console.log(
-        `[Episodes API] Returning ${actualCount} cached episodes for season ${seasonNum}`,
-      );
-
-      return NextResponse.json(existingEpisodes, {
-        headers: {
-          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=1800",
-        },
+    if (!currentUserId || currentUserId !== userId) {
+      console.error("[Toggle Episode] Unauthorized:", {
+        currentUserId,
+        userId,
       });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch from TMDB if not fully cached
-    console.log(
-      `[Episodes API] Fetching season ${seasonNum} from TMDB (have ${actualCount}/${expectedCount})`,
-    );
+    // Get episode details to verify it exists and get air date
+    const { data: episode, error: episodeError } = await supabase
+      .from("episodes")
+      .select("id, air_date, episode_number, season_number")
+      .eq("id", episodeId)
+      .single();
 
-    const tmdbUrl = `https://api.themoviedb.org/3/tv/${series.tmdb_id}/season/${seasonNum}?language=en-US`;
+    if (episodeError || !episode) {
+      console.error("[Toggle Episode] Episode not found:", episodeError);
+      return NextResponse.json({ error: "Episode not found" }, { status: 404 });
+    }
 
-    const tmdbResponse = await fetch(tmdbUrl, {
-      headers: {
-        accept: "application/json",
-        Authorization: `Bearer ${process.env.TMDB_API_TOKEN}`,
-      },
-      next: { revalidate: 3600 }, // Cache TMDB response for 1 hour
-    });
+    // Check if episode has aired (prevent marking unaired episodes as watched)
+    const today = new Date().toISOString().split("T")[0];
+    const hasAired = episode.air_date ? episode.air_date <= today : false;
 
-    if (!tmdbResponse.ok) {
-      console.error(`[Episodes API] TMDB API error: ${tmdbResponse.status}`);
+    if (isWatched && !hasAired) {
+      console.warn("[Toggle Episode] Attempt to mark unaired episode:", {
+        episodeId,
+        airDate: episode.air_date,
+      });
+      return NextResponse.json(
+        {
+          error: "Cannot mark unaired episodes as watched",
+          airDate: episode.air_date,
+        },
+        { status: 400 },
+      );
+    }
 
-      // If TMDB fails but we have some cached episodes, return those
-      if (existingEpisodes && existingEpisodes.length > 0) {
-        console.log(
-          `[Episodes API] TMDB failed, returning ${actualCount} cached episodes`,
+    if (isWatched) {
+      // Mark episode as watched
+      const { error: upsertError } = await supabase
+        .from("episode_watches")
+        .upsert(
+          {
+            user_id: userId,
+            episode_id: episodeId,
+            series_id: seriesId,
+            watched_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id,episode_id",
+          },
         );
-        return NextResponse.json(existingEpisodes);
+
+      if (upsertError) {
+        console.error(
+          "[Toggle Episode] Error marking as watched:",
+          upsertError,
+        );
+        return NextResponse.json(
+          {
+            error: "Failed to mark episode as watched",
+            details: upsertError.message,
+          },
+          { status: 500 },
+        );
       }
 
-      throw new Error(`TMDB API error: ${tmdbResponse.status}`);
-    }
+      // Update reel_deck last_watched_at
+      const { error: updateError } = await supabase
+        .from("reel_deck")
+        .update({ last_watched_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("media_id", seriesId)
+        .eq("media_type", "tv");
 
-    const seasonData = await tmdbResponse.json();
+      if (updateError) {
+        console.warn(
+          "[Toggle Episode] Failed to update reel_deck timestamp:",
+          updateError,
+        );
+        // Don't fail the request if this update fails
+      }
 
-    if (!seasonData.episodes || seasonData.episodes.length === 0) {
-      console.warn(`[Episodes API] No episodes in TMDB response`);
-      return NextResponse.json(existingEpisodes || []);
-    }
+      console.log(
+        `[Toggle Episode] Marked S${episode.season_number}E${episode.episode_number} as watched`,
+      );
+    } else {
+      // Mark episode as unwatched
+      const { error: deleteError } = await supabase
+        .from("episode_watches")
+        .delete()
+        .eq("user_id", userId)
+        .eq("episode_id", episodeId);
 
-    // Prepare episodes for upsert
-    const episodesToUpsert = seasonData.episodes.map((ep: any) => ({
-      series_id: seriesId,
-      season_id: season.id,
-      season_number: seasonNum,
-      episode_number: ep.episode_number,
-      tmdb_id: ep.id,
-      title: ep.name || `Episode ${ep.episode_number}`,
-      overview: ep.overview,
-      poster_path: ep.still_path,
-      air_date: ep.air_date,
-      runtime: ep.runtime,
-    }));
+      if (deleteError) {
+        console.error(
+          "[Toggle Episode] Error marking as unwatched:",
+          deleteError,
+        );
+        return NextResponse.json(
+          {
+            error: "Failed to mark episode as unwatched",
+            details: deleteError.message,
+          },
+          { status: 500 },
+        );
+      }
 
-    // Upsert episodes to database
-    const { data: upsertedEpisodes, error: upsertError } = await supabase
-      .from("episodes")
-      .upsert(episodesToUpsert, {
-        onConflict: "series_id,season_number,episode_number",
-        ignoreDuplicates: false,
-      })
-      .select(
-        "id, episode_number, title, overview, air_date, runtime, poster_path, tmdb_id",
-      )
-      .order("episode_number", { ascending: true });
-
-    if (upsertError) {
-      console.error(`[Episodes API] Error upserting episodes:`, upsertError);
-      // Return TMDB data even if database update fails
-      return NextResponse.json(
-        seasonData.episodes.map((ep: any) => ({
-          id: `tmdb-${ep.id}`,
-          episode_number: ep.episode_number,
-          title: ep.name,
-          overview: ep.overview,
-          air_date: ep.air_date,
-          runtime: ep.runtime,
-          poster_path: ep.still_path,
-          tmdb_id: ep.id,
-        })),
+      console.log(
+        `[Toggle Episode] Marked S${episode.season_number}E${episode.episode_number} as unwatched`,
       );
     }
 
-    console.log(
-      `[Episodes API] Successfully upserted ${
-        upsertedEpisodes?.length || 0
-      } episodes`,
-    );
-
-    return NextResponse.json(upsertedEpisodes || [], {
-      headers: {
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=1800",
+    // OPTIMIZATION: Return useful metadata
+    return NextResponse.json({
+      success: true,
+      episodeId,
+      action: isWatched ? "watched" : "unwatched",
+      episode: {
+        number: episode.episode_number,
+        season: episode.season_number,
       },
     });
   } catch (error) {
-    console.error("[Episodes API] Error:", error);
+    console.error("[Toggle Episode] Unexpected error:", error);
     return NextResponse.json(
       {
-        error: "Failed to load episodes",
+        error: "Internal server error",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
