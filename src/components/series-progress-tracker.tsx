@@ -164,10 +164,18 @@ export default function SeriesProgressTracker({
   const [loadedSeasons, setLoadedSeasons] = useState<Set<string>>(new Set());
   const [loadingSeasons, setLoadingSeasons] = useState<Set<string>>(new Set());
 
+  useEffect(() => {
+    setSeasons(initialSeasons);
+  }, [initialSeasons]);
+
   // OPTIMIZATION 2: Store watched IDs in state for faster lookups
   const [watchedIds, setWatchedIds] = useState(
     () => new Set(initialWatchedIds),
   );
+
+  useEffect(() => {
+    setWatchedIds(new Set(initialWatchedIds));
+  }, [initialWatchedIds]);
 
   // Optimistic state for episodes
   const [optimisticSeasons, setOptimisticSeasons] = useOptimistic(
@@ -258,10 +266,6 @@ export default function SeriesProgressTracker({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    setWatchedIds(new Set(initialWatchedIds));
-  }, [initialWatchedIds]);
 
   // Open the appropriate season once all episodes have loaded
   useEffect(() => {
