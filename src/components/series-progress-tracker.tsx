@@ -165,7 +165,9 @@ export default function SeriesProgressTracker({
   const [loadingSeasons, setLoadingSeasons] = useState<Set<string>>(new Set());
 
   // OPTIMIZATION 2: Store watched IDs in state for faster lookups
-  const [watchedIds] = useState(() => new Set(initialWatchedIds));
+  const [watchedIds, setWatchedIds] = useState(
+    () => new Set(initialWatchedIds),
+  );
 
   // Optimistic state for episodes
   const [optimisticSeasons, setOptimisticSeasons] = useOptimistic(
@@ -256,6 +258,10 @@ export default function SeriesProgressTracker({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    setWatchedIds(new Set(initialWatchedIds));
+  }, [initialWatchedIds]);
 
   // Open the appropriate season once all episodes have loaded
   useEffect(() => {
@@ -382,6 +388,17 @@ export default function SeriesProgressTracker({
     }
 
     startTransition(async () => {
+      // Update watchedIds immediately for optimistic UI
+      setWatchedIds((prev) => {
+        const newSet = new Set(prev);
+        if (!currentlyWatched) {
+          newSet.add(episodeId);
+        } else {
+          newSet.delete(episodeId);
+        }
+        return newSet;
+      });
+
       // Optimistic update
       setOptimisticSeasons({
         seasonId: season.id,
@@ -410,6 +427,16 @@ export default function SeriesProgressTracker({
         router.refresh();
       } catch (error) {
         console.error("Error toggling episode:", error);
+        // Revert watchedIds on error
+        setWatchedIds((prev) => {
+          const newSet = new Set(prev);
+          if (currentlyWatched) {
+            newSet.add(episodeId);
+          } else {
+            newSet.delete(episodeId);
+          }
+          return newSet;
+        });
         alert(
           `Failed to update episode: ${
             error instanceof Error ? error.message : "Unknown error"
