@@ -685,7 +685,10 @@ export default function SeriesProgressTracker({
           >
             {/* Season Header */}
             <div className="p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+              <div
+                onClick={() => toggleSeason(season.season_number)}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3"
+              >
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">
                     Season {season.season_number}
@@ -761,34 +764,41 @@ export default function SeriesProgressTracker({
             </div>
 
             {/* Episodes List */}
-            {isOpen && (
-              <div className="border-t border-neutral-800 px-4 py-4 space-y-2 max-h-[600px] overflow-y-auto">
-                {isLoading && (
-                  <div className="flex items-center justify-center py-8 text-neutral-400">
-                    <IconLoader2 size={24} className="animate-spin mr-2" />
-                    <span>Loading episodes...</span>
-                  </div>
-                )}
+            <div
+              className={`border-t border-neutral-800 px-4 space-y-2 transition-all duration-300 ease-in-out overflow-hidden ${
+                isOpen ? "py-4" : "max-h-0 py-0"
+              }`}
+              style={{
+                maxHeight: isOpen
+                  ? `${season.episodes.length * 80 + 100}px` // More accurate per-episode height
+                  : "0px",
+              }}
+            >
+              {isLoading && (
+                <div className="flex items-center justify-center py-8 text-neutral-400">
+                  <IconLoader2 size={24} className="animate-spin mr-2" />
+                  <span>Loading episodes...</span>
+                </div>
+              )}
 
-                {!isLoading && hasEpisodes && (
-                  <>
-                    {season.episodes.map((episode) => (
-                      <EpisodeItem
-                        key={episode.id}
-                        episode={episode}
-                        onToggle={handleEpisodeToggle}
-                      />
-                    ))}
-                  </>
-                )}
+              {!isLoading && hasEpisodes && (
+                <>
+                  {season.episodes.map((episode) => (
+                    <EpisodeItem
+                      key={episode.id}
+                      episode={episode}
+                      onToggle={handleEpisodeToggle}
+                    />
+                  ))}
+                </>
+              )}
 
-                {!isLoading && !hasEpisodes && (
-                  <div className="py-8 text-center text-neutral-500">
-                    No episodes found for this season.
-                  </div>
-                )}
-              </div>
-            )}
+              {!isLoading && !hasEpisodes && (
+                <div className="py-8 text-center text-neutral-500">
+                  No episodes found for this season.
+                </div>
+              )}
+            </div>
           </div>
         );
       })}
