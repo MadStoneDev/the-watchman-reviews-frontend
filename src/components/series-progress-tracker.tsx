@@ -164,17 +164,42 @@ export default function SeriesProgressTracker({
   const [loadedSeasons, setLoadedSeasons] = useState<Set<string>>(new Set());
   const [loadingSeasons, setLoadingSeasons] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    setSeasons(initialSeasons);
-  }, [initialSeasons]);
-
   // OPTIMIZATION 2: Store watched IDs in state for faster lookups
   const [watchedIds, setWatchedIds] = useState(
     () => new Set(initialWatchedIds),
   );
 
   useEffect(() => {
-    setWatchedIds(new Set(initialWatchedIds));
+    const newWatchedIds = new Set(initialWatchedIds);
+    setWatchedIds(newWatchedIds);
+
+    // Update episodes' isWatched status based on new watchedIds from server
+    setSeasons((prevSeasons) =>
+      prevSeasons.map((season) => {
+        // Only update if this season has loaded episodes
+        if (season.episodes.length === 0) return season;
+
+        const updatedEpisodes = season.episodes.map((ep) => ({
+          ...ep,
+          isWatched: newWatchedIds.has(ep.id),
+        }));
+
+        const watchedCount = updatedEpisodes.filter(
+          (ep) => ep.isWatched,
+        ).length;
+        const percentage =
+          season.totalCount > 0
+            ? Math.round((watchedCount / season.totalCount) * 100)
+            : 0;
+
+        return {
+          ...season,
+          episodes: updatedEpisodes,
+          watchedCount,
+          percentage,
+        };
+      }),
+    );
   }, [initialWatchedIds]);
 
   // Optimistic state for episodes
