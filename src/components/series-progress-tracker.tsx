@@ -256,7 +256,7 @@ export default function SeriesProgressTracker({
     const newWatchedIds = new Set(initialWatchedIds);
     const hasChanged =
       newWatchedIds.size !== watchedIds.size ||
-      [...newWatchedIds].some((id) => !watchedIds.has(id));
+      Array.from(newWatchedIds).some((id) => !watchedIds.has(id));
 
     if (!hasChanged) return;
 
