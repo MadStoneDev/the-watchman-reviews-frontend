@@ -5,6 +5,8 @@ import React, {
   useOptimistic,
   useTransition,
   useEffect,
+  useCallback,
+  useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -47,20 +49,52 @@ interface SeriesProgressTrackerProps {
   initialWatchedIds: string[];
 }
 
-// OPTIMIZATION 1: Memoize episode item to prevent unnecessary re-renders
+// Memoize date formatting functions outside component for better performance
+const formatAirDate = (airDate: string | null): string => {
+  if (!airDate) return "Date TBA";
+  const date = new Date(airDate);
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getRelativeAirDate = (airDate: string | null): string | null => {
+  if (!airDate) return null;
+
+  const date = new Date(airDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffTime = date.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return null;
+  if (diffDays === 0) return "Airs today";
+  if (diffDays === 1) return "Airs tomorrow";
+  if (diffDays <= 7) return `Airs in ${diffDays} days`;
+  if (diffDays <= 30) return `Airs in ${Math.ceil(diffDays / 7)} weeks`;
+  return null; // Don't show for far future dates
+};
+
+// Memoized episode item component
 const EpisodeItem = React.memo(
   ({
     episode,
     onToggle,
-    formatAirDate,
-    getRelativeAirDate,
   }: {
     episode: Episode;
     onToggle: (id: string, watched: boolean, hasAired: boolean) => void;
-    formatAirDate: (date: string | null) => string;
-    getRelativeAirDate: (date: string | null) => string | null;
   }) => {
-    const relativeAirDate = getRelativeAirDate(episode.air_date);
+    const relativeAirDate = useMemo(
+      () => getRelativeAirDate(episode.air_date),
+      [episode.air_date],
+    );
+    const formattedAirDate = useMemo(
+      () => formatAirDate(episode.air_date),
+      [episode.air_date],
+    );
     const isDisabled = !episode.hasAired && !episode.isWatched;
 
     return (
@@ -71,7 +105,7 @@ const EpisodeItem = React.memo(
         disabled={isDisabled}
         title={
           isDisabled
-            ? `Episode hasn't aired yet (${formatAirDate(episode.air_date)})`
+            ? `Episode hasn't aired yet (${formattedAirDate})`
             : episode.isWatched
               ? "Mark as unwatched"
               : "Mark as watched"
@@ -122,7 +156,7 @@ const EpisodeItem = React.memo(
               <span className="font-bold">
                 {new Date(episode.air_date) > new Date() ? "Airs" : "Aired"}:
               </span>{" "}
-              {formatAirDate(episode.air_date)}
+              {formattedAirDate}
             </p>
           )}
         </div>
@@ -160,23 +194,76 @@ export default function SeriesProgressTracker({
 }: SeriesProgressTrackerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [seasons, setSeasons] = useState(initialSeasons);
-  const [loadedSeasons, setLoadedSeasons] = useState<Set<string>>(new Set());
-  const [loadingSeasons, setLoadingSeasons] = useState<Set<string>>(new Set());
 
-  // OPTIMIZATION 2: Store watched IDs in state for faster lookups
+  // Core state
+  const [seasons, setSeasons] = useState(initialSeasons);
   const [watchedIds, setWatchedIds] = useState(
     () => new Set(initialWatchedIds),
   );
 
+  // Loading state
+  const [loadedSeasons, setLoadedSeasons] = useState<Set<string>>(new Set());
+  const [loadingSeasons, setLoadingSeasons] = useState<Set<string>>(new Set());
+
+  // UI state
+  const [openSeasons, setOpenSeasons] = useState<Set<number>>(new Set());
+  const [resettingSeasons, setResettingSeasons] = useState<Set<string>>(
+    new Set(),
+  );
+  const [resettingSeries, setResettingSeries] = useState(false);
+  const [hasOpenedDefaultSeason, setHasOpenedDefaultSeason] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Optimistic state for episodes
+  const [optimisticSeasons, setOptimisticSeasons] = useOptimistic(
+    seasons,
+    (currentSeasons, { seasonId, episodeId, allEpisodes, watched }: any) => {
+      return currentSeasons.map((season) => {
+        if (season.id !== seasonId) return season;
+
+        let newEpisodes = season.episodes;
+
+        if (allEpisodes) {
+          newEpisodes = season.episodes.map((ep) => ({
+            ...ep,
+            isWatched: ep.hasAired ? watched : ep.isWatched,
+          }));
+        } else if (episodeId) {
+          newEpisodes = season.episodes.map((ep) =>
+            ep.id === episodeId ? { ...ep, isWatched: watched } : ep,
+          );
+        }
+
+        const watchedCount = newEpisodes.filter((ep) => ep.isWatched).length;
+        const percentage =
+          season.totalCount > 0
+            ? Math.round((watchedCount / season.totalCount) * 100)
+            : 0;
+
+        return {
+          ...season,
+          episodes: newEpisodes,
+          watchedCount,
+          percentage,
+        };
+      });
+    },
+  );
+
+  // Sync with server data when initialWatchedIds changes (after refresh)
+  // This only runs when parent component provides new data
   useEffect(() => {
     const newWatchedIds = new Set(initialWatchedIds);
+    const hasChanged =
+      newWatchedIds.size !== watchedIds.size ||
+      [...newWatchedIds].some((id) => !watchedIds.has(id));
+
+    if (!hasChanged) return;
+
     setWatchedIds(newWatchedIds);
 
-    // Update episodes' isWatched status based on new watchedIds from server
     setSeasons((prevSeasons) =>
       prevSeasons.map((season) => {
-        // Only update if this season has loaded episodes
         if (season.episodes.length === 0) return season;
 
         const updatedEpisodes = season.episodes.map((ep) => ({
@@ -200,101 +287,115 @@ export default function SeriesProgressTracker({
         };
       }),
     );
-  }, [initialWatchedIds]);
+  }, [initialWatchedIds, watchedIds]);
 
-  // Optimistic state for episodes
-  const [optimisticSeasons, setOptimisticSeasons] = useOptimistic(
-    seasons,
-    (currentSeasons, { seasonId, episodeId, allEpisodes, watched }: any) => {
-      return currentSeasons.map((season) => {
-        if (season.id !== seasonId) return season;
-
-        let newEpisodes = season.episodes;
-
-        if (allEpisodes) {
-          // Only mark AIRED episodes as watched
-          newEpisodes = season.episodes.map((ep) => ({
-            ...ep,
-            isWatched: ep.hasAired ? watched : ep.isWatched,
-          }));
-        } else if (episodeId) {
-          // Toggle single episode
-          newEpisodes = season.episodes.map((ep) =>
-            ep.id === episodeId ? { ...ep, isWatched: watched } : ep,
-          );
-        }
-
-        const watchedCount = newEpisodes.filter((ep) => ep.isWatched).length;
-        const percentage =
-          season.totalCount > 0
-            ? Math.round((watchedCount / season.totalCount) * 100)
-            : 0;
-
-        return {
-          ...season,
-          episodes: newEpisodes,
-          watchedCount,
-          percentage,
-        };
-      });
-    },
-  );
-
-  // Determine which season to open by default based on watch progress
-  const getDefaultOpenSeason = () => {
-    // Since seasons array is reversed (latest first), iterate from end to start for chronological order
+  // Memoize default season calculation
+  const getDefaultOpenSeason = useCallback(() => {
     let lastCompletedIndex = -1;
 
     for (let i = optimisticSeasons.length - 1; i >= 0; i--) {
       const season = optimisticSeasons[i];
 
-      // If this season has progress but isn't complete, open it (they're currently watching it)
       if (season.percentage > 0 && season.percentage < 100) {
         return season.season_number;
       }
 
-      // If this season is fully watched, keep track of it
       if (season.percentage === 100) {
         lastCompletedIndex = i;
       }
     }
 
-    // If we found completed seasons, open the next unwatched season after the last completed one
     if (lastCompletedIndex !== -1 && lastCompletedIndex > 0) {
-      // Next season is at lastCompletedIndex - 1 (since array is reversed)
       return optimisticSeasons[lastCompletedIndex - 1]?.season_number;
     }
 
-    // If all seasons are complete, open the latest season
     if (lastCompletedIndex === 0) {
       return optimisticSeasons[0]?.season_number || 1;
     }
 
-    // If nothing has been watched, open season 1 (last item in reversed array)
     return optimisticSeasons[optimisticSeasons.length - 1]?.season_number || 1;
-  };
+  }, [optimisticSeasons]);
 
-  const [openSeasons, setOpenSeasons] = useState<Set<number>>(new Set());
-  const [resettingSeasons, setResettingSeasons] = useState<Set<string>>(
-    new Set(),
+  // Progressive loading of episodes
+  const loadEpisodesForSeason = useCallback(
+    async (seasonId: string, seasonNumber: number) => {
+      if (loadedSeasons.has(seasonId) || loadingSeasons.has(seasonId)) {
+        return;
+      }
+
+      setLoadingSeasons((prev) => new Set(prev).add(seasonId));
+
+      try {
+        const response = await fetch(
+          `/api/series/${seriesId}/season/${seasonNumber}/episodes`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load episodes");
+        }
+
+        const episodes = await response.json();
+        const today = new Date().toISOString().split("T")[0];
+
+        const transformedEpisodes = episodes
+          .map((ep: any) => ({
+            id: ep.id,
+            episode_number: ep.episode_number,
+            title: ep.title,
+            isWatched: watchedIds.has(ep.id),
+            air_date: ep.air_date,
+            hasAired: ep.air_date ? ep.air_date <= today : false,
+          }))
+          .reverse();
+
+        // Batch state updates
+        setSeasons((prevSeasons) =>
+          prevSeasons.map((season) => {
+            if (season.id !== seasonId) return season;
+
+            const watchedCount = transformedEpisodes.filter((ep: Episode) =>
+              watchedIds.has(ep.id),
+            ).length;
+
+            return {
+              ...season,
+              episodes: transformedEpisodes,
+              watchedCount,
+              percentage:
+                season.totalCount > 0
+                  ? Math.round((watchedCount / season.totalCount) * 100)
+                  : 0,
+              isLoading: false,
+            };
+          }),
+        );
+
+        setLoadedSeasons((prev) => new Set(prev).add(seasonId));
+      } catch (error) {
+        console.error("Error loading episodes:", error);
+        setError("Failed to load episodes. Please try again.");
+      } finally {
+        setLoadingSeasons((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(seasonId);
+          return newSet;
+        });
+      }
+    },
+    [seriesId, watchedIds, loadedSeasons, loadingSeasons],
   );
-  const [resettingSeries, setResettingSeries] = useState(false);
-  const [hasOpenedDefaultSeason, setHasOpenedDefaultSeason] = useState(false);
 
-  // OPTIMIZATION 3: Load all episodes progressively on mount
+  // Load all seasons progressively on mount
   useEffect(() => {
-    // Load episodes for all seasons progressively
     optimisticSeasons.forEach((season) => {
       if (!loadedSeasons.has(season.id) && !loadingSeasons.has(season.id)) {
         loadEpisodesForSeason(season.id, season.season_number);
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [optimisticSeasons, loadedSeasons, loadingSeasons, loadEpisodesForSeason]);
 
-  // Open the appropriate season once all episodes have loaded
+  // Open default season once all episodes loaded
   useEffect(() => {
-    // Wait until all seasons have loaded their episodes
     const allSeasonsLoaded = optimisticSeasons.every(
       (season) => loadedSeasons.has(season.id) || season.episodes.length > 0,
     );
@@ -304,88 +405,15 @@ export default function SeriesProgressTracker({
       setOpenSeasons(new Set([defaultSeason]));
       setHasOpenedDefaultSeason(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadedSeasons, hasOpenedDefaultSeason]);
+  }, [
+    loadedSeasons,
+    hasOpenedDefaultSeason,
+    optimisticSeasons,
+    getDefaultOpenSeason,
+  ]);
 
-  // OPTIMIZATION 4: Progressive episode loading
-  const loadEpisodesForSeason = async (
-    seasonId: string,
-    seasonNumber: number,
-  ) => {
-    if (loadedSeasons.has(seasonId) || loadingSeasons.has(seasonId)) {
-      return; // Already loaded or loading
-    }
-
-    setLoadingSeasons((prev) => {
-      const newSet = new Set(prev);
-      newSet.add(seasonId);
-      return newSet;
-    });
-
-    try {
-      // Fetch episodes for this season only
-      const response = await fetch(
-        `/api/series/${seriesId}/season/${seasonNumber}/episodes`,
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to load episodes");
-      }
-
-      const episodes = await response.json();
-      const today = new Date().toISOString().split("T")[0];
-
-      // Transform episodes with watched status
-      const transformedEpisodes = episodes
-        .map((ep: any) => ({
-          id: ep.id,
-          episode_number: ep.episode_number,
-          title: ep.title,
-          isWatched: watchedIds.has(ep.id),
-          air_date: ep.air_date,
-          hasAired: ep.air_date ? ep.air_date <= today : false,
-        }))
-        .reverse(); // Latest episodes first
-
-      // Update the season with episodes
-      setSeasons((prevSeasons) =>
-        prevSeasons.map((season) => {
-          if (season.id !== seasonId) return season;
-
-          const watchedCount = transformedEpisodes.filter((ep: Episode) =>
-            watchedIds.has(ep.id),
-          ).length;
-
-          return {
-            ...season,
-            episodes: transformedEpisodes,
-            watchedCount,
-            percentage:
-              season.totalCount > 0
-                ? Math.round((watchedCount / season.totalCount) * 100)
-                : 0,
-            isLoading: false,
-          };
-        }),
-      );
-
-      setLoadedSeasons((prev) => {
-        const newSet = new Set(prev);
-        newSet.add(seasonId);
-        return newSet;
-      });
-    } catch (error) {
-      console.error("Error loading episodes:", error);
-    } finally {
-      setLoadingSeasons((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(seasonId);
-        return newSet;
-      });
-    }
-  };
-
-  const toggleSeason = (seasonNumber: number) => {
+  // Memoized toggle handlers
+  const toggleSeason = useCallback((seasonNumber: number) => {
     setOpenSeasons((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(seasonNumber)) {
@@ -395,181 +423,175 @@ export default function SeriesProgressTracker({
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const handleEpisodeToggle = async (
-    episodeId: string,
-    currentlyWatched: boolean,
-    hasAired: boolean,
-  ) => {
-    // Prevent marking unaired episodes as watched
-    if (!hasAired && !currentlyWatched) {
-      return;
-    }
+  const handleEpisodeToggle = useCallback(
+    async (episodeId: string, currentlyWatched: boolean, hasAired: boolean) => {
+      if (!hasAired && !currentlyWatched) return;
 
-    const season = optimisticSeasons.find((s) =>
-      s.episodes.some((ep) => ep.id === episodeId),
-    );
+      const season = optimisticSeasons.find((s) =>
+        s.episodes.some((ep) => ep.id === episodeId),
+      );
 
-    if (!season) {
-      console.error("Season not found for episode:", episodeId);
-      return;
-    }
+      if (!season) return;
 
-    startTransition(async () => {
-      // Update watchedIds immediately for optimistic UI
-      setWatchedIds((prev) => {
-        const newSet = new Set(prev);
-        if (!currentlyWatched) {
-          newSet.add(episodeId);
-        } else {
-          newSet.delete(episodeId);
-        }
-        return newSet;
-      });
+      startTransition(async () => {
+        const newWatchedState = !currentlyWatched;
 
-      // Optimistic update
-      setOptimisticSeasons({
-        seasonId: season.id,
-        episodeId,
-        watched: !currentlyWatched,
-      });
-
-      try {
-        const response = await fetch("/api/reel-deck/toggle-episode", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            episodeId,
-            seriesId,
-            userId,
-            isWatched: !currentlyWatched,
-          }),
+        // Apply optimistic update immediately
+        setOptimisticSeasons({
+          seasonId: season.id,
+          episodeId,
+          watched: newWatchedState,
         });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          console.error("API error:", data);
-          throw new Error(data.error || "Failed to toggle episode");
-        }
-        router.refresh();
-      } catch (error) {
-        console.error("Error toggling episode:", error);
-        // Revert watchedIds on error
+        // Update local watchedIds for consistency
         setWatchedIds((prev) => {
           const newSet = new Set(prev);
-          if (currentlyWatched) {
+          if (newWatchedState) {
             newSet.add(episodeId);
           } else {
             newSet.delete(episodeId);
           }
           return newSet;
         });
-        alert(
-          `Failed to update episode: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`,
-        );
-        router.refresh();
-      }
-    });
-  };
 
-  const handleMarkAllToggle = async (
-    seasonId: string,
-    markAsWatched: boolean,
-  ) => {
-    startTransition(async () => {
-      // Optimistic update
-      setOptimisticSeasons({
-        seasonId,
-        allEpisodes: true,
-        watched: markAsWatched,
+        try {
+          const response = await fetch("/api/reel-deck/toggle-episode", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              episodeId,
+              seriesId,
+              userId,
+              isWatched: newWatchedState,
+            }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || "Failed to toggle episode");
+          }
+
+          // SUCCESS: Don't call router.refresh() here!
+          // The optimistic update is already showing the correct state
+          // Only refresh on error to ensure consistency
+        } catch (error) {
+          console.error("Error toggling episode:", error);
+
+          // Revert optimistic update on error
+          setWatchedIds((prev) => {
+            const newSet = new Set(prev);
+            if (currentlyWatched) {
+              newSet.add(episodeId);
+            } else {
+              newSet.delete(episodeId);
+            }
+            return newSet;
+          });
+
+          setError(
+            `Failed to update episode: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+          );
+
+          // Refresh to ensure we're in sync with server
+          router.refresh();
+        }
       });
+    },
+    [optimisticSeasons, seriesId, userId, router, setOptimisticSeasons],
+  );
+
+  const handleMarkAllToggle = useCallback(
+    async (seasonId: string, markAsWatched: boolean) => {
+      startTransition(async () => {
+        setOptimisticSeasons({
+          seasonId,
+          allEpisodes: true,
+          watched: markAsWatched,
+        });
+
+        try {
+          const response = await fetch("/api/reel-deck/toggle-season", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              seasonId,
+              seriesId,
+              userId,
+              markAsWatched,
+              airedOnly: markAsWatched,
+            }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || "Failed to toggle season");
+          }
+
+          // SUCCESS: Don't refresh, optimistic update is sufficient
+        } catch (error) {
+          console.error("Error toggling season:", error);
+          setError(
+            `Failed to update season: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
+          );
+          router.refresh();
+        }
+      });
+    },
+    [seriesId, userId, router, setOptimisticSeasons],
+  );
+
+  const handleResetSeason = useCallback(
+    async (seasonId: string) => {
+      if (
+        !confirm("Are you sure you want to reset all progress for this season?")
+      ) {
+        return;
+      }
+
+      setResettingSeasons((prev) => new Set(prev).add(seasonId));
 
       try {
-        const response = await fetch("/api/reel-deck/toggle-season", {
+        const response = await fetch("/api/reel-deck/reset-season", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             seasonId,
             seriesId,
             userId,
-            markAsWatched,
-            // Tell API to only mark aired episodes
-            airedOnly: markAsWatched,
           }),
         });
 
-        const data = await response.json();
-
         if (!response.ok) {
-          console.error("API error:", data);
-          throw new Error(data.error || "Failed to toggle season");
+          const data = await response.json();
+          throw new Error(data.error || "Failed to reset season");
         }
 
         router.refresh();
       } catch (error) {
-        console.error("Error toggling season:", error);
-        alert(
-          `Failed to update season: ${
+        console.error("Error resetting season:", error);
+        setError(
+          `Failed to reset season: ${
             error instanceof Error ? error.message : "Unknown error"
           }`,
         );
-        router.refresh();
+      } finally {
+        setResettingSeasons((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(seasonId);
+          return newSet;
+        });
       }
-    });
-  };
+    },
+    [seriesId, userId, router],
+  );
 
-  const handleResetSeason = async (seasonId: string) => {
-    if (
-      !confirm("Are you sure you want to reset all progress for this season?")
-    ) {
-      return;
-    }
-
-    setResettingSeasons((prev) => {
-      const newSet = new Set(prev);
-      newSet.add(seasonId);
-      return newSet;
-    });
-
-    try {
-      const response = await fetch("/api/reel-deck/reset-season", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          seasonId,
-          seriesId,
-          userId,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to reset season");
-      }
-
-      router.refresh();
-    } catch (error) {
-      console.error("Error resetting season:", error);
-      alert(
-        `Failed to reset season: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      );
-    } finally {
-      setResettingSeasons((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(seasonId);
-        return newSet;
-      });
-    }
-  };
-
-  const handleResetSeries = async () => {
+  const handleResetSeries = useCallback(async () => {
     if (
       !confirm(
         "Are you sure you want to reset ALL progress for this series? This cannot be undone.",
@@ -590,16 +612,15 @@ export default function SeriesProgressTracker({
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json();
         throw new Error(data.error || "Failed to reset series");
       }
 
       router.refresh();
     } catch (error) {
       console.error("Error resetting series:", error);
-      alert(
+      setError(
         `Failed to reset series: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
@@ -607,48 +628,42 @@ export default function SeriesProgressTracker({
     } finally {
       setResettingSeries(false);
     }
-  };
+  }, [seriesId, userId, router]);
 
-  // OPTIMIZATION 5: Extract date formatting functions (memoized outside component would be even better)
-  const formatAirDate = (airDate: string | null) => {
-    if (!airDate) return "Date TBA";
-    const date = new Date(airDate);
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const getRelativeAirDate = (airDate: string | null) => {
-    if (!airDate) return null;
-
-    const date = new Date(airDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const diffTime = date.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return null; // Already aired
-    if (diffDays === 0) return "Airs today";
-    if (diffDays === 1) return "Airs tomorrow";
-    if (diffDays <= 7) return `Airs in ${diffDays} days`;
-    if (diffDays <= 30) return `Airs in ${Math.ceil(diffDays / 7)} weeks`;
-    return `Airs ${formatAirDate(airDate)}`;
-  };
+  // Check if any season has progress
+  const hasAnyProgress = useMemo(
+    () => optimisticSeasons.some((s) => s.watchedCount > 0),
+    [optimisticSeasons],
+  );
 
   return (
     <div className="space-y-4">
+      {/* Error Toast */}
+      {error && (
+        <div className="p-4 bg-red-900/20 border border-red-800/50 rounded-lg text-red-400">
+          <p>{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="mt-2 text-sm underline hover:no-underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Reset All Button */}
-      {optimisticSeasons.some((s) => s.watchedCount > 0) && (
+      {hasAnyProgress && (
         <div className="flex justify-end">
           <button
             onClick={handleResetSeries}
             disabled={resettingSeries}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-red-900/20 text-red-400 hover:bg-red-900/30 border border-red-800/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <IconTrash size={16} />
+            {resettingSeries ? (
+              <IconLoader2 size={16} className="animate-spin" />
+            ) : (
+              <IconTrash size={16} />
+            )}
             {resettingSeries ? "Resetting..." : "Reset All Progress"}
           </button>
         </div>
@@ -702,7 +717,8 @@ export default function SeriesProgressTracker({
                   {!allWatched && hasEpisodes && (
                     <button
                       onClick={() => handleMarkAllToggle(season.id, true)}
-                      className="px-3 py-1.5 text-sm font-medium bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg transition-colors"
+                      disabled={isPending}
+                      className="px-3 py-1.5 text-sm font-medium bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Mark all aired episodes as watched"
                     >
                       Mark All Watched
@@ -713,7 +729,8 @@ export default function SeriesProgressTracker({
                   {allWatched && (
                     <button
                       onClick={() => handleMarkAllToggle(season.id, false)}
-                      className="px-3 py-1.5 text-sm font-medium bg-neutral-800 text-neutral-300 hover:bg-neutral-700 rounded-lg transition-colors"
+                      disabled={isPending}
+                      className="px-3 py-1.5 text-sm font-medium bg-neutral-800 text-neutral-300 hover:bg-neutral-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Mark All Unwatched
                     </button>
@@ -723,6 +740,7 @@ export default function SeriesProgressTracker({
                   <button
                     onClick={() => toggleSeason(season.season_number)}
                     className="p-2 text-neutral-400 hover:text-lime-400 transition-colors"
+                    aria-label={isOpen ? "Collapse season" : "Expand season"}
                   >
                     {isOpen ? (
                       <IconChevronUp size={20} />
@@ -743,43 +761,34 @@ export default function SeriesProgressTracker({
             </div>
 
             {/* Episodes List */}
-            <div className="border-t border-neutral-800">
-              <div
-                className={`px-4 space-y-2 ${
-                  isOpen ? "py-4 max-h-[999px]" : "max-h-0"
-                } transition-all duration-200 ease-in-out overflow-y-auto`}
-              >
-                {/* Show loading state while episodes are being fetched */}
-                {isOpen && isLoading && (
+            {isOpen && (
+              <div className="border-t border-neutral-800 px-4 py-4 space-y-2 max-h-[600px] overflow-y-auto">
+                {isLoading && (
                   <div className="flex items-center justify-center py-8 text-neutral-400">
                     <IconLoader2 size={24} className="animate-spin mr-2" />
                     <span>Loading episodes...</span>
                   </div>
                 )}
 
-                {/* Show episodes once loaded */}
-                {isOpen && !isLoading && hasEpisodes && (
+                {!isLoading && hasEpisodes && (
                   <>
                     {season.episodes.map((episode) => (
                       <EpisodeItem
                         key={episode.id}
                         episode={episode}
                         onToggle={handleEpisodeToggle}
-                        formatAirDate={formatAirDate}
-                        getRelativeAirDate={getRelativeAirDate}
                       />
                     ))}
                   </>
                 )}
 
-                {/* Show message if no episodes after loading */}
-                {isOpen && !isLoading && !hasEpisodes && (
+                {!isLoading && !hasEpisodes && (
                   <div className="py-8 text-center text-neutral-500">
                     No episodes found for this season.
                   </div>
                 )}
               </div>
-            </div>
+            )}
           </div>
         );
       })}
