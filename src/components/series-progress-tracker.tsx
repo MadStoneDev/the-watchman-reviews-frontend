@@ -290,7 +290,7 @@ export default function SeriesProgressTracker({
           };
         }),
     );
-  }, [initialWatchedIds, watchedIds]);
+  }, [initialWatchedIds]);
 
   // Memoize default season calculation
   const getDefaultOpenSeason = useCallback(() => {

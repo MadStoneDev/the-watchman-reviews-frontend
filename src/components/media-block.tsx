@@ -658,7 +658,7 @@ export default function MediaBlock({
             </button>
 
             {/* Add to Reel Deck Button */}
-            {isUser && data.mediaType === "series" && (
+            {isUser && data.mediaType !== "movie" && (
               <button
                 onClick={handleReelDeckToggle}
                 disabled={loading}
