@@ -159,14 +159,14 @@ export default async function MoviePage({ params }: MoviePageProps) {
                 </Link>
 
                 {/* Add to Reel Deck button */}
-                {currentUserId && (
-                  <AddToReelDeckButton
-                    mediaId={movieId}
-                    mediaType="movie"
-                    isInReelDeck={!!reelDeckItem}
-                    currentStatus={reelDeckItem?.status}
-                  />
-                )}
+                {/*{currentUserId && (*/}
+                {/*  <AddToReelDeckButton*/}
+                {/*    mediaId={movieId}*/}
+                {/*    mediaType="movie"*/}
+                {/*    isInReelDeck={!!reelDeckItem}*/}
+                {/*    currentStatus={reelDeckItem?.status}*/}
+                {/*  />*/}
+                {/*)}*/}
               </div>
             </div>
           </div>

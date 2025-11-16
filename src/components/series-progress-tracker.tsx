@@ -46,9 +46,8 @@ interface SeriesProgressTrackerProps {
   seasons: Season[];
   seriesId: string;
   userId: string;
-  username: string;
+  username?: string;
   initialWatchedIds: string[];
-  mediaType: "movie" | "series";
   collectionId?: string; // The reel deck collection ID
 }
 
@@ -192,9 +191,7 @@ export default function SeriesProgressTracker({
                                                 seasons: initialSeasons,
                                                 seriesId,
                                                 userId,
-                                                username,
                                                 initialWatchedIds,
-                                                mediaType,
                                                 collectionId,
                                               }: SeriesProgressTrackerProps) {
   const router = useRouter();
@@ -697,7 +694,7 @@ export default function SeriesProgressTracker({
 
     if (
         !confirm(
-            `Are you sure you want to remove this ${mediaType} from your Reel Deck? All progress will be lost.`,
+            `Are you sure you want to remove this TV Show from your Reel Deck? All progress will be lost.`,
         )
     ) {
       return;
@@ -712,7 +709,7 @@ export default function SeriesProgressTracker({
         body: JSON.stringify({
           collectionId,
           mediaId: seriesId,
-          mediaType,
+          mediaType: "series",
           userId,
         }),
       });
@@ -735,7 +732,7 @@ export default function SeriesProgressTracker({
     } finally {
       setRemovingFromDeck(false);
     }
-  }, [collectionId, seriesId, mediaType, userId, router]);
+  }, [collectionId, seriesId, userId, router]);
 
   // Check if any season has progress
   const hasAnyProgress = useMemo(
