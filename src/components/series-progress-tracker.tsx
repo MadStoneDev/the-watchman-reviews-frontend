@@ -193,6 +193,7 @@ export default function SeriesProgressTracker({
   seasons: initialSeasons,
   seriesId,
   userId,
+  username,
   initialWatchedIds,
 }: SeriesProgressTrackerProps) {
   const router = useRouter();
@@ -740,7 +741,7 @@ export default function SeriesProgressTracker({
         throw new Error(data.error || "Failed to remove from Reel Deck");
       }
 
-      router.push("/reel-deck");
+      router.push(`/${username}/reel-deck`);
       router.refresh();
     } catch (error) {
       console.error("Error removing from deck:", error);
