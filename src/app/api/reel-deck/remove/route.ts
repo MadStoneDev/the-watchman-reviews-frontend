@@ -1,22 +1,22 @@
 // /api/reel-deck/remove/route.ts
-import {createClient} from "@/src/utils/supabase/server";
+import { createClient } from "@/src/utils/supabase/server";
 
 export async function POST(req: Request) {
-    const { collectionId, mediaId, mediaType, userId } = await req.json();
-    
-    const supabase = await createClient()
+  const { mediaId, mediaType, userId } = await req.json();
 
-    // Delete from medias_collections table
-    const { error } = await supabase
-        .from('medias_collections')
-        .delete()
-        .eq('collection_id', collectionId)
-        .eq('media_id', mediaId)
-        .eq('media_type', mediaType);
+  const supabase = await createClient();
 
-    if (error) {
-        return Response.json({ error: error.message }, { status: 500 });
-    }
+  // Delete from reel_deck table
+  const { error } = await supabase
+    .from("reel_deck")
+    .delete()
+    .eq("user_id", userId)
+    .eq("media_id", mediaId)
+    .eq("media_type", mediaType);
 
-    return Response.json({ success: true });
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  return Response.json({ success: true });
 }
