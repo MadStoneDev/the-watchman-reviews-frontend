@@ -27,10 +27,8 @@ export async function generateMetadata(params: Promise<{ seriesId: string }>) {
 }
 
 export default async function SeriesLayout({
-  params,
   children,
 }: {
-  params: Promise<{ seriesId: string }>;
   children: React.ReactNode;
 }) {
   return <>{children}</>;
