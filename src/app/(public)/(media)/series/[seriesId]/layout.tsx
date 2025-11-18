@@ -1,7 +1,11 @@
 ﻿import React from "react";
 import { createClient } from "@/src/utils/supabase/server";
 
-export async function generateMetadata(params: Promise<{ seriesId: string }>) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ seriesId: string }>;
+}) {
   const { seriesId } = await params;
 
   // Supabase

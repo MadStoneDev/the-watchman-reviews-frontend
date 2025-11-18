@@ -1,14 +1,18 @@
 ﻿import React from "react";
 import { createClient } from "@/src/utils/supabase/server";
 
-export async function generateMetadata(params: Promise<{ movieId: string }>) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ movieId: string }>;
+}) {
   const { movieId } = await params;
 
   // Supabase
   const supabase = await createClient();
 
   const { data: movie, error } = await supabase
-    .from("mobies")
+    .from("movies")
     .select("title")
     .eq("id", movieId)
     .single();
