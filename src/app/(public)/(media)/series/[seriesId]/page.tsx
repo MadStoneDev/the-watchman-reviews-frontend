@@ -11,7 +11,6 @@ import {
   IconDeviceTv,
   IconExternalLink,
   IconCalendar,
-  IconClock,
 } from "@tabler/icons-react";
 
 interface SeriesPageProps {
