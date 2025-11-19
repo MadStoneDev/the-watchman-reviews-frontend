@@ -67,15 +67,17 @@ export async function handleAuth(formData: FormData): Promise<AuthResponse> {
   }
 
   try {
-    // First check: reCAPTCHA verification
-    const isHuman = await verifyRecaptcha(recaptchaToken);
+    if (process.env.NODE_ENV === "production") {
+      // First check: reCAPTCHA verification
+      const isHuman = await verifyRecaptcha(recaptchaToken);
 
-    if (!isHuman) {
-      return {
-        error:
-          "🤖 Beep boop! Our robot detector thinks you might be a bot. Please try again.",
-        success: false,
-      };
+      if (!isHuman) {
+        return {
+          error:
+            "🤖 Beep boop! Our robot detector thinks you might be a bot. Please try again.",
+          success: false,
+        };
+      }
     }
 
     // Second check: Rate limiting by email
@@ -151,7 +153,7 @@ export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
     };
   }
 
-  if (!recaptchaToken) {
+  if (process.env.NODE_ENV === "production" && !recaptchaToken) {
     return {
       error: "Security check failed. Please refresh the page and try again.",
       success: false,
@@ -159,14 +161,16 @@ export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
   }
 
   try {
-    // Verify reCAPTCHA for OTP verification too
-    const isHuman = await verifyRecaptcha(recaptchaToken);
+    if (process.env.NODE_ENV === "production") {
+      // Verify reCAPTCHA for OTP verification too
+      const isHuman = await verifyRecaptcha(recaptchaToken);
 
-    if (!isHuman) {
-      return {
-        error: "🤖 Security check failed. Please try again.",
-        success: false,
-      };
+      if (!isHuman) {
+        return {
+          error: "🤖 Security check failed. Please try again.",
+          success: false,
+        };
+      }
     }
 
     const supabase = await createClient();

@@ -165,21 +165,25 @@ export default function CreateOrLoginForm() {
     setServerError(null);
 
     try {
-      // Get reCAPTCHA token for OTP verification
-      const recaptchaToken = await getRecaptchaToken("verify_otp");
+      const formDataObj = new FormData();
 
-      if (!recaptchaToken) {
-        setServerError(
-          "Security check failed. Please refresh the page and try again.",
-        );
-        setIsSubmitting(false);
-        return;
+      if (process.env.NODE_ENV === "production") {
+        // Get reCAPTCHA token for OTP verification
+        const recaptchaToken = await getRecaptchaToken("verify_otp");
+
+        if (!recaptchaToken) {
+          setServerError(
+            "Security check failed. Please refresh the page and try again.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        formDataObj.append("recaptcha-token", recaptchaToken);
       }
 
-      const formDataObj = new FormData();
       formDataObj.append("email", formData.email);
       formDataObj.append("otp", otp);
-      formDataObj.append("recaptcha-token", recaptchaToken);
 
       const response = await verifyOtp(formDataObj);
 

@@ -23,12 +23,42 @@ export default function AuthLayout({
       position: "object-center",
     },
     {
+      title: "Avatar",
+      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      position: "object-center",
+    },
+    {
+      title: "Avangers Endgame",
+      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      position: "object-center",
+    },
+    {
+      title: "Titanic",
+      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      position: "object-center",
+    },
+    {
+      title: "Star Wars",
+      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      position: "object-center",
+    },
+    {
+      title: "The Lion King",
+      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      position: "object-center",
+    },
+    {
+      title: "Jurassic World",
+      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      position: "object-center",
+    },
+    {
       title: "Spider-Man: Into the Spider-Verse",
       url: "qGQf2OHIkoh89K8XeKQzhxczf96.jpg",
       position: "object-center",
     },
     {
-      title: "Am I Racist?",
+      title: "Friends",
       url: "7PImlfBNIq0wUQ4v9Xy4OqQShnW.jpg",
       position: "object-center",
     },
@@ -45,6 +75,16 @@ export default function AuthLayout({
     {
       title: "Special Ops: Lioness",
       url: "sa9vB0xb3OMU6iSMkig8RBbdESq.jpg",
+      position: "object-center",
+    },
+    {
+      title: "The Penguin",
+      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      position: "object-center",
+    },
+    {
+      title: "The Bear",
+      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
       position: "object-center",
     },
     {

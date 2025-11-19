@@ -219,7 +219,6 @@ export default function SeriesProgressTracker({
     new Set(),
   );
   const [resettingSeries, setResettingSeries] = useState(false);
-  const [removingFromDeck, setRemovingFromDeck] = useState(false);
   const [hasOpenedDefaultSeason, setHasOpenedDefaultSeason] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -714,47 +713,6 @@ export default function SeriesProgressTracker({
     }
   }, [seriesId, userId, router]);
 
-  const handleRemoveFromDeck = useCallback(async () => {
-    if (
-      !confirm(
-        `Are you sure you want to remove this TV Show from your Reel Deck? All progress will be lost.`,
-      )
-    ) {
-      return;
-    }
-
-    setRemovingFromDeck(true);
-
-    try {
-      const response = await fetch("/api/reel-deck/remove", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mediaId: seriesId,
-          mediaType: "series",
-          userId,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to remove from Reel Deck");
-      }
-
-      router.push(`/${username}/reel-deck`);
-      router.refresh();
-    } catch (error) {
-      console.error("Error removing from deck:", error);
-      setError(
-        `Failed to remove from Reel Deck: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      );
-    } finally {
-      setRemovingFromDeck(false);
-    }
-  }, [seriesId, userId, router]);
-
   const hasAnyProgress = useMemo(
     () => optimisticSeasons.some((s) => s.watchedCount > 0),
     [optimisticSeasons],
@@ -797,19 +755,6 @@ export default function SeriesProgressTracker({
 
       {/* Action Buttons */}
       <div className="flex justify-between items-center gap-2">
-        <button
-          onClick={handleRemoveFromDeck}
-          disabled={removingFromDeck}
-          className="flex items-center gap-2 px-4 py-2 text-sm bg-neutral-800 text-neutral-300 hover:bg-neutral-700 border border-neutral-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {removingFromDeck ? (
-            <IconLoader2 size={16} className="animate-spin" />
-          ) : (
-            <IconX size={16} />
-          )}
-          {removingFromDeck ? "Removing..." : "Remove from Reel Deck"}
-        </button>
-
         {hasAnyProgress && (
           <button
             onClick={handleResetSeries}
