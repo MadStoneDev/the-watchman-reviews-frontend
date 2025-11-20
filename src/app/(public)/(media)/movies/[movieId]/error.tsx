@@ -30,7 +30,7 @@ export default function MoviesError({
           We encountered an error while loading this movie.
         </p>
 
-        {process.env.NODE_ENV === "development" && (
+        {process.env.NODE_ENV && process.env.NODE_ENV === "development" && (
           <p className="text-sm text-red-400 mb-8 font-mono">{error.message}</p>
         )}
 

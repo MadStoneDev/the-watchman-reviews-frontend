@@ -1,6 +1,6 @@
 ﻿// Enable performance logging with NEXT_PUBLIC_PERF_LOG=true in .env
 const isPerfEnabled =
-  process.env.NODE_ENV === "development" ||
+  (process.env.NODE_ENV && process.env.NODE_ENV === "development") ||
   process.env.NEXT_PUBLIC_PERF_LOG === "true";
 
 export function perfLog(message: string, duration?: number) {

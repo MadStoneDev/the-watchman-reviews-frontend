@@ -67,7 +67,7 @@ export async function handleAuth(formData: FormData): Promise<AuthResponse> {
   }
 
   try {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.RECAPTCHA_SECRET_KEY) {
       // First check: reCAPTCHA verification
       const isHuman = await verifyRecaptcha(recaptchaToken);
 
@@ -153,7 +153,7 @@ export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
     };
   }
 
-  if (process.env.NODE_ENV === "production" && !recaptchaToken) {
+  if (process.env.RECAPTCHA_SECRET_KEY && !recaptchaToken) {
     return {
       error: "Security check failed. Please refresh the page and try again.",
       success: false,
@@ -161,7 +161,7 @@ export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
   }
 
   try {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.RECAPTCHA_SECRET_KEY) {
       // Verify reCAPTCHA for OTP verification too
       const isHuman = await verifyRecaptcha(recaptchaToken);
 

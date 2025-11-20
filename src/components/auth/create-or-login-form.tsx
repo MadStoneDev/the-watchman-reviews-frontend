@@ -167,7 +167,7 @@ export default function CreateOrLoginForm() {
     try {
       const formDataObj = new FormData();
 
-      if (process.env.NODE_ENV === "production") {
+      if (process.env.RECAPTCHA_SECRET_KEY) {
         // Get reCAPTCHA token for OTP verification
         const recaptchaToken = await getRecaptchaToken("verify_otp");
 
