@@ -63,8 +63,8 @@ export function BrowseMediaRow({
             >
               <Link href={getMediaUrl(media)} className="group">
                 <div
-                  className={`relative grid place-items-center w-full bg-neutral-800 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out group-hover:ring-2 group-hover:ring-lime-400`}
-                  style={{ aspectRatio: "1/1.25" }}
+                  className={`relative grid place-items-center w-full bg-neutral-800 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out border-2 border-transparent group-hover:border-lime-400`}
+                  style={{ aspectRatio: "1/1.5" }}
                 >
                   {media.poster_path ? (
                     <Image

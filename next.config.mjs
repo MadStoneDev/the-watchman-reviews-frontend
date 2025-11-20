@@ -9,6 +9,12 @@ const nextConfig = {
         port: "",
         pathname: "/t/p/**",
       },
+      {
+        protocol: 'https',
+        hostname: "supabase.justreel.app",
+        port: "",
+        pathname: "/**"
+      }
     ],
   },
 

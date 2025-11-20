@@ -1,7 +1,9 @@
 ﻿"use client";
 
+import Image from "next/image";
 import React, { useState } from "react";
 import { createClient } from "@/src/utils/supabase/client";
+
 import {
   IconMail,
   IconEye,
@@ -14,7 +16,6 @@ import {
   IconUpload,
   IconUser,
 } from "@tabler/icons-react";
-import Image from "next/image";
 import DeleteAccountModal from "./delete-account-modal";
 
 interface SettingsContentProps {
@@ -182,6 +183,7 @@ export default function SettingsContent({
       const { data } = supabase.storage
         .from("avatars")
         .getPublicUrl(avatarPath);
+      console.log("Generated URL:", data.publicUrl); // Add this
       return data.publicUrl;
     }
     return null;
@@ -207,7 +209,7 @@ export default function SettingsContent({
                 alt="Avatar"
                 width={80}
                 height={80}
-                className="rounded-full object-cover"
+                className="rounded-full aspect-square object-cover"
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-lime-400 flex items-center justify-center text-neutral-900 text-3xl font-bold">
