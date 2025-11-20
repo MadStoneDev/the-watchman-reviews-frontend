@@ -6,7 +6,9 @@ import { createClient } from "@/src/utils/supabase/server";
 import SeriesSeasonTabs from "@/src/components/series-season-tabs";
 import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
 import GenreBadges from "@/src/components/genre-badges";
+import CommentSection from "@/src/components/comment-section";
 import { syncSeriesGenres, getSeriesGenres } from "@/src/utils/genre-utils";
+import { getComments } from "@/src/app/actions/comments";
 import {
   IconDeviceTv,
   IconExternalLink,
@@ -53,7 +55,6 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
   }
 
   // Sync genres from TMDB if not already synced
-  // This checks the junction table and fetches from TMDB if needed
   await syncSeriesGenres(seriesId, series.tmdb_id);
 
   // Get genres with icons from junction table
@@ -65,6 +66,10 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
     .select("*")
     .eq("series_id", seriesId)
     .order("season_number", { ascending: true });
+
+  // Fetch comments
+  const commentsResult = await getComments("series", seriesId);
+  const comments = commentsResult.success ? commentsResult.comments || [] : [];
 
   // Format air date range
   const formatAirDateRange = () => {
@@ -189,7 +194,6 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                   <IconExternalLink size={16} />
                 </Link>
 
-                {/* Add to Reel Deck button */}
                 {currentUserId && (
                   <AddToReelDeckButton
                     mediaId={seriesId}
@@ -209,7 +213,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
         <div className="max-w-6xl">
           {/* Overview */}
           {series.overview && (
-            <div className="mb-8">
+            <div className="mb-12">
               <h2 className="text-2xl font-bold mb-4">Overview</h2>
               <p className="text-neutral-300 leading-relaxed text-lg">
                 {series.overview}
@@ -218,7 +222,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           )}
 
           {/* Seasons Tabs */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">Seasons</h2>
             <SeriesSeasonTabs
               seriesId={seriesId}
@@ -227,14 +231,14 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
             />
           </div>
 
-          {/* Comments Section - Will implement in point 6 */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Comments</h2>
-            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6">
-              <p className="text-neutral-500 text-center">
-                Comments coming soon...
-              </p>
-            </div>
+          {/* Comments Section */}
+          <div className="mb-12">
+            <CommentSection
+              mediaType="series"
+              mediaId={seriesId}
+              initialComments={comments}
+              currentUserId={currentUserId}
+            />
           </div>
         </div>
       </section>

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/src/utils/supabase/server";
+import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
 import GenreBadges from "@/src/components/genre-badges";
 import CommentSection from "@/src/components/comment-section";
 import { syncMovieGenres, getMovieGenres } from "@/src/utils/genre-utils";
@@ -13,7 +14,6 @@ import {
   IconCalendar,
   IconClock,
 } from "@tabler/icons-react";
-import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
 
 interface MoviePageProps {
   params: Promise<{ movieId: string }>;

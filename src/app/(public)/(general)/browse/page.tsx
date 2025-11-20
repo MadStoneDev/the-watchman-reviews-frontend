@@ -23,11 +23,38 @@ export default async function BrowsePage() {
   const supabase = await createClient();
 
   // Fetch newest content (mixed movies and series)
-  const { data: newestRaw } = await supabase
+  const { data: newestMovies } = await supabase
     .from("movies")
     .select("id, title, poster_path, release_year, vote_average, backdrop_path")
-    .order("created_at", { ascending: false })
-    .limit(20);
+    .not("release_year", "is", "null")
+    .order("release_year", { ascending: false })
+    .limit(10);
+
+  const { data: newestSeries } = await supabase
+    .from("series")
+    .select("id, title, poster_path, release_year, vote_average, backdrop_path")
+    .order("release_year", { ascending: false })
+    .limit(10);
+
+  const newestRaw: MediaItem[] = [
+    ...(newestMovies || []),
+    ...(newestSeries || []),
+  ];
+
+  newestRaw.sort((a, b) => {
+    const yearA = parseInt(a.release_year!) || 0;
+    const yearB = parseInt(b.release_year!) || 0;
+
+    // 1. Primary Sort: Release Year (Descending - Newest First)
+    const yearDiff = yearB - yearA;
+
+    if (yearDiff !== 0) {
+      return yearDiff;
+    }
+
+    // 2. Secondary Sort (Tie-Breaker): Title (Ascending - A-Z)
+    return a.title.localeCompare(b.title);
+  });
 
   const newest: MediaItem[] = (newestRaw || []).map((item: any) => ({
     id: item.id,
@@ -128,12 +155,12 @@ export default async function BrowsePage() {
         linkType="series"
       />
 
-      <BrowseMediaRow
-        title="Great for Kids"
-        data={kidsContent}
-        type="kids"
-        linkType="movie"
-      />
+      {/*<BrowseMediaRow*/}
+      {/*  title="Great for Kids"*/}
+      {/*  data={kidsContent}*/}
+      {/*  type="kids"*/}
+      {/*  linkType="movie"*/}
+      {/*/>*/}
     </>
   );
 }

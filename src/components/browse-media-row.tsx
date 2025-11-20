@@ -56,14 +56,14 @@ export function BrowseMediaRow({
           filteredData.map((media) => (
             <article
               key={media.id}
-              className={`pb-5 flex flex-col justify-between gap-4 min-w-[180px] max-w-[180px] rounded-3xl transition-all duration-300 ease-in-out`}
+              className={`pb-5 flex flex-col justify-between min-w-[180px] max-w-[180px] transition-all duration-300 ease-in-out`}
               style={{
                 scrollSnapAlign: "center",
               }}
             >
               <Link href={getMediaUrl(media)} className="group">
                 <div
-                  className={`relative grid place-items-center w-full bg-neutral-800 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out border-2 border-transparent group-hover:border-lime-400`}
+                  className={`relative grid place-items-center w-full bg-neutral-800 rounded-xl overflow-hidden transition-all duration-300 ease-in-out border-2 border-transparent group-hover:border-lime-400`}
                   style={{ aspectRatio: "1/1.5" }}
                 >
                   {media.poster_path ? (
@@ -83,7 +83,7 @@ export function BrowseMediaRow({
                   )}
                 </div>
 
-                <section className={`flex-grow flex flex-col gap-4 mt-4`}>
+                <section className={`flex-grow flex flex-col gap-1 mt-4`}>
                   <div className={`flex-grow w-full`}>
                     <h3
                       className={`text-neutral-200 whitespace-nowrap truncate text-sm font-semibold group-hover:text-lime-400 transition-colors`}

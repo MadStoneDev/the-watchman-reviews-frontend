@@ -23,6 +23,7 @@ interface SpecialMediaBlockProps {
   timerProgress: number;
   timerRunning: boolean;
   setActiveBlock: React.Dispatch<React.SetStateAction<number>>;
+  setTimerProgress: React.Dispatch<React.SetStateAction<number>>;
   setTimerRunning: React.Dispatch<React.SetStateAction<boolean>>;
   media: FeaturedMedia;
 }
@@ -33,6 +34,7 @@ export default function SpecialMediaBlock({
   timerProgress,
   timerRunning,
   setActiveBlock,
+  setTimerProgress,
   setTimerRunning,
   media,
 }: SpecialMediaBlockProps) {
@@ -47,6 +49,7 @@ export default function SpecialMediaBlock({
   // Functions
   const handleMakeActive = () => {
     setActiveBlock(myIndex);
+    setTimerProgress(0);
   };
 
   const handleMouseEnter = () => {

@@ -214,6 +214,7 @@ export default function SpecialBlockWrapperClient({
               setActiveBlock={setActiveBlock}
               timerProgress={timerProgress}
               timerRunning={timerRunning}
+              setTimerProgress={setTimerProgress}
               setTimerRunning={setTimerRunning}
               media={media}
             />

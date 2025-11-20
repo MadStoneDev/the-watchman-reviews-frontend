@@ -18,27 +18,41 @@ export default async function SpecialBlockWrapper() {
   const supabase = await createClient();
 
   // Fetch featured movies (high rated, recent)
+  // const { data: featuredMovies } = await supabase
+  //   .from("movies")
+  //   .select(
+  //     "id, title, overview, poster_path, backdrop_path, release_year, vote_average, tmdb_id",
+  //   )
+  //   .not("backdrop_path", "is", null) // Must have backdrop
+  //   .not("vote_average", "is", null)
+  //   .gte("vote_average", 7.5) // High rated
+  //   .order("vote_average", { ascending: false })
+  //   .limit(10);
   const { data: featuredMovies } = await supabase
     .from("movies")
     .select(
       "id, title, overview, poster_path, backdrop_path, release_year, vote_average, tmdb_id",
     )
     .not("backdrop_path", "is", null) // Must have backdrop
-    .not("vote_average", "is", null)
-    .gte("vote_average", 7.5) // High rated
-    .order("vote_average", { ascending: false })
     .limit(10);
 
   // Fetch featured series (high rated, recent)
+  // const { data: featuredSeries } = await supabase
+  //   .from("series")
+  //   .select(
+  //     "id, title, overview, poster_path, backdrop_path, release_year, vote_average, tmdb_id",
+  //   )
+  //   .not("backdrop_path", "is", null)
+  //   .not("vote_average", "is", null)
+  //   .gte("vote_average", 7.5)
+  //   .order("vote_average", { ascending: false })
+  //   .limit(10);
   const { data: featuredSeries } = await supabase
     .from("series")
     .select(
       "id, title, overview, poster_path, backdrop_path, release_year, vote_average, tmdb_id",
     )
     .not("backdrop_path", "is", null)
-    .not("vote_average", "is", null)
-    .gte("vote_average", 7.5)
-    .order("vote_average", { ascending: false })
     .limit(10);
 
   // Combine and shuffle
