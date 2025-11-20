@@ -91,6 +91,8 @@ export default function CommentItem({
     }
   };
 
+  console.log(comment.user.avatar_path);
+
   return (
     <div className={`${depth > 0 ? "ml-6 md:ml-12" : ""}`}>
       <div className="flex gap-3 group">
@@ -99,7 +101,7 @@ export default function CommentItem({
           <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-neutral-800 border border-neutral-700 overflow-hidden">
             {comment.user.avatar_path ? (
               <Image
-                src={comment.user.avatar_path}
+                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${comment.user.avatar_path}`}
                 alt={comment.user.username}
                 width={40}
                 height={40}

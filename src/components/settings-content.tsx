@@ -183,7 +183,7 @@ export default function SettingsContent({
       const { data } = supabase.storage
         .from("avatars")
         .getPublicUrl(avatarPath);
-      console.log("Generated URL:", data.publicUrl); // Add this
+
       return data.publicUrl;
     }
     return null;
