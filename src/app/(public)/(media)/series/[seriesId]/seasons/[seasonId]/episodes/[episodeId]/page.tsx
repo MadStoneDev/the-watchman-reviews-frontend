@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/src/utils/supabase/server";
+import CommentSection from "@/src/components/comment-section";
+import { getComments } from "@/src/app/actions/comments";
 import {
-  IconDeviceTv,
   IconArrowLeft,
   IconCalendar,
   IconClock,
@@ -47,6 +48,16 @@ export default async function EpisodePage({ params }: EpisodePageProps) {
     .eq("id", seriesId)
     .single();
 
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const currentUserId = user?.id || null;
+
+  // Fetch comments for this episode
+  const commentsResult = await getComments("episode", episodeId);
+  const comments = commentsResult.success ? commentsResult.comments || [] : [];
+
   return (
     <main className="min-h-screen px-5 md:px-10 xl:px-24 py-10">
       {/* Breadcrumb */}
@@ -81,7 +92,7 @@ export default async function EpisodePage({ params }: EpisodePageProps) {
       </Link>
 
       {/* Episode Header */}
-      <div className="mb-8">
+      <div className="mb-12">
         {/* Episode Still Image */}
         {episode.poster_path && (
           <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-xl mb-6 border-2 border-neutral-800">
@@ -138,7 +149,7 @@ export default async function EpisodePage({ params }: EpisodePageProps) {
       <section className="max-w-6xl">
         {/* Overview */}
         {episode.overview && (
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">Overview</h2>
             <p className="text-neutral-300 leading-relaxed text-lg">
               {episode.overview}
@@ -146,14 +157,14 @@ export default async function EpisodePage({ params }: EpisodePageProps) {
           </div>
         )}
 
-        {/* Comments Section - Will implement in point 6 */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Comments</h2>
-          <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6">
-            <p className="text-neutral-500 text-center">
-              Comments coming soon...
-            </p>
-          </div>
+        {/* Comments Section - The main reason for this page! */}
+        <div className="mb-12">
+          <CommentSection
+            mediaType="episode"
+            mediaId={episodeId}
+            initialComments={comments}
+            currentUserId={currentUserId}
+          />
         </div>
       </section>
     </main>

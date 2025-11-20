@@ -1,18 +1,94 @@
 ﻿import React from "react";
 import type { Metadata } from "next";
+import { createClient } from "@/src/utils/supabase/server";
 import SpecialBlockWrapper from "@/src/components/special-block-wrapper";
-import { Popcorn } from "lucide-react";
-import Image from "next/image";
-import { IconStarFilled } from "@tabler/icons-react";
 import { BrowseMediaRow } from "@/src/components/browse-media-row";
 
 export const metadata: Metadata = {
   title: "Browse | JustReel",
   description:
-    "Guiding families and groups to make informed viewing choices. Get detailed content analysis of movies and TV shows, including themes, language, and values.",
+    "Discover movies and TV shows. Browse by category, genre, and popularity.",
 };
 
-export default function BrowsePage() {
+interface MediaItem {
+  id: string;
+  title: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_year: string | null;
+  vote_average: number | null;
+}
+
+export default async function BrowsePage() {
+  const supabase = await createClient();
+
+  // Fetch newest content (mixed movies and series)
+  const { data: newestRaw } = await supabase
+    .from("movies")
+    .select("id, title, poster_path, release_year, vote_average, backdrop_path")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const newest: MediaItem[] = (newestRaw || []).map((item: any) => ({
+    id: item.id,
+    title: item.title,
+    poster_path: item.poster_path,
+    release_year: item.release_year,
+    vote_average: item.vote_average,
+    backdrop_path: item.backdrop_path,
+  }));
+
+  // Fetch popular movies
+  const { data: popularMoviesRaw } = await supabase
+    .from("movies")
+    .select("id, title, poster_path, release_year, vote_average, backdrop_path")
+    .order("popularity", { ascending: false })
+    .limit(20);
+
+  const popularMovies: MediaItem[] = (popularMoviesRaw || []).map(
+    (item: any) => ({
+      id: item.id,
+      title: item.title,
+      poster_path: item.poster_path,
+      release_year: item.release_year,
+      vote_average: item.vote_average,
+      backdrop_path: item.backdrop_path,
+    }),
+  );
+
+  // Fetch popular series
+  const { data: popularSeriesRaw } = await supabase
+    .from("series")
+    .select("id, title, poster_path, release_year, vote_average, backdrop_path")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const popularSeries: MediaItem[] = (popularSeriesRaw || []).map(
+    (item: any) => ({
+      id: item.id,
+      title: item.title,
+      poster_path: item.poster_path,
+      release_year: item.release_year,
+      vote_average: item.vote_average,
+      backdrop_path: item.backdrop_path,
+    }),
+  );
+
+  // Fetch kids content
+  const { data: kidsContentRaw } = await supabase
+    .from("movies")
+    .select("id, title, poster_path, release_year, vote_average, backdrop_path")
+    .limit(20);
+
+  const kidsContent: MediaItem[] = (kidsContentRaw || []).map((item: any) => ({
+    id: item.id,
+    title: item.title,
+    poster_path: item.poster_path,
+    release_year: item.release_year,
+    vote_average: item.vote_average,
+    backdrop_path: item.backdrop_path,
+  }));
+
   return (
     <>
       <section
@@ -23,16 +99,41 @@ export default function BrowsePage() {
         </h1>
       </section>
 
+      {/* Featured/Special Blocks Carousel */}
       <div
         className={`mt-8 flex flex-nowrap items-center justify-between gap-2 transition-all duration-300 ease-in-out`}
       >
         <SpecialBlockWrapper />
       </div>
 
-      <BrowseMediaRow title={"Newest Reviews"} type={"newest"} />
-      <BrowseMediaRow title={"Movie Reviews"} type={"movies"} />
-      <BrowseMediaRow title={"TV Show Reviews"} type={"series"} />
-      <BrowseMediaRow title={"Kids Section"} type={"kids"} />
+      {/* Content Rows with Real Data */}
+      <BrowseMediaRow
+        title="Newest Additions"
+        data={newest}
+        type="newest"
+        linkType="movie"
+      />
+
+      <BrowseMediaRow
+        title="Popular Movies"
+        data={popularMovies}
+        type="movies"
+        linkType="movie"
+      />
+
+      <BrowseMediaRow
+        title="Popular TV Shows"
+        data={popularSeries}
+        type="series"
+        linkType="series"
+      />
+
+      <BrowseMediaRow
+        title="Great for Kids"
+        data={kidsContent}
+        type="kids"
+        linkType="movie"
+      />
     </>
   );
 }

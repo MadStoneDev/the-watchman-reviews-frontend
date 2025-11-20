@@ -3,15 +3,17 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/src/utils/supabase/server";
-import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
 import GenreBadges from "@/src/components/genre-badges";
+import CommentSection from "@/src/components/comment-section";
 import { syncMovieGenres, getMovieGenres } from "@/src/utils/genre-utils";
+import { getComments } from "@/src/app/actions/comments";
 import {
   IconMovie,
   IconExternalLink,
   IconCalendar,
   IconClock,
 } from "@tabler/icons-react";
+import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
 
 interface MoviePageProps {
   params: Promise<{ movieId: string }>;
@@ -53,11 +55,14 @@ export default async function MoviePage({ params }: MoviePageProps) {
   }
 
   // Sync genres from TMDB if not already synced
-  // This checks the junction table and fetches from TMDB if needed
   await syncMovieGenres(movieId, movie.tmdb_id);
 
   // Get genres with icons from junction table
   const genres = await getMovieGenres(movieId);
+
+  // Fetch comments
+  const commentsResult = await getComments("movie", movieId);
+  const comments = commentsResult.success ? commentsResult.comments || [] : [];
 
   // Format runtime
   const formatRuntime = (minutes: number | null) => {
@@ -158,15 +163,14 @@ export default async function MoviePage({ params }: MoviePageProps) {
                   <IconExternalLink size={16} />
                 </Link>
 
-                {/* Add to Reel Deck button */}
-                {/*{currentUserId && (*/}
-                {/*  <AddToReelDeckButton*/}
-                {/*    mediaId={movieId}*/}
-                {/*    mediaType="movie"*/}
-                {/*    isInReelDeck={!!reelDeckItem}*/}
-                {/*    currentStatus={reelDeckItem?.status}*/}
-                {/*  />*/}
-                {/*)}*/}
+                {currentUserId && (
+                  <AddToReelDeckButton
+                    mediaId={movieId}
+                    mediaType="movie"
+                    isInReelDeck={!!reelDeckItem}
+                    currentStatus={reelDeckItem?.status}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -178,7 +182,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
         <div className="max-w-6xl">
           {/* Overview */}
           {movie.overview && (
-            <div className="mb-8">
+            <div className="mb-12">
               <h2 className="text-2xl font-bold mb-4">Overview</h2>
               <p className="text-neutral-300 leading-relaxed text-lg">
                 {movie.overview}
@@ -186,14 +190,14 @@ export default async function MoviePage({ params }: MoviePageProps) {
             </div>
           )}
 
-          {/* Comments Section - Will implement in point 6 */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Comments</h2>
-            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6">
-              <p className="text-neutral-500 text-center">
-                Comments coming soon...
-              </p>
-            </div>
+          {/* Comments Section */}
+          <div className="mb-12">
+            <CommentSection
+              mediaType="movie"
+              mediaId={movieId}
+              initialComments={comments}
+              currentUserId={currentUserId}
+            />
           </div>
         </div>
       </section>

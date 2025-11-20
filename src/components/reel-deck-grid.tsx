@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import React, { useMemo } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { MediaImage } from "@/src/components/ui/media-image";
 import {
   IconChairDirector,
   IconDeviceTv,
@@ -79,7 +79,6 @@ const MEDIA_TYPES = {
 } as const;
 
 // OPTIMIZATION 2: Extract utility functions outside component
-// These are pure functions that don't need to be recreated on every render
 function formatDate(dateString: string | null): string | null {
   if (!dateString) return null;
 
@@ -149,26 +148,14 @@ const ReelDeckCard = React.memo(
         {/* Poster */}
         <Link href={detailUrl} className="block">
           <div className="relative aspect-[2/3] bg-neutral-800 overflow-hidden">
-            {item.poster_path ? (
-              <Image
-                src={`https://image.tmdb.org/t/p/w500${item.poster_path}`}
-                alt={item.title}
-                fill
-                // OPTIMIZATION 4: Add sizes prop for better image optimization
-                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 14vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                // OPTIMIZATION 5: Use loading="lazy" for off-screen images
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                {isMovie ? (
-                  <IconChairDirector size={48} className="text-neutral-600" />
-                ) : (
-                  <IconDeviceTv size={48} className="text-neutral-600" />
-                )}
-              </div>
-            )}
+            {/* OPTIMIZED: Using MediaImage component */}
+            <MediaImage
+              src={item.poster_path}
+              alt={item.title}
+              mediaType={isMovie ? "movie" : "tv"}
+              size="md"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+            />
 
             {/* Status Badge */}
             <div
@@ -261,8 +248,6 @@ ReelDeckCard.displayName = "ReelDeckCard";
 
 // OPTIMIZATION 7: Memoize the entire grid component
 function ReelDeckGrid({ items, username, userId }: ReelDeckGridProps) {
-  // No need to useMemo the items since they come from props
-  // and will already be stable references
   return (
     <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
       {items.map((item) => (

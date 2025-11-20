@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/src/utils/supabase/server";
 import SeasonEpisodeTabs from "@/src/components/season-episode-tabs";
+import CommentSection from "@/src/components/comment-section";
+import { getComments } from "@/src/app/actions/comments";
 import { IconDeviceTv, IconArrowLeft, IconCalendar } from "@tabler/icons-react";
 
 interface SeasonPageProps {
@@ -39,6 +41,16 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
     .eq("season_id", seasonId)
     .order("episode_number", { ascending: true });
 
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const currentUserId = user?.id || null;
+
+  // Fetch comments
+  const commentsResult = await getComments("season", seasonId);
+  const comments = commentsResult.success ? commentsResult.comments || [] : [];
+
   return (
     <main className="min-h-screen px-5 md:px-10 xl:px-24 py-10">
       {/* Breadcrumb */}
@@ -53,7 +65,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       </div>
 
       {/* Season Header */}
-      <div className="flex flex-col md:flex-row gap-6 mb-8">
+      <div className="flex flex-col md:flex-row gap-6 mb-12">
         {/* Season Poster */}
         <div className="relative w-32 md:w-48 aspect-[2/3] rounded-lg overflow-hidden shadow-xl flex-shrink-0 border-2 border-neutral-800">
           {season.poster_path ? (
@@ -89,25 +101,27 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
         </div>
       </div>
 
-      {/* Episodes Section */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">Episodes</h2>
-        <SeasonEpisodeTabs
-          seriesId={seriesId}
-          seasonId={seasonId}
-          seriesTmdbId={series?.tmdb_id || 0}
-          seasonNumber={season.season_number}
-          initialEpisodes={episodes || []}
-        />
-      </div>
+      <div className="max-w-6xl">
+        {/* Episodes Section */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-4">Episodes</h2>
+          <SeasonEpisodeTabs
+            seriesId={seriesId}
+            seasonId={seasonId}
+            seriesTmdbId={series?.tmdb_id || 0}
+            seasonNumber={season.season_number}
+            initialEpisodes={episodes || []}
+          />
+        </div>
 
-      {/* Comments Section - Will implement in point 6 */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">Comments</h2>
-        <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6">
-          <p className="text-neutral-500 text-center">
-            Comments coming soon...
-          </p>
+        {/* Comments Section */}
+        <div className="mb-12">
+          <CommentSection
+            mediaType="season"
+            mediaId={seasonId}
+            initialComments={comments}
+            currentUserId={currentUserId}
+          />
         </div>
       </div>
     </main>

@@ -1,7 +1,7 @@
 ﻿"use client";
 
-import React, { useState, useEffect } from "react";
-import { createClient } from "@/src/utils/supabase/client";
+import React, { useState, useTransition } from "react";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -17,6 +17,12 @@ import { MediaItem } from "@/src/lib/types";
 
 import SortableCollectionItem from "@/src/components/sortable-collection-item";
 import AddMediaForm from "@/src/components/add-media-form";
+
+import {
+  getCollectionMedias,
+  updateCollectionPositions,
+  deleteFromCollection,
+} from "@/src/app/actions/collections";
 
 type Collection = Tables<"collections">;
 
@@ -45,8 +51,7 @@ export default function MediasCollection({
   isOwner,
 }: MediasCollectionProps) {
   const [medias, setMedias] = useState<MediaItem[]>(initialMedias);
-  const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const [isPending, startTransition] = useTransition();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -56,102 +61,20 @@ export default function MediasCollection({
     }),
   );
 
-  const handleWatchToggle = (mediaId: string) => {};
+  const handleWatchToggle = (mediaId: string) => {
+    // Implement if needed
+  };
 
   const refetchMedias = async () => {
-    setLoading(true);
-    try {
-      const { data: mediaEntries } = await supabase
-        .from("medias_collections")
-        .select("*")
-        .eq("collection_id", collection.id)
-        .order("position", { ascending: true }); // Remove the second order
+    startTransition(async () => {
+      const result = await getCollectionMedias(collection.id);
 
-      if (mediaEntries && mediaEntries.length > 0) {
-        const movieIds = mediaEntries
-          .filter((item) => item.media_type === "movie")
-          .map((item) => item.media_id);
-        const seriesIds = mediaEntries
-          .filter((item) => item.media_type === "tv")
-          .map((item) => item.media_id);
-
-        const mediaItems: MediaItem[] = [];
-
-        if (movieIds.length > 0) {
-          const { data: movies } = await supabase
-            .from("movies")
-            .select("*")
-            .in("id", movieIds);
-
-          if (movies) {
-            const movieItems: MediaItem[] = movies.map((movie) => {
-              const entry = mediaEntries.find(
-                (e) => e.media_id === movie.id && e.media_type === "movie",
-              );
-
-              return {
-                id: movie.id,
-                title: movie.title,
-                overview: movie.overview,
-                posterPath: movie.poster_path,
-                backdropPath: movie.backdrop_path,
-                tmdbId: movie.tmdb_id,
-                mediaType: "movie",
-                releaseYear: movie.release_year,
-                collectionEntryId: entry?.id,
-                mediaId: movie.id,
-                position: entry?.position ?? 0, // Add position here
-              };
-            });
-
-            mediaItems.push(...movieItems);
-          }
-        }
-
-        if (seriesIds.length > 0) {
-          const { data: series } = await supabase
-            .from("series")
-            .select("*")
-            .in("id", seriesIds);
-
-          if (series) {
-            const seriesItems: MediaItem[] = series.map((series) => {
-              const entry = mediaEntries.find(
-                (e) => e.media_id === series.id && e.media_type === "tv",
-              );
-
-              return {
-                id: series.id,
-                title: series.title,
-                overview: series.overview,
-                posterPath: series.poster_path,
-                backdropPath: series.backdrop_path,
-                tmdbId: series.tmdb_id,
-                mediaType: "tv",
-                releaseYear: series.release_year,
-                collectionEntryId: entry?.id,
-                mediaId: series.id,
-                position: entry?.position ?? 0, // Add position here
-              };
-            });
-
-            mediaItems.push(...seriesItems);
-          }
-        }
-
-        // Sort by position after combining movies and series
-        const sortedMediaItems = mediaItems.sort(
-          (a, b) => (a.position ?? 0) - (b.position ?? 0),
-        );
-        setMedias(sortedMediaItems);
+      if (result.success) {
+        setMedias(result.medias);
       } else {
-        setMedias([]);
+        toast.error("Failed to refresh collection");
       }
-    } catch (error) {
-      console.error("Error fetching medias:", error);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -167,41 +90,55 @@ export default function MediasCollection({
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newMedias = arrayMove(medias, oldIndex, newIndex);
+
+        // Update local state immediately (optimistic update)
         setMedias(newMedias);
 
-        // Update positions in database
-        await updatePositions(newMedias);
-      }
-    }
-  };
+        // Show loading toast
+        const toastId = toast.loading("Updating order...");
 
-  const updatePositions = async (reorderedMedias: MediaItem[]) => {
-    try {
-      for (let index = 0; index < reorderedMedias.length; index++) {
-        const item = reorderedMedias[index];
-        await supabase
-          .from("medias_collections")
-          .update({ position: index })
-          .eq("id", item.collectionEntryId);
+        // Update server
+        startTransition(async () => {
+          const updates = newMedias.map((item, index) => ({
+            collectionEntryId: item.collectionEntryId!,
+            position: index,
+          }));
+
+          const result = await updateCollectionPositions(
+            collection.id,
+            updates,
+          );
+
+          if (result.success) {
+            toast.success("Order updated", { id: toastId });
+          } else {
+            // Revert on error
+            setMedias(initialMedias);
+            toast.error("Failed to update order", { id: toastId });
+          }
+        });
       }
-    } catch (error) {
-      console.error("Error updating positions:", error);
     }
   };
 
   const handleDelete = async (collectionEntryId: string) => {
-    try {
-      const { error } = await supabase
-        .from("medias_collections")
-        .delete()
-        .eq("id", collectionEntryId);
+    if (!confirm("Remove from collection?")) return;
 
-      if (error) throw error;
+    const toastId = toast.loading("Removing...");
 
-      await refetchMedias();
-    } catch (error) {
-      console.error("Error deleting media:", error);
-    }
+    startTransition(async () => {
+      const result = await deleteFromCollection(
+        collectionEntryId,
+        collection.id,
+      );
+
+      if (result.success) {
+        toast.success("Removed from collection", { id: toastId });
+        await refetchMedias();
+      } else {
+        toast.error(result.error || "Failed to remove", { id: toastId });
+      }
+    });
   };
 
   return (
@@ -215,8 +152,11 @@ export default function MediasCollection({
         </div>
       )}
 
-      {loading ? (
-        <div className="text-center py-8">Loading...</div>
+      {isPending && medias.length === 0 ? (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-lime-400"></div>
+          <p className="mt-2 text-neutral-400">Loading...</p>
+        </div>
       ) : medias.length === 0 ? (
         <div className="text-center py-8 text-neutral-500">
           {isOwner
@@ -243,7 +183,6 @@ export default function MediasCollection({
                   collectionId={collection.id}
                   isOwner={isOwner}
                   onDelete={() => handleDelete(media.collectionEntryId!)}
-                  // onWatchToggle={refetchMedias}
                   onWatchToggle={() => handleWatchToggle(media.id.toString())}
                 />
               ))}

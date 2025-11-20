@@ -1,61 +1,41 @@
 ﻿"use client";
 
-import React, { useEffect, useState } from "react";
-
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { Popcorn } from "lucide-react";
 import { IconStarFilled } from "@tabler/icons-react";
-import { dummyReviewList } from "@/src/data/dummy-review-list";
+
+interface MediaItem {
+  id: string;
+  title: string;
+  poster_path: string | null;
+  backdrop_path?: string | null;
+  release_year: string | null;
+  vote_average?: number | null;
+}
 
 interface BrowseMediaRowProps {
-  data?: any[];
-  type?: "newest" | "movies" | "series" | "kids";
+  data: MediaItem[];
+  linkType: "movie" | "series"; // Determines URL structure
   title?: string;
   max?: number;
+  type?: "newest" | "movies" | "series" | "kids"; // Optional: for tracking/analytics
 }
 
 export function BrowseMediaRow({
   data = [],
-  type = "newest",
-  title = "Newest Reviews",
+  linkType = "movie",
+  title = "Media",
   max = 20,
+  type, // Optional prop for tracking
 }: BrowseMediaRowProps) {
-  // Temporary data
-  data = [...dummyReviewList];
+  const filteredData = data.slice(0, max);
 
-  // States
-  const [isLoading, setIsLoading] = useState(true);
-  const [filteredData, setFilteredData] = useState(data);
-
-  // Functions
-  const filterData = () => {
-    const sortedData = data.sort(
-      (a, b) =>
-        new Date(b.reviewed_at).getTime() - new Date(a.reviewed_at).getTime(),
-    );
-
-    if (type === "newest") {
-      return sortedData.slice(0, max);
-    } else if (type === "movies") {
-      return sortedData.filter((item) => item.type === "movie").slice(0, max);
-    } else if (type === "series") {
-      return sortedData.filter((item) => item.type === "series").slice(0, max);
-    } else if (type === "kids") {
-      return sortedData.filter((item) => item.ageRating < 16).slice(0, max);
-    } else {
-      return data.slice(0, max);
-    }
+  // Determine the base URL for links
+  const getMediaUrl = (item: MediaItem) => {
+    return linkType === "movie" ? `/movies/${item.id}` : `/series/${item.id}`;
   };
-
-  const getYear = (date: string) => {
-    const dateObject = new Date(date);
-    return dateObject.getFullYear();
-  };
-
-  // Effects
-  useEffect(() => {
-    setFilteredData(filterData());
-    setIsLoading(false);
-  }, []);
 
   return (
     <section className={`mt-24 flex flex-col`}>
@@ -70,57 +50,84 @@ export function BrowseMediaRow({
           scrollPaddingInlineStart: "2rem",
         }}
       >
-        {!isLoading &&
-          filteredData.map((media, index) => (
+        {filteredData.length === 0 ? (
+          <p className="text-neutral-500 text-sm py-8">No content available</p>
+        ) : (
+          filteredData.map((media) => (
             <article
-              key={`${type}-review-${index}`}
+              key={media.id}
               className={`pb-5 flex flex-col justify-between gap-4 min-w-[180px] max-w-[180px] rounded-3xl transition-all duration-300 ease-in-out`}
               style={{
                 scrollSnapAlign: "center",
               }}
             >
-              <div
-                className={`group grid place-items-center w-full bg-neutral-800 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out`}
-                style={{ aspectRatio: "1/1.25" }}
-              >
+              <Link href={getMediaUrl(media)} className="group">
                 <div
-                  className={`flex flex-col items-center justify-center gap-2 text-neutral-400`}
+                  className={`relative grid place-items-center w-full bg-neutral-800 rounded-3xl overflow-hidden transition-all duration-300 ease-in-out group-hover:ring-2 group-hover:ring-lime-400`}
+                  style={{ aspectRatio: "1/1.25" }}
                 >
-                  <Popcorn />
-                  <p className={`text-xs`}>No image found</p>
+                  {media.poster_path ? (
+                    <Image
+                      src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
+                      alt={media.title}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div
+                      className={`flex flex-col items-center justify-center gap-2 text-neutral-400`}
+                    >
+                      <Popcorn />
+                      <p className={`text-xs`}>No image</p>
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              <section className={`flex-grow flex flex-col gap-4`}>
-                <div className={`flex-grow w-full`}>
-                  <h3
-                    className={`text-neutral-200 whitespace-nowrap truncate text-sm font-semibold`}
-                  >
-                    {media.title}
-                  </h3>
-                </div>
+                <section className={`flex-grow flex flex-col gap-4 mt-4`}>
+                  <div className={`flex-grow w-full`}>
+                    <h3
+                      className={`text-neutral-200 whitespace-nowrap truncate text-sm font-semibold group-hover:text-lime-400 transition-colors`}
+                      title={media.title}
+                    >
+                      {media.title}
+                    </h3>
+                  </div>
 
-                <div
-                  className={`flex items-center gap-2`}
-                  title={`TMDB Rating`}
-                >
-                  <div
-                    className={`pr-2 flex items-center gap-2 border-r border-neutral-700`}
-                  >
-                    <IconStarFilled size={15} className={`text-lime-400`} />
-                    <span className={`text-xs text-neutral-300`}>
-                      {media.rating}
-                    </span>
+                  <div className={`flex items-center gap-2`}>
+                    {media.vote_average !== null &&
+                      media.vote_average !== undefined &&
+                      media.vote_average > 0 && (
+                        <>
+                          <div
+                            className={`pr-2 flex items-center gap-2 border-r border-neutral-700`}
+                            title={`TMDB Rating: ${media.vote_average.toFixed(
+                              1,
+                            )}`}
+                          >
+                            <IconStarFilled
+                              size={15}
+                              className={`text-lime-400`}
+                            />
+                            <span className={`text-xs text-neutral-300`}>
+                              {media.vote_average.toFixed(1)}
+                            </span>
+                          </div>
+                        </>
+                      )}
+
+                    {media.release_year && (
+                      <div className={`pr-2 flex items-center`}>
+                        <span className={`text-xs text-neutral-300`}>
+                          {media.release_year}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className={`pr-2 flex items-center`}>
-                    <span className={`text-xs text-neutral-300`}>
-                      {getYear(media.releaseDate)}
-                    </span>
-                  </div>
-                </div>
-              </section>
+                </section>
+              </Link>
             </article>
-          ))}
+          ))
+        )}
       </div>
     </section>
   );

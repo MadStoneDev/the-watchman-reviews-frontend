@@ -24,32 +24,32 @@ export default function AuthLayout({
     },
     {
       title: "Avatar",
-      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      url: "pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
       position: "object-center",
     },
     {
-      title: "Avangers Endgame",
-      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      title: "Avengers Endgame",
+      url: "bR8ISy1O9XQxqiy0fQFw2BX72RQ.jpg",
       position: "object-center",
     },
     {
       title: "Titanic",
-      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      url: "9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg",
       position: "object-center",
     },
     {
       title: "Star Wars",
-      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      url: "6FfCtAuVAW8XJjZ7eWeLibRLWTw.jpg",
       position: "object-center",
     },
     {
       title: "The Lion King",
-      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      url: "sKCr78MXSLixwmZ8DyJLrpMsd15.jpg",
       position: "object-center",
     },
     {
       title: "Jurassic World",
-      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      url: "1RICxzeoNCAO5NpcRMIgg1XT6fm.jpg",
       position: "object-center",
     },
     {
@@ -59,7 +59,7 @@ export default function AuthLayout({
     },
     {
       title: "Friends",
-      url: "7PImlfBNIq0wUQ4v9Xy4OqQShnW.jpg",
+      url: "f496cm9enuEsZkSPzCwnTESEK5s.jpg",
       position: "object-center",
     },
     {
@@ -79,12 +79,12 @@ export default function AuthLayout({
     },
     {
       title: "The Penguin",
-      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      url: "vOWcqC4oDQws1doDWLO7d3dh5qc.jpg",
       position: "object-center",
     },
     {
       title: "The Bear",
-      url: "c71B3umVpuLCtUKaZssCc2XIjBB.jpg",
+      url: "eKfVzzEazSIjJMrw9ADa2x8ksLz.jpg",
       position: "object-center",
     },
     {

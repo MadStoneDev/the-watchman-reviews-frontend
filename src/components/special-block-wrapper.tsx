@@ -1,173 +1,63 @@
-﻿"use client";
+﻿import React from "react";
+import { createClient } from "@/src/utils/supabase/server";
+import SpecialBlockWrapperClient from "./special-block-wrapper-client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import SpecialMediaBlock from "@/src/components/special-media-block";
+interface FeaturedMedia {
+  id: string;
+  title: string;
+  overview: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_year: string | null;
+  vote_average: number | null;
+  media_type: "movie" | "series";
+  tmdb_id: number;
+}
 
-export default function SpecialBlockWrapper() {
-  // States
-  const [activeBlock, setActiveBlock] = useState(0);
-  const [blocksToShow, setBlocksToShow] = useState(5);
+export default async function SpecialBlockWrapper() {
+  const supabase = await createClient();
 
-  const [isLoading, setIsLoading] = useState(true);
+  // Fetch featured movies (high rated, recent)
+  const { data: featuredMovies } = await supabase
+    .from("movies")
+    .select(
+      "id, title, overview, poster_path, backdrop_path, release_year, vote_average, tmdb_id",
+    )
+    .not("backdrop_path", "is", null) // Must have backdrop
+    .not("vote_average", "is", null)
+    .gte("vote_average", 7.5) // High rated
+    .order("vote_average", { ascending: false })
+    .limit(10);
 
-  const [timerMaster, setTimerMaster] = useState(true); // True means on, false means off
-  const [timerRunning, setTimerRunning] = useState(true);
-  const [timerProgress, setTimerProgress] = useState(0);
+  // Fetch featured series (high rated, recent)
+  const { data: featuredSeries } = await supabase
+    .from("series")
+    .select(
+      "id, title, overview, poster_path, backdrop_path, release_year, vote_average, tmdb_id",
+    )
+    .not("backdrop_path", "is", null)
+    .not("vote_average", "is", null)
+    .gte("vote_average", 7.5)
+    .order("vote_average", { ascending: false })
+    .limit(10);
 
-  // Refs
-  const blockTimer = useRef<any>(null);
-  const startTime = useRef<number | null>(null);
-  const pausedTime = useRef<number | null>(null);
+  // Combine and shuffle
+  const allFeatured: FeaturedMedia[] = [
+    ...(featuredMovies || []).map((m: any) => ({
+      ...m,
+      media_type: "movie" as const,
+    })),
+    ...(featuredSeries || []).map((s: any) => ({
+      ...s,
+      media_type: "series" as const,
+    })),
+  ];
 
-  // Constants
-  const TIMER_DURATION = 10000;
-  const breakpoints = {
-    sm: 640,
-    md: 768,
-    lg: 1024,
-    xl: 1280,
-    "2xl": 1536,
-    "3xl": 1920,
-  };
+  // Shuffle array
+  const shuffled = allFeatured.sort(() => Math.random() - 0.5);
 
-  // Functions
-  const handleResize = useCallback(() => {
-    let newBlocksToShow = 0;
+  // Take top 20 for rotation
+  const featuredMedia = shuffled.slice(0, 20);
 
-    if (window.innerWidth > breakpoints["3xl"]) {
-      newBlocksToShow = 20;
-    } else if (window.innerWidth > breakpoints["2xl"]) {
-      newBlocksToShow = 12;
-    } else if (window.innerWidth > breakpoints.xl) {
-      newBlocksToShow = 6;
-    } else if (window.innerWidth > breakpoints.lg) {
-      newBlocksToShow = 3;
-    } else if (window.innerWidth > breakpoints.md) {
-      newBlocksToShow = 1;
-    } else if (window.innerWidth > breakpoints.sm) {
-      newBlocksToShow = 2;
-    } else {
-      newBlocksToShow = 1;
-    }
-
-    setBlocksToShow(newBlocksToShow);
-    setActiveBlock((prevActive) => {
-      return Math.min(prevActive, newBlocksToShow - 1);
-    });
-
-    setTimerMaster(newBlocksToShow > 1);
-    resetTimer(true);
-  }, []);
-
-  const resetTimer = useCallback(
-    (shouldReset = true) => {
-      if (!timerMaster) {
-        setTimerRunning(false);
-        setTimerProgress(0);
-        return;
-      }
-
-      if (blockTimer.current) {
-        clearInterval(blockTimer.current);
-      }
-
-      if (shouldReset) {
-        setTimerProgress(0);
-        startTime.current = Date.now();
-        pausedTime.current = null;
-      } else if (pausedTime.current !== null) {
-        // Resume Timer
-        startTime.current = Date.now() - (pausedTime.current || 0);
-        pausedTime.current = null;
-      }
-
-      blockTimer.current = setInterval(() => {
-        const elapsed = Date.now() - (startTime.current || 0);
-        const progress = Math.min((elapsed / TIMER_DURATION) * 100, 100);
-        setTimerProgress(progress);
-
-        if (progress >= 100) {
-          setActiveBlock((prevActive) => (prevActive + 1) % blocksToShow);
-          resetTimer();
-        }
-      }, 50);
-    },
-    [timerMaster, blocksToShow]
-  );
-
-  const pauseTimer = useCallback(() => {
-    if (blockTimer.current) {
-      clearInterval(blockTimer.current);
-    }
-
-    pausedTime.current = Date.now() - (startTime.current || 0);
-  }, []);
-
-  // Effects
-  useEffect(() => {
-    handleResize();
-
-    // Add Event Listener on Resize
-    window.addEventListener("resize", handleResize);
-
-    setIsLoading(false);
-
-    // Remove Event Listener on Resize
-    return () => window.removeEventListener("resize", handleResize);
-  }, [handleResize]);
-
-  useEffect(() => {
-    if (blocksToShow < 2) {
-      setActiveBlock(0);
-      setTimerMaster(false);
-      setTimerRunning(false);
-      setTimerProgress(0);
-      return;
-    }
-
-    if (!timerMaster) {
-      setTimerRunning(false);
-      setTimerProgress(0);
-      return;
-    }
-
-    if (timerRunning) {
-      resetTimer(false);
-    } else if (blockTimer.current) {
-      pauseTimer();
-    }
-
-    return () => {
-      if (blockTimer.current) {
-        clearInterval(blockTimer.current!);
-      }
-    };
-  }, [timerRunning, timerMaster, resetTimer, pauseTimer]);
-
-  useEffect(() => {
-    if (!timerMaster) {
-      setTimerRunning(false);
-      setTimerProgress(0);
-      return;
-    }
-
-    resetTimer(true);
-  }, [activeBlock, blocksToShow, timerMaster, resetTimer]);
-
-  return (
-    <>
-      {!isLoading &&
-        Array.from({ length: blocksToShow }, (_, i) => i).map((index) => (
-          <SpecialMediaBlock
-            key={index}
-            myIndex={index}
-            activeIndex={activeBlock}
-            setActiveBlock={setActiveBlock}
-            timerProgress={timerProgress}
-            timerRunning={timerRunning}
-            setTimerRunning={setTimerRunning}
-          />
-        ))}
-    </>
-  );
+  return <SpecialBlockWrapperClient featuredMedia={featuredMedia} />;
 }

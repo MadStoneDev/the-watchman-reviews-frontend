@@ -1,4 +1,5 @@
 |   .env.local
+|   .env.sentry-build-plugin
 |   .gitignore
 |   components.json
 |   data.sql
@@ -11,6 +12,8 @@
 |   package.json
 |   postcss.config.mjs
 |   README.md
+|   sentry.edge.config.ts
+|   sentry.server.config.ts
 |   supabase_backup.sql
 |   tailwind.config.ts
 |   tsconfig.json
@@ -19,8 +22,12 @@
 |       tmdb-logo.svg
 |       
 +---src
+|   |   instrumentation-client.ts
+|   |   instrumentation.ts
+|   |   
 |   +---app
 |   |   |   favicon.ico
+|   |   |   global-error.tsx
 |   |   |   globals.css
 |   |   |   layout.tsx
 |   |   |   
@@ -71,6 +78,7 @@
 |   |   |       |   |       
 |   |   |       |   +---series
 |   |   |       |   |   \---[seriesId]
+|   |   |       |   |           loading.tsx
 |   |   |       |   |           page.tsx
 |   |   |       |   |           
 |   |   |       |   \---upcoming
@@ -141,6 +149,7 @@
 |   |   |       |   |   
 |   |   |       |   \---[movieId]
 |   |   |       |           error.tsx
+|   |   |       |           layout.tsx
 |   |   |       |           not-found.tsx
 |   |   |       |           page.tsx
 |   |   |       |           
@@ -149,6 +158,7 @@
 |   |   |           |   
 |   |   |           \---[seriesId]
 |   |   |               |   error.tsx
+|   |   |               |   layout.tsx
 |   |   |               |   not-found.tsx
 |   |   |               |   page.tsx
 |   |   |               |   
@@ -170,6 +180,9 @@
 |   |   |           
 |   |   +---api
 |   |   |   +---reel-deck
+|   |   |   |   +---remove
+|   |   |   |   |       route.ts
+|   |   |   |   |       
 |   |   |   |   +---reset-season
 |   |   |   |   |       route.ts
 |   |   |   |   |       
@@ -182,6 +195,16 @@
 |   |   |   |   \---toggle-season
 |   |   |   |           route.ts
 |   |   |   |           
+|   |   |   +---sentry-example-api
+|   |   |   |       route.ts
+|   |   |   |       
+|   |   |   +---series
+|   |   |   |   \---[seriesId]
+|   |   |   |       \---season
+|   |   |   |           \---[seasonNumber]
+|   |   |   |               \---episodes
+|   |   |   |                       route.ts
+|   |   |   |                       
 |   |   |   \---tmdb
 |   |   |       +---genres
 |   |   |       |   \---[type]
@@ -210,10 +233,13 @@
 |   |   |       Montserrat-SemiBold.ttf
 |   |   |       Montserrat.ttf
 |   |   |       
-|   |   \---media
-|   |       \---[id]
-|   |               page.tsx
-|   |               
+|   |   +---media
+|   |   |   \---[id]
+|   |   |           page.tsx
+|   |   |           
+|   |   \---sentry-example-page
+|   |           page.tsx
+|   |           
 |   +---components
 |   |   |   add-media-form.tsx
 |   |   |   add-to-reel-deck-button.tsx
@@ -234,6 +260,7 @@
 |   |   |   reel-deck-filters.tsx
 |   |   |   reel-deck-grid-skeleton.tsx
 |   |   |   reel-deck-grid.tsx
+|   |   |   remove-from-reel-deck-button.tsx
 |   |   |   results-view.tsx
 |   |   |   search-form.tsx
 |   |   |   search-skeleton-boundary.tsx

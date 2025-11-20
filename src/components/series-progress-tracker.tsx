@@ -18,8 +18,9 @@ import {
   IconClock,
   IconCalendar,
   IconLoader2,
-  IconX,
 } from "@tabler/icons-react";
+
+import { toast } from "sonner";
 
 interface Episode {
   id: string;
@@ -220,7 +221,6 @@ export default function SeriesProgressTracker({
   );
   const [resettingSeries, setResettingSeries] = useState(false);
   const [hasOpenedDefaultSeason, setHasOpenedDefaultSeason] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Optimistic state for episodes
   const [optimisticSeasons, setOptimisticSeasons] = useOptimistic(
@@ -316,7 +316,7 @@ export default function SeriesProgressTracker({
         };
       }),
     );
-  }, [initialWatchedIds]); // ← ONLY initialWatchedIds
+  }, [initialWatchedIds]); // Only initialWatchedIds
 
   // Memoize default season calculation
   const getDefaultOpenSeason = useCallback(() => {
@@ -401,7 +401,7 @@ export default function SeriesProgressTracker({
         setLoadedSeasons((prev) => new Set(prev).add(seasonId));
       } catch (error) {
         console.error("Error loading episodes:", error);
-        setError("Failed to load episodes. Please try again.");
+        toast.error("Failed to load episodes. Please try again.");
       } finally {
         setLoadingSeasons((prev) => {
           const newSet = new Set(prev);
@@ -452,27 +452,76 @@ export default function SeriesProgressTracker({
     });
   }, []);
 
-  const handleEpisodeToggle = useCallback(
-    async (episodeId: string, currentlyWatched: boolean, hasAired: boolean) => {
-      if (!hasAired && !currentlyWatched) return;
+  // ✨ FIXED: Update real state after successful API call
+  const updateSeasonState = useCallback(
+    (seasonId: string, episodeId: string, watched: boolean) => {
+      setSeasons((prevSeasons) =>
+        prevSeasons.map((season) => {
+          if (season.id !== seasonId) return season;
 
-      const season = optimisticSeasons.find((s) =>
+          const updatedEpisodes = season.episodes.map((ep) =>
+            ep.id === episodeId ? { ...ep, isWatched: watched } : ep,
+          );
+
+          const watchedCount = updatedEpisodes.filter(
+            (ep) => ep.isWatched,
+          ).length;
+          const percentage =
+            season.totalCount > 0
+              ? Math.round((watchedCount / season.totalCount) * 100)
+              : 0;
+
+          return {
+            ...season,
+            episodes: updatedEpisodes,
+            watchedCount,
+            percentage,
+          };
+        }),
+      );
+    },
+    [],
+  );
+
+  const handleEpisodeToggle = useCallback(
+    async (
+      episodeId: string,
+      isCurrentlyWatched: boolean,
+      hasAired: boolean,
+    ) => {
+      if (!hasAired && !isCurrentlyWatched) {
+        toast.error("Cannot mark unaired episodes as watched");
+        return;
+      }
+
+      const newWatchedState = !isCurrentlyWatched;
+      const season = seasons.find((s) =>
         s.episodes.some((ep) => ep.id === episodeId),
       );
 
       if (!season) return;
 
+      // Update local state immediately
+      if (newWatchedState) {
+        setWatchedIds((prev) => new Set(prev).add(episodeId));
+      } else {
+        setWatchedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(episodeId);
+          return next;
+        });
+      }
+
       setPendingEpisodeId(episodeId);
 
+      // Optimistic update
+      setOptimisticSeasons({
+        seasonId: season.id,
+        episodeId,
+        watched: newWatchedState,
+      });
+
       startTransition(async () => {
-        const newWatchedState = !currentlyWatched;
-
-        setOptimisticSeasons({
-          seasonId: season.id,
-          episodeId,
-          watched: newWatchedState,
-        });
-
         try {
           const response = await fetch("/api/reel-deck/toggle-episode", {
             method: "POST",
@@ -487,30 +536,45 @@ export default function SeriesProgressTracker({
 
           if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || "Failed to toggle episode");
+            throw new Error(data.error || "Failed to update episode");
           }
 
-          setWatchedIds((prev) => {
-            const newSet = new Set(prev);
-            if (newWatchedState) {
-              newSet.add(episodeId);
-            } else {
-              newSet.delete(episodeId);
-            }
-            return newSet;
-          });
+          // ✨ FIXED: Update real state on success
+          updateSeasonState(season.id, episodeId, newWatchedState);
 
+          // Success - show toast
+          toast.success(
+            newWatchedState ? "Marked as watched" : "Marked as unwatched",
+          );
+
+          // Sync with server (non-blocking)
+          router.refresh();
+        } catch (error) {
+          console.error("Error toggling episode:", error);
+
+          // Revert optimistic update on error
+          if (newWatchedState) {
+            setWatchedIds((prev) => {
+              const next = new Set(prev);
+              next.delete(episodeId);
+              return next;
+            });
+          } else {
+            setWatchedIds((prev) => new Set(prev).add(episodeId));
+          }
+
+          // ✨ FIXED: Revert real state too
           setSeasons((prevSeasons) =>
             prevSeasons.map((s) => {
               if (s.id !== season.id) return s;
 
-              const updatedEpisodes = s.episodes.map((ep) =>
+              const revertedEpisodes = s.episodes.map((ep) =>
                 ep.id === episodeId
-                  ? { ...ep, isWatched: newWatchedState }
+                  ? { ...ep, isWatched: isCurrentlyWatched }
                   : ep,
               );
 
-              const watchedCount = updatedEpisodes.filter(
+              const watchedCount = revertedEpisodes.filter(
                 (ep) => ep.isWatched,
               ).length;
               const percentage =
@@ -520,39 +584,108 @@ export default function SeriesProgressTracker({
 
               return {
                 ...s,
-                episodes: updatedEpisodes,
+                episodes: revertedEpisodes,
                 watchedCount,
                 percentage,
               };
             }),
           );
-        } catch (error) {
-          console.error("Error toggling episode:", error);
-          setError(
-            `Failed to update episode: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
+
+          toast.error(
+            `Failed to mark as ${newWatchedState ? "watched" : "unwatched"}`,
           );
-          router.refresh();
         } finally {
           setPendingEpisodeId(null);
         }
       });
     },
-    [optimisticSeasons, seriesId, userId, router, setOptimisticSeasons],
+    [
+      seasons,
+      seriesId,
+      userId,
+      router,
+      setOptimisticSeasons,
+      startTransition,
+      updateSeasonState,
+    ],
+  );
+
+  // ✨ FIXED: Update real state for season toggle
+  const updateSeasonStateAll = useCallback(
+    (seasonId: string, watched: boolean) => {
+      setSeasons((prevSeasons) =>
+        prevSeasons.map((season) => {
+          if (season.id !== seasonId) return season;
+
+          const updatedEpisodes = season.episodes.map((ep) => ({
+            ...ep,
+            isWatched: ep.hasAired ? watched : ep.isWatched,
+          }));
+
+          const watchedCount = updatedEpisodes.filter(
+            (ep) => ep.isWatched,
+          ).length;
+          const percentage =
+            season.totalCount > 0
+              ? Math.round((watchedCount / season.totalCount) * 100)
+              : 0;
+
+          return {
+            ...season,
+            episodes: updatedEpisodes,
+            watchedCount,
+            percentage,
+          };
+        }),
+      );
+    },
+    [],
   );
 
   const handleMarkAllToggle = useCallback(
     async (seasonId: string, markAsWatched: boolean) => {
+      const season = seasons.find((s) => s.id === seasonId);
+      if (!season) return;
+
+      const airedEpisodes = season.episodes.filter((ep) => ep.hasAired);
+      const episodeIds = airedEpisodes.map((ep) => ep.id);
+
+      if (episodeIds.length === 0) {
+        toast.error("No aired episodes to update");
+        return;
+      }
+
+      // Update local state immediately
+      if (markAsWatched) {
+        setWatchedIds((prev) => {
+          const next = new Set(prev);
+          episodeIds.forEach((id) => next.add(id));
+          return next;
+        });
+      } else {
+        setWatchedIds((prev) => {
+          const next = new Set(prev);
+          episodeIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
+
       setPendingSeasonId(seasonId);
 
-      startTransition(async () => {
-        setOptimisticSeasons({
-          seasonId,
-          allEpisodes: true,
-          watched: markAsWatched,
-        });
+      // Optimistic update
+      setOptimisticSeasons({
+        seasonId,
+        allEpisodes: true,
+        watched: markAsWatched,
+      });
 
+      const toastId = toast.loading(
+        markAsWatched
+          ? `Marking ${episodeIds.length} episodes as watched...`
+          : `Unmarking ${episodeIds.length} episodes...`,
+      );
+
+      startTransition(async () => {
         try {
           const response = await fetch("/api/reel-deck/toggle-season", {
             method: "POST",
@@ -562,82 +695,76 @@ export default function SeriesProgressTracker({
               seriesId,
               userId,
               markAsWatched,
-              airedOnly: markAsWatched,
             }),
           });
 
           if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || "Failed to toggle season");
+            throw new Error(data.error || "Failed to update season");
           }
 
-          const season = seasons.find((s) => s.id === seasonId);
-          if (!season) return;
+          const data = await response.json();
 
-          setSeasons((prevSeasons) =>
-            prevSeasons.map((s) => {
-              if (s.id !== seasonId) return s;
+          // ✨ FIXED: Update real state on success
+          updateSeasonStateAll(seasonId, markAsWatched);
 
-              const updatedEpisodes = s.episodes.map((ep) => ({
-                ...ep,
-                isWatched: ep.hasAired ? markAsWatched : ep.isWatched,
-              }));
-
-              const watchedCount = updatedEpisodes.filter(
-                (ep) => ep.isWatched,
-              ).length;
-              const percentage =
-                s.totalCount > 0
-                  ? Math.round((watchedCount / s.totalCount) * 100)
-                  : 0;
-
-              return {
-                ...s,
-                episodes: updatedEpisodes,
-                watchedCount,
-                percentage,
-              };
-            }),
+          toast.success(
+            markAsWatched
+              ? `Marked ${data.episodesAffected} episodes as watched`
+              : `Unmarked ${data.episodesAffected} episodes`,
+            { id: toastId },
           );
 
-          setWatchedIds((prev) => {
-            const newSet = new Set(prev);
-            season.episodes.forEach((ep) => {
-              if (ep.hasAired) {
-                if (markAsWatched) {
-                  newSet.add(ep.id);
-                } else {
-                  newSet.delete(ep.id);
-                }
-              }
-            });
-            return newSet;
-          });
+          // Sync with server (non-blocking)
+          router.refresh();
         } catch (error) {
           console.error("Error toggling season:", error);
-          setError(
-            `Failed to update season: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`,
-          );
-          router.refresh();
+
+          // Revert optimistic update on error
+          if (markAsWatched) {
+            setWatchedIds((prev) => {
+              const next = new Set(prev);
+              episodeIds.forEach((id) => next.delete(id));
+              return next;
+            });
+          } else {
+            setWatchedIds((prev) => {
+              const next = new Set(prev);
+              episodeIds.forEach((id) => next.add(id));
+              return next;
+            });
+          }
+
+          // ✨ FIXED: Revert real state too
+          updateSeasonStateAll(seasonId, !markAsWatched);
+
+          toast.error("Failed to update season", { id: toastId });
         } finally {
           setPendingSeasonId(null);
         }
       });
     },
-    [seriesId, userId, router, setOptimisticSeasons, seasons],
+    [
+      seasons,
+      seriesId,
+      userId,
+      router,
+      setOptimisticSeasons,
+      startTransition,
+      updateSeasonStateAll,
+    ],
   );
 
   const handleResetSeason = useCallback(
     async (seasonId: string) => {
-      if (
-        !confirm("Are you sure you want to reset all progress for this season?")
-      ) {
-        return;
-      }
+      if (!confirm("Reset all progress for this season?")) return;
+
+      const season = seasons.find((s) => s.id === seasonId);
+      if (!season) return;
 
       setResettingSeasons((prev) => new Set(prev).add(seasonId));
+
+      const toastId = toast.loading("Resetting season...");
 
       try {
         const response = await fetch("/api/reel-deck/reset-season", {
@@ -655,35 +782,35 @@ export default function SeriesProgressTracker({
           throw new Error(data.error || "Failed to reset season");
         }
 
+        // ✨ FIXED: Update real state on success
+        updateSeasonStateAll(seasonId, false);
+
+        toast.success("Season progress reset", { id: toastId });
         router.refresh();
       } catch (error) {
         console.error("Error resetting season:", error);
-        setError(
-          `Failed to reset season: ${
-            error instanceof Error ? error.message : "Unknown error"
-          }`,
-        );
+        toast.error("Failed to reset season", { id: toastId });
       } finally {
         setResettingSeasons((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(seasonId);
-          return newSet;
+          const next = new Set(prev);
+          next.delete(seasonId);
+          return next;
         });
       }
     },
-    [seriesId, userId, router],
+    [seriesId, userId, router, seasons, updateSeasonStateAll],
   );
 
   const handleResetSeries = useCallback(async () => {
     if (
-      !confirm(
-        "Are you sure you want to reset ALL progress for this series? This cannot be undone.",
-      )
+      !confirm("Reset all progress for this series? This cannot be undone.")
     ) {
       return;
     }
 
     setResettingSeries(true);
+
+    const toastId = toast.loading("Resetting series...");
 
     try {
       const response = await fetch("/api/reel-deck/reset-series", {
@@ -700,14 +827,33 @@ export default function SeriesProgressTracker({
         throw new Error(data.error || "Failed to reset series");
       }
 
+      // ✨ FIXED: Update real state on success - mark all unwatched
+      setWatchedIds(new Set());
+      setSeasons((prevSeasons) =>
+        prevSeasons.map((season) => {
+          const updatedEpisodes = season.episodes.map((ep) => ({
+            ...ep,
+            isWatched: false,
+          }));
+
+          return {
+            ...season,
+            episodes: updatedEpisodes,
+            watchedCount: 0,
+            percentage: 0,
+          };
+        }),
+      );
+
+      toast.success("Series progress reset", {
+        id: toastId,
+        description: "All episodes have been unmarked",
+      });
+
       router.refresh();
     } catch (error) {
       console.error("Error resetting series:", error);
-      setError(
-        `Failed to reset series: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      );
+      toast.error("Failed to reset series", { id: toastId });
     } finally {
       setResettingSeries(false);
     }
@@ -720,19 +866,6 @@ export default function SeriesProgressTracker({
 
   return (
     <div className="space-y-4">
-      {/* Error Toast */}
-      {error && (
-        <div className="p-4 bg-red-900/20 border border-red-800/50 rounded-lg text-red-400">
-          <p>{error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="mt-2 text-sm underline hover:no-underline"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
       {/* Overall Progress Card */}
       <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6">
         <div className="flex justify-between items-center mb-3">

@@ -20,7 +20,7 @@ export type MediaSearchResult = {
   posterPath: string;
   backdropPath: string;
   tmdbId: number;
-  mediaType: string;
+  mediaType: "movie" | "tv";
   releaseYear: string;
   tmdbRating: number;
   popularity: number;

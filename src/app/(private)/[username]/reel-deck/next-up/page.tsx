@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import ReelDeckGrid from "@/src/components/reel-deck-grid";
-import ReelDeckFilters from "@/src/components/reel-deck-filters";
 import { getSeriesEpisodeCount } from "@/src/utils/tmdb-utils";
 import Link from "next/link";
 import { IconArrowLeft } from "@tabler/icons-react";
