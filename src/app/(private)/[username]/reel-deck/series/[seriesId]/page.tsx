@@ -8,6 +8,7 @@ import SeriesProgressTracker from "@/src/components/series-progress-tracker";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import { IconArrowLeft, IconDeviceTv, IconCalendar } from "@tabler/icons-react";
 import RemoveFromReelDeckButton from "@/src/components/remove-from-reel-deck-button";
+import ForceRefreshReelDeck from "@/src/components/force-refresh-reel-deck";
 
 interface SeriesProgressPageProps {
   params: Promise<{
@@ -33,7 +34,7 @@ export default async function SeriesProgressPage({
   // Get profile for the username in the URL - only needed fields
   const { data: urlProfile } = await supabase
     .from("profiles")
-    .select("id, username")
+    .select("id, username, role")
     .eq("username", username)
     .single();
 
@@ -195,7 +196,16 @@ export default async function SeriesProgressPage({
                 View full series details →
               </Link>
 
-              <div className={`mt-6 flex justify-end`}>
+              <div className={`mt-6 flex justify-end gap-2`}>
+                {urlProfile.role >= 10 && (
+                  <ForceRefreshReelDeck
+                    userId={currentUserId}
+                    role={parseInt(urlProfile.role) || 0}
+                    tmdbId={series.tmdb_id}
+                    seriesId={seriesId}
+                  />
+                )}
+
                 {user && (
                   <RemoveFromReelDeckButton
                     userId={currentUserId}
