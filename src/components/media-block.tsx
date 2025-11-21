@@ -21,7 +21,7 @@ import { createClient } from "@/src/utils/supabase/client";
 
 interface MediaBlockProps {
   data: MediaSearchResult;
-  userId: string;
+  userId: string | undefined;
   isUser?: boolean;
   username?: string;
   admin?: boolean;
