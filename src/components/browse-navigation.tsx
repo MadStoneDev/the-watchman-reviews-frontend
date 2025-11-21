@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 interface NavigationItem {
   label: string;
   href: string;
+  color?: string;
 }
 
 export default function BrowseNavigation({
@@ -19,33 +20,32 @@ export default function BrowseNavigation({
   profileId?: string;
   currentUserId?: string;
 }) {
-  // Hooks
   const pathname = usePathname();
 
-  // States
   const [highlightStyle, setHighlightStyle] = useState<{}>({});
+  const [highlightColor, setHighlightColor] = useState<string>("bg-lime-400"); // NEW
 
-  // Refs
   const browseRef = React.useRef<HTMLAnchorElement[]>([]);
   const highlightRef = React.useRef<HTMLDivElement>(null);
 
-  // Add Settings tab if viewing own profile
-  // Check that currentUserId exists and is not an empty string (failsafe for logged out users)
   const isOwnProfile =
     profileId &&
     currentUserId &&
     currentUserId !== "" &&
     profileId === currentUserId;
   const navigationItems = isOwnProfile
-    ? [...items, { label: "Settings", href: "/settings" }]
+    ? [...items, { label: "Settings", href: "/settings", color: "neutral-500" }]
     : items;
 
-  // Effects
   useEffect(() => {
     const updateHighlight = () => {
       const currentLink = browseRef.current.find(
         (el) => el.getAttribute(`href`) === pathname,
       );
+
+      const getIndex = navigationItems
+        .map((item) => item.href)
+        .indexOf(pathname);
 
       if (currentLink) {
         const { offsetLeft, offsetWidth } = currentLink;
@@ -53,24 +53,30 @@ export default function BrowseNavigation({
           left: `${offsetLeft}px`,
           width: `${offsetWidth}px`,
         });
+        setHighlightColor(
+          navigationItems[getIndex]?.color
+            ? `bg-${navigationItems[getIndex].color}`
+            : "bg-lime-400",
+        );
       } else {
         setHighlightStyle({
           left: `0`,
           width: `0`,
         });
+        setHighlightColor("bg-lime-400");
       }
     };
 
     updateHighlight();
     window.addEventListener(`resize`, updateHighlight);
     return () => window.removeEventListener(`resize`, updateHighlight);
-  }, [pathname]);
+  }, [pathname, items, profileId, currentUserId]);
 
   return (
     <nav
       className={`relative flex gap-5 md:gap-10 transition-all duration-300 ease-in-out`}
     >
-      {navigationItems.map(({ label, href }, index) => (
+      {navigationItems.map(({ label, href, color }, index) => (
         <Link
           key={href}
           ref={(el) => {
@@ -82,7 +88,7 @@ export default function BrowseNavigation({
           className={`px-2 md:px-4 py-2 flex max-w-fit ${
             pathname === href
               ? "text-neutral-900"
-              : "text-neutral-500 hover:text-lime-400"
+              : `text-neutral-500 hover:text-${color ? color : "lime-400"}`
           } text-sm md:text-base font-bold transition-all duration-300 ease-in-out z-50`}
         >
           <span>{label}</span>
@@ -91,7 +97,7 @@ export default function BrowseNavigation({
 
       <div
         ref={highlightRef}
-        className={`absolute top-0 h-full bg-lime-400 transition-all duration-300 ease-in-out`}
+        className={`absolute top-0 h-full transition-all duration-300 ease-in-out ${highlightColor}`}
         style={{ ...highlightStyle }}
       ></div>
     </nav>

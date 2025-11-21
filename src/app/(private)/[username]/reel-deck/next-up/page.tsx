@@ -241,6 +241,7 @@ export default async function NextUpPage({
           {
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
+            color: `indigo-500`,
           },
         ]}
         profileId={urlProfile.id}

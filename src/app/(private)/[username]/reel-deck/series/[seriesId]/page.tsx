@@ -122,6 +122,7 @@ export default async function SeriesProgressPage({
           {
             label: "Collections",
             href: `/${username}/collections`,
+            color: `indigo-500`,
           },
         ]}
         profileId={urlProfile.id}

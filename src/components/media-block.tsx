@@ -10,6 +10,8 @@ import {
   IconX,
   IconPlaylistAdd,
   IconLoader2,
+  IconDeviceTv,
+  IconBubbleText,
 } from "@tabler/icons-react";
 
 import { MediaImage } from "@/src/components/ui/media-image";
@@ -24,6 +26,7 @@ interface MediaBlockProps {
   ownedCollections?: MediaCollection[];
   sharedCollections?: MediaCollection[];
   reelDeckItems?: Array<{
+    tmdb_id: string;
     media_id: string;
     media_type: "movie" | "tv";
     status: string;
@@ -52,9 +55,11 @@ export default function MediaBlock({
 
   // Memoize computed values
   const reelDeckStatus = useMemo(() => {
+    console.log(reelDeckItems);
+    console.log(data);
     const item = reelDeckItems.find(
       (item) =>
-        item.media_id === data.tmdbId.toString() &&
+        item.tmdb_id.toString() === data.tmdbId.toString() &&
         item.media_type === data.mediaType,
     );
     return item?.status || null;
@@ -287,44 +292,61 @@ export default function MediaBlock({
         />
 
         {/* Action Buttons Overlay - Only show on hover and for users */}
-        {isUser && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="absolute bottom-4 left-4 right-4 flex gap-2">
-              {/* Add to Reel Deck */}
-              {!reelDeckStatus && (
-                <button
-                  onClick={handleAddToReelDeck}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium text-sm transition-colors"
-                >
-                  <IconSquarePlus size={18} />
-                  <span>Add to Reel Deck</span>
-                </button>
-              )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute bottom-4 left-2 right-2 flex gap-2">
+            {isUser && (
+              <>
+                {/* Add to Reel Deck */}
+                {!reelDeckStatus && (
+                  <button
+                    onClick={handleAddToReelDeck}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium text-sm transition-colors"
+                    title="Add to Reel Deck"
+                  >
+                    <IconDeviceTv size={18} />
+                  </button>
+                )}
 
-              {/* In Reel Deck indicator */}
-              {reelDeckStatus && (
-                <div className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400/20 text-lime-400 rounded-lg font-medium text-sm border border-lime-400/30">
-                  <IconCheck size={18} />
-                  <span>In Reel Deck</span>
-                </div>
-              )}
+                {/* In Reel Deck indicator */}
+                {reelDeckStatus && (
+                  <div className="group/deck flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400/20 hover:bg-red-800/20 text-lime-400 hover:text-red-600 rounded-lg font-medium text-sm border border-lime-400/30 hover:border-red-600/30 transition-all duration-200">
+                    <IconCheck
+                      size={18}
+                      className={`group-hover/deck:hidden`}
+                    />
+                    <IconX
+                      size={18}
+                      className={`hidden group-hover/deck:block`}
+                    />
+                  </div>
+                )}
 
-              {/* Add to Collection */}
-              {allCollections.length > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowCollections(true);
-                  }}
-                  className="p-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-lg transition-colors"
-                  title="Add to collection"
-                >
-                  <IconPlaylistAdd size={20} />
-                </button>
-              )}
-            </div>
+                {/* Add to Collection */}
+                {allCollections.length > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCollections(true);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-indigo-500 text-neutral-900 hover:bg-indigo-600 rounded-lg font-medium text-sm transition-colors"
+                    title="Add to collection"
+                  >
+                    <IconPlaylistAdd size={20} />
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* More Info Button */}
+            <button
+              onClick={handleViewDetails}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-neutral-500 text-neutral-900 hover:bg-neutral-600 rounded-lg font-medium text-sm transition-colors"
+              title="Add to Reel Deck"
+            >
+              <IconBubbleText size={18} />
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Content */}

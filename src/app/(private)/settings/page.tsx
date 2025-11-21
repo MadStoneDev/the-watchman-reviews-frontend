@@ -52,16 +52,19 @@ export default async function SettingsPage() {
           {
             label: "Collections",
             href: `/${profileData.username}/collections`,
+            color: `indigo-500`,
           },
         ]}
         profileId={profileData.id}
-        currentUserId={user.claims.sub}
+        currentUserId={user.claims.sub || ""}
       />
 
       <section
         className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
       >
-        <h1 className="text-3xl font-bold mb-8">Settings</h1>
+        <h1 className={`mb-8 max-w-3xl text-2xl sm:3xl md:text-4xl font-bold`}>
+          Settings
+        </h1>
         <SettingsContent
           profileData={profileData}
           userEmail={userEmail}

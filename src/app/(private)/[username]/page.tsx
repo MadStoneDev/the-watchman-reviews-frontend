@@ -61,6 +61,7 @@ export default async function PrivatePage({
           {
             label: "Collections",
             href: `/${profileData.username}/collections`,
+            color: `indigo-500`,
           },
         ]}
         profileId={profileData.id}

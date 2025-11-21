@@ -109,7 +109,7 @@ export const UserCollectionRow = ({
         className={`absolute inset-0 ${
           showDeleteConfirm
             ? "bg-neutral-200"
-            : "bg-gradient-to-r from-neutral-900 via-neutral-900/50 to-transparent"
+            : "bg-gradient-to-r from-neutral-900 via-neutral-900/30 to-transparent"
         }`}
       />
 
@@ -157,7 +157,7 @@ export const UserCollectionRow = ({
                     onKeyDown={handleKeyDown}
                     className={`w-full p-1 border ${
                       error ? "border-red-500" : "border-neutral-300"
-                    } rounded focus:outline-none focus:border-lime-400`}
+                    } rounded focus:outline-none focus:border-indigo-400`}
                     autoFocus
                   />
                 </div>
@@ -165,10 +165,10 @@ export const UserCollectionRow = ({
                   <button
                     onClick={confirmEdit}
                     disabled={!!error || !editTitle.trim()}
-                    className={`p-1 text-lime-400 ${
+                    className={`p-1 text-indigo-400 ${
                       !!error || !editTitle.trim()
                         ? "text-neutral-600 cursor-not-allowed"
-                        : "hover:text-neutral-900 hover:bg-lime-400"
+                        : "hover:text-neutral-900 hover:bg-indigo-400"
                     } rounded transition-all duration-300 ease-in-out`}
                   >
                     <IconCheck size={20} />
@@ -185,7 +185,7 @@ export const UserCollectionRow = ({
               <>
                 <Link
                   href={`/collections/${collection.id}`}
-                  className={`flex-grow flex flex-col justify-center h-10 hover:text-lime-400 transition-all duration-300 ease-in-out`}
+                  className={`flex-grow flex flex-col justify-center h-10 hover:text-indigo-400 transition-all duration-300 ease-in-out`}
                 >
                   <div className={`text-sm font-medium`}>
                     {collection.title}
@@ -202,7 +202,7 @@ export const UserCollectionRow = ({
                   >
                     <button
                       onClick={handleEdit}
-                      className={`p-1 grid place-content-center w-10 h-10 hover:bg-lime-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+                      className={`p-1 grid place-content-center w-10 h-10 hover:bg-indigo-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
                     >
                       <IconPencil size={20} />
                     </button>

@@ -218,7 +218,11 @@ export default async function CollectionPage({
         <BrowseNavigation
           items={[
             { label: "Account", href: `/${profile.username}` },
-            { label: "Collections", href: `/${profile.username}/collections` },
+            {
+              label: "Collections",
+              href: `/${profile.username}/collections`,
+              color: `indigo-500`,
+            },
           ]}
         />
       )}

@@ -13,18 +13,20 @@ export default async function SettingsPage({
       <BrowseNavigation
         items={[
           { label: "Account", href: `/${username}` },
-          { label: "Collections", href: `/${username}/collections` },
+          {
+            label: "Collections",
+            href: `/${username}/collections`,
+            color: `indigo-500`,
+          },
         ]}
       />
       <section
-        className={`mt-14 lg:mt-20 transition-all duration-300 ease-in-out`}
+        className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
       >
-        <h1 className={`max-w-60 text-2xl sm:3xl md:text-4xl font-bold`}>
+        <h1 className={`max-w-3xl text-2xl sm:3xl md:text-4xl font-bold`}>
           Settings
         </h1>
       </section>
-
-      <p className={`mt-4 text-sm text-neutral-400 italic`}>Coming soon.</p>
     </>
   );
 }

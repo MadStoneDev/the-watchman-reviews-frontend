@@ -6,6 +6,7 @@ import { Popcorn } from "lucide-react";
 import SearchForm from "@/src/components/search-form";
 import MediaBlock from "@/src/components/media-block";
 import LoadMoreButton from "@/src/components/load-more-button";
+
 import { perfLog } from "@/src/utils/perf";
 
 import { Tables } from "@/database.types";
@@ -18,6 +19,7 @@ export interface ReelDeckItem {
   media_id: string;
   media_type: "movie" | "tv";
   status: string;
+  tmdb_id: string | undefined;
 }
 
 export default function SearchWrapper({

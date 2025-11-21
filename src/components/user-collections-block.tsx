@@ -383,7 +383,7 @@ export default function UserCollectionsBlock({
       {isCurrentUser && (
         <button
           onClick={createNewCollection}
-          className="p-2 flex justify-center items-center gap-1 w-full hover:bg-lime-400 border hover:border-lime-400 hover:text-neutral-900 opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out rounded"
+          className="p-2 flex justify-center items-center gap-1 w-full hover:bg-indigo-500 border hover:border-indigo-500 hover:text-neutral-900 opacity-70 hover:opacity-100 transition-all duration-300 ease-in-out rounded"
         >
           <IconSquarePlus size={32} />
           <span>Create a new collection</span>

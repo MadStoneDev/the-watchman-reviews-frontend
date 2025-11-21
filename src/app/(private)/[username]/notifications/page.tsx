@@ -13,10 +13,14 @@ export default async function NotificationsPage({
       <BrowseNavigation
         items={[
           { label: "Account", href: `/${username}` },
-          { label: "Collections", href: `/${username}/collections` },
+          {
+            label: "Collections",
+            href: `/${username}/collections`,
+            color: `indigo-500`,
+          },
         ]}
       />
-        
+
       <section
         className={`mt-14 lg:mt-20 transition-all duration-300 ease-in-out`}
       >

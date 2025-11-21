@@ -177,6 +177,7 @@ export default async function UpcomingPage({
           {
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
+            color: `indigo-500`,
           },
         ]}
         profileId={urlProfile.id}

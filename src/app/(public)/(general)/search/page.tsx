@@ -19,6 +19,7 @@ export interface ReelDeckItem {
   media_id: string;
   media_type: "movie" | "tv";
   status: string;
+  tmdb_id: string | undefined;
 }
 
 export default async function SearchPage() {
@@ -71,10 +72,48 @@ export default async function SearchPage() {
       // ✅ NEW: Reel deck items
       measureQuery("🎬 Reel deck items", async () => {
         if (!userId) return { data: null, error: null };
-        return supabase
+
+        // Step 1: Get all reel_deck items
+        const { data: deckItems, error: deckError } = await supabase
           .from("reel_deck")
           .select("media_id, media_type, status")
           .eq("user_id", userId);
+
+        if (deckError || !deckItems) return { data: null, error: deckError };
+
+        // Step 2: Split by type and get tmdb_ids
+        const movieIds = deckItems
+          .filter((item) => item.media_type === "movie")
+          .map((item) => item.media_id);
+
+        const seriesIds = deckItems
+          .filter((item) => item.media_type === "tv")
+          .map((item) => item.media_id);
+
+        const [moviesData, seriesData] = await Promise.all([
+          movieIds.length > 0
+            ? supabase.from("movies").select("id, tmdb_id").in("id", movieIds)
+            : { data: [], error: null },
+          seriesIds.length > 0
+            ? supabase.from("series").select("id, tmdb_id").in("id", seriesIds)
+            : { data: [], error: null },
+        ]);
+
+        // Step 3: Map everything together
+        const tmdbMap = new Map<string, string>();
+        (moviesData.data || []).forEach((m) => tmdbMap.set(m.id, m.tmdb_id));
+        (seriesData.data || []).forEach((s) => tmdbMap.set(s.id, s.tmdb_id));
+
+        const data: ReelDeckItem[] = deckItems
+          .map((item) => ({
+            media_id: item.media_id,
+            media_type: item.media_type as "movie" | "tv",
+            status: item.status,
+            tmdb_id: tmdbMap.get(item.media_id),
+          }))
+          .filter((item) => item.tmdb_id !== undefined); // Only include items with tmdb_id
+
+        return { data, error: null };
       }),
     ]);
 

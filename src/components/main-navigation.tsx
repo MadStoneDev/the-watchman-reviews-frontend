@@ -90,17 +90,17 @@ export default function MainNavigation({
             </Link>
           )}
 
-          <Link
-            href={`/how-it-works`}
-            className={`flex gap-6 max-w-fit ${
-              pathname === `/how-it-works`
-                ? "text-lime-400"
-                : "text-neutral-500 hover:text-neutral-200"
-            } font-bold transition-all duration-300 ease-in-out`}
-          >
-            <IconChartBar />
-            <span className={`hidden lg:block`}>How it Works</span>
-          </Link>
+          {/*<Link*/}
+          {/*  href={`/how-it-works`}*/}
+          {/*  className={`flex gap-6 max-w-fit ${*/}
+          {/*    pathname === `/how-it-works`*/}
+          {/*      ? "text-lime-400"*/}
+          {/*      : "text-neutral-500 hover:text-neutral-200"*/}
+          {/*  } font-bold transition-all duration-300 ease-in-out`}*/}
+          {/*>*/}
+          {/*  <IconChartBar />*/}
+          {/*  <span className={`hidden lg:block`}>How it Works</span>*/}
+          {/*</Link>*/}
         </article>
 
         <article className={`flex items-center gap-2 lg:w-full`}>
