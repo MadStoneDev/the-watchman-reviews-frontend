@@ -9,14 +9,12 @@ interface AddToReelDeckButtonProps {
   mediaId: string;
   mediaType: "movie" | "tv";
   isInReelDeck: boolean;
-  currentStatus?: string | null;
 }
 
 export default function AddToReelDeckButton({
   mediaId,
   mediaType,
   isInReelDeck,
-  currentStatus,
 }: AddToReelDeckButtonProps) {
   const router = useRouter();
   const supabase = createClient();

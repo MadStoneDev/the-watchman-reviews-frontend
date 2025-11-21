@@ -12,6 +12,7 @@ import {
   IconLoader2,
   IconDeviceTv,
   IconBubbleText,
+  IconMovie,
 } from "@tabler/icons-react";
 
 import { MediaImage } from "@/src/components/ui/media-image";
@@ -20,21 +21,23 @@ import { createClient } from "@/src/utils/supabase/client";
 
 interface MediaBlockProps {
   data: MediaSearchResult;
+  userId: string;
   isUser?: boolean;
   username?: string;
   admin?: boolean;
   ownedCollections?: MediaCollection[];
   sharedCollections?: MediaCollection[];
   reelDeckItems?: Array<{
-    tmdb_id: string;
     media_id: string;
     media_type: "movie" | "tv";
     status: string;
+    tmdb_id: string | undefined;
   }>;
 }
 
 export default function MediaBlock({
   data,
+  userId,
   isUser,
   username = "",
   ownedCollections = [],
@@ -53,17 +56,28 @@ export default function MediaBlock({
   const [loadingCollections, setLoadingCollections] = useState(false);
   const [addingToCollections, setAddingToCollections] = useState(false);
 
+  const [optimisticReelDeck, setOptimisticReelDeck] = useState<{
+    action: "add" | "remove" | null;
+    tmdbId: string;
+  } | null>(null);
+
+  const [reelDeckUpdating, setReelDeckUpdating] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   // Memoize computed values
   const reelDeckStatus = useMemo(() => {
-    console.log(reelDeckItems);
-    console.log(data);
+    if (optimisticReelDeck?.tmdbId === data.tmdbId.toString()) {
+      return optimisticReelDeck.action === "add" ? "watching" : null;
+    }
+
     const item = reelDeckItems.find(
       (item) =>
+        item.tmdb_id &&
         item.tmdb_id.toString() === data.tmdbId.toString() &&
         item.media_type === data.mediaType,
     );
     return item?.status || null;
-  }, [reelDeckItems, data.tmdbId, data.mediaType]);
+  }, [reelDeckItems, data.tmdbId, data.mediaType, optimisticReelDeck]);
 
   const allCollections = useMemo(
     () => [...ownedCollections, ...sharedCollections],
@@ -77,25 +91,149 @@ export default function MediaBlock({
     }
   }, [showCollections, isUser]);
 
-  // OPTIMIZED: Simple, instant navigation
-  const handleViewDetails = () => {
-    const path =
-      data.mediaType === "movie"
-        ? `/movies/${data.tmdbId}`
-        : `/series/${data.tmdbId}`;
+  // ✅ UPDATED: View details with API
+  const handleViewDetails = async () => {
+    try {
+      setLoading(true);
 
-    // Navigate immediately - the page will handle data fetching
-    router.push(path);
+      // Use the API to ensure media exists and get DB ID
+      const response = await fetch("/api/media/ensure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tmdb_id: data.tmdbId,
+          media_type: data.mediaType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load media");
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to load media");
+      }
+
+      // Navigate to media page
+      const path =
+        data.mediaType === "movie"
+          ? `/movies/${result.media_id}`
+          : `/series/${result.media_id}`;
+
+      router.push(path);
+    } catch (err) {
+      console.error("Error navigating to details:", err);
+      toast.error("Failed to load media details");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Add to reel deck
-  const handleAddToReelDeck = (e: React.MouseEvent) => {
+  // ✅ UPDATED: Add to reel deck with API
+  const handleAddToReelDeck = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isUser || !username) return;
 
-    router.push(
-      `/${username}/reel-deck?add=${data.tmdbId}&type=${data.mediaType}`,
-    );
+    const toastId = toast.loading("Adding to Reel Deck...");
+
+    setOptimisticReelDeck({
+      action: "add",
+      tmdbId: data.tmdbId.toString(),
+    });
+
+    try {
+      setReelDeckUpdating(true);
+
+      const response = await fetch("/api/media/ensure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tmdb_id: data.tmdbId,
+          media_type: data.mediaType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create media record");
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create media record");
+      }
+
+      const { error } = await supabase.from("reel_deck").insert({
+        user_id: userId,
+        media_id: result.media_id,
+        media_type: data.mediaType,
+        status: "watching",
+      });
+
+      if (error) throw error;
+
+      toast.success("Added to Reel Deck", { id: toastId });
+
+      // ✅ Keep optimistic state - it's now the source of truth
+      // The optimistic state correctly shows it's added
+      // No need to clear it or wait for refresh
+    } catch (error) {
+      console.error("Error adding to reel deck:", error);
+      setOptimisticReelDeck(null); // Only revert on error
+      toast.error("Failed to add to Reel Deck", { id: toastId });
+    } finally {
+      setReelDeckUpdating(false);
+    }
+  };
+
+  const handleRemoveFromReelDeck = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isUser || !username) return;
+
+    const toastId = toast.loading("Removing from Reel Deck...");
+
+    setOptimisticReelDeck({
+      action: "remove",
+      tmdbId: data.tmdbId.toString(),
+    });
+
+    try {
+      setReelDeckUpdating(true);
+
+      const tableName = data.mediaType === "movie" ? "movies" : "series";
+      const { data: mediaRecord } = await supabase
+        .from(tableName)
+        .select("id")
+        .eq("tmdb_id", data.tmdbId)
+        .maybeSingle();
+
+      if (!mediaRecord) {
+        throw new Error("Media not found");
+      }
+
+      const { error } = await supabase
+        .from("reel_deck")
+        .delete()
+        .eq("user_id", userId)
+        .eq("media_id", mediaRecord.id)
+        .eq("media_type", data.mediaType);
+
+      if (error) throw error;
+
+      toast.success("Removed from Reel Deck", { id: toastId });
+
+      // ✅ Keep optimistic state - it's now the source of truth
+      // The optimistic state correctly shows it's removed
+      // No need to clear it or wait for refresh
+    } catch (error) {
+      console.error("Error removing from reel deck:", error);
+      setOptimisticReelDeck(null); // Only revert on error
+      toast.error("Failed to remove from Reel Deck", { id: toastId });
+    } finally {
+      setReelDeckUpdating(false);
+    }
   };
 
   // Load collection status
@@ -103,7 +241,6 @@ export default function MediaBlock({
     setLoadingCollections(true);
 
     try {
-      // Get current user
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -113,7 +250,6 @@ export default function MediaBlock({
         return;
       }
 
-      // Get user's collections
       const { data: userCollections } = await supabase
         .from("collections")
         .select("id")
@@ -126,15 +262,12 @@ export default function MediaBlock({
 
       const collectionIds = userCollections.map((c) => c.id);
 
-      // Check which already have this media using TMDB ID
       const { data: existingEntries } = await supabase
         .from("medias_collections")
         .select("collection_id, media_id")
         .eq("media_type", data.mediaType)
         .in("collection_id", collectionIds);
 
-      // We need to check if any existing entries match this TMDB ID
-      // This requires getting the media records to compare TMDB IDs
       if (existingEntries && existingEntries.length > 0) {
         const mediaIds = existingEntries.map((e) => e.media_id);
 
@@ -171,7 +304,7 @@ export default function MediaBlock({
     );
   };
 
-  // Add to collections
+  // ✅ UPDATED: Add to collections using API
   const handleAddToCollections = async () => {
     if (selectedCollections.length === 0) return;
 
@@ -183,45 +316,27 @@ export default function MediaBlock({
     );
 
     try {
-      // First, ensure the media exists in our database
-      const tableName = data.mediaType === "movie" ? "movies" : "series";
-
-      // Check if media exists by TMDB ID
-      let { data: existingMedia } = await supabase
-        .from(tableName)
-        .select("id")
-        .eq("tmdb_id", data.tmdbId)
-        .maybeSingle();
-
-      let mediaDbId: string;
-
-      if (!existingMedia) {
-        // Create the media record
-        const mediaRecord = {
+      // Ensure media exists and get database ID
+      const response = await fetch("/api/media/ensure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           tmdb_id: data.tmdbId,
-          title: data.title,
-          overview: data.overview || "",
-          poster_path: data.posterPath,
-          backdrop_path: data.backdropPath,
-          release_year: data.releaseYear || null,
-          popularity: data.popularity
-            ? parseInt(data.popularity.toString())
-            : null,
-          tmdb_popularity: data.popularity ? String(data.popularity) : null,
-          last_fetched: new Date().toISOString(),
-        };
+          media_type: data.mediaType,
+        }),
+      });
 
-        const { data: newMedia, error: createError } = await supabase
-          .from(tableName)
-          .insert(mediaRecord)
-          .select("id")
-          .single();
-
-        if (createError) throw createError;
-        mediaDbId = newMedia.id;
-      } else {
-        mediaDbId = existingMedia.id;
+      if (!response.ok) {
+        throw new Error("Failed to create media record");
       }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create media record");
+      }
+
+      const mediaDbId = result.media_id;
 
       // Get the highest position for each collection
       const positionPromises = selectedCollections.map(async (collectionId) => {
@@ -277,7 +392,7 @@ export default function MediaBlock({
   };
 
   return (
-    <article className="group relative bg-neutral-900 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-all overflow-hidden hover:shadow-lg hover:shadow-black/20">
+    <article className="group relative flex flex-col bg-neutral-900 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-all overflow-hidden hover:shadow-lg hover:shadow-black/20">
       {/* Poster */}
       <div
         onClick={handleViewDetails}
@@ -297,28 +412,43 @@ export default function MediaBlock({
             {isUser && (
               <>
                 {/* Add to Reel Deck */}
-                {!reelDeckStatus && (
+                {data.mediaType === "tv" && !reelDeckStatus && (
                   <button
                     onClick={handleAddToReelDeck}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium text-sm transition-colors"
+                    disabled={reelDeckUpdating}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400 text-neutral-900 hover:bg-lime-500 disabled:bg-lime-400/30 disabled:cursor-not-allowed rounded-lg font-medium text-sm transition-colors"
                     title="Add to Reel Deck"
                   >
-                    <IconDeviceTv size={18} />
+                    {reelDeckUpdating ? (
+                      <IconLoader2 size={16} className="animate-spin" />
+                    ) : (
+                      <IconDeviceTv size={18} />
+                    )}
                   </button>
                 )}
 
                 {/* In Reel Deck indicator */}
-                {reelDeckStatus && (
-                  <div className="group/deck flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400/20 hover:bg-red-800/20 text-lime-400 hover:text-red-600 rounded-lg font-medium text-sm border border-lime-400/30 hover:border-red-600/30 transition-all duration-200">
-                    <IconCheck
-                      size={18}
-                      className={`group-hover/deck:hidden`}
-                    />
-                    <IconX
-                      size={18}
-                      className={`hidden group-hover/deck:block`}
-                    />
-                  </div>
+                {data.mediaType === "tv" && reelDeckStatus && (
+                  <button
+                    className="group/deck flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400/20 hover:bg-red-800/20 text-lime-400 hover:text-red-600 rounded-lg font-medium text-sm border border-lime-400/30 hover:border-red-600/30 transition-all duration-200"
+                    onClick={handleRemoveFromReelDeck}
+                    disabled={reelDeckUpdating}
+                  >
+                    {reelDeckUpdating ? (
+                      <IconLoader2 size={16} className="animate-spin" />
+                    ) : (
+                      <>
+                        <IconCheck
+                          size={18}
+                          className={`group-hover/deck:hidden`}
+                        />
+                        <IconX
+                          size={18}
+                          className={`hidden group-hover/deck:block`}
+                        />
+                      </>
+                    )}
+                  </button>
                 )}
 
                 {/* Add to Collection */}
@@ -340,20 +470,26 @@ export default function MediaBlock({
             {/* More Info Button */}
             <button
               onClick={handleViewDetails}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-neutral-500 text-neutral-900 hover:bg-neutral-600 rounded-lg font-medium text-sm transition-colors"
-              title="Add to Reel Deck"
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-neutral-500 text-neutral-900 hover:bg-neutral-600 disabled:bg-neutral-500/50 disabled:cursor-not-allowed rounded-lg font-medium text-sm transition-colors"
+              title="More info"
             >
-              <IconBubbleText size={18} />
+              {loading ? (
+                <IconLoader2 size={18} className="animate-spin" />
+              ) : (
+                <IconBubbleText size={18} />
+              )}
             </button>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-3">
+      <div className="p-3 flex-1 flex flex-col justify-between">
         <button
           onClick={handleViewDetails}
-          className="w-full text-left group-hover:text-lime-400 transition-colors"
+          disabled={loading}
+          className="w-full text-left group-hover:text-lime-400 transition-colors disabled:cursor-not-allowed"
         >
           <h3 className="text-sm font-medium line-clamp-2 mb-2 leading-tight">
             {data.title}
@@ -368,7 +504,16 @@ export default function MediaBlock({
               <span>•</span>
             </>
           )}
-          <span>{data.mediaType === "movie" ? "Movie" : "TV Series"}</span>
+
+          <div className={`flex gap-1 items-center`}>
+            {data.mediaType === "movie" ? (
+              <IconMovie size={14} />
+            ) : (
+              <IconDeviceTv size={14} />
+            )}
+            <span>{data.mediaType === "movie" ? "Movie" : "TV Series"}</span>
+          </div>
+
           {data.tmdbRating && (
             <>
               <span>•</span>

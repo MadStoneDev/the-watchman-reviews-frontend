@@ -24,12 +24,14 @@ export interface ReelDeckItem {
 
 export default function SearchWrapper({
   admin = false,
+  userId,
   isUser,
   profile,
   ownedCollections = [],
   sharedCollections = [],
   reelDeckItems = [],
 }: {
+  userId: string | undefined;
   admin?: boolean;
   isUser?: boolean;
   profile?: Profile | null;
@@ -132,6 +134,7 @@ export default function SearchWrapper({
               <MediaBlock
                 key={`${item.tmdbId}-${item.mediaType}-${index}`}
                 data={item}
+                userId={userId}
                 isUser={isUser}
                 username={profile?.username || ""}
                 admin={admin}

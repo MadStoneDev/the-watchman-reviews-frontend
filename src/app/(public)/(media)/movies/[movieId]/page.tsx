@@ -168,7 +168,6 @@ export default async function MoviePage({ params }: MoviePageProps) {
                     mediaId={movieId}
                     mediaType="movie"
                     isInReelDeck={!!reelDeckItem}
-                    currentStatus={reelDeckItem?.status}
                   />
                 )}
               </div>

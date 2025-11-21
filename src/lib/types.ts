@@ -15,6 +15,7 @@ export interface MediaCollection {
 }
 
 export type MediaSearchResult = {
+  id: string;
   title: string;
   overview: string;
   posterPath: string;

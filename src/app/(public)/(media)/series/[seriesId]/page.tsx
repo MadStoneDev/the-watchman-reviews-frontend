@@ -199,7 +199,6 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                     mediaId={seriesId}
                     mediaType="tv"
                     isInReelDeck={!!reelDeckItem}
-                    currentStatus={reelDeckItem?.status}
                   />
                 )}
               </div>

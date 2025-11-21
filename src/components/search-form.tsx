@@ -103,6 +103,7 @@ export default ({
         )
         .map(
           (item: any): MediaSearchResult => ({
+            id: item.id,
             title: item.title || item.name,
             overview: item.overview,
             posterPath: item.poster_path,

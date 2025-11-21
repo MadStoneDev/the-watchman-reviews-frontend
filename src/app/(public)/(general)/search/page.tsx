@@ -162,6 +162,7 @@ export default async function SearchPage() {
 
       <Suspense fallback={<SearchSkeletonBoundary />}>
         <SearchWrapper
+          userId={userId}
           isUser={isUser}
           profile={profile}
           ownedCollections={ownedCollections}
