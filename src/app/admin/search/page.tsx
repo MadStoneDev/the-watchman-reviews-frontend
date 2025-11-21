@@ -19,7 +19,7 @@ export default function AdminSearchPage() {
         </h1>
 
         <Suspense fallback={<SearchSkeletonBoundary />}>
-          <SearchWrapper admin={true} />
+          <SearchWrapper admin={true} userId={undefined} />
         </Suspense>
       </section>
     </>
