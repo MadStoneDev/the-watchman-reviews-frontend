@@ -114,7 +114,6 @@ export default function CreateOrLoginForm() {
     try {
       // Get reCAPTCHA token
       const recaptchaToken = await getRecaptchaToken("login");
-      console.log(recaptchaToken);
 
       // if (!recaptchaToken) {
       //   setServerError(
