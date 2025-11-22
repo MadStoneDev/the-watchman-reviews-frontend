@@ -114,19 +114,20 @@ export default function CreateOrLoginForm() {
     try {
       // Get reCAPTCHA token
       const recaptchaToken = await getRecaptchaToken("login");
+      console.log(recaptchaToken);
 
-      if (!recaptchaToken) {
-        setServerError(
-          "Security check failed. Please refresh the page and try again.",
-        );
-        setIsSubmitting(false);
-        return;
-      }
+      // if (!recaptchaToken) {
+      //   setServerError(
+      //     "Security check failed. Please refresh the page and try again.",
+      //   );
+      //   setIsSubmitting(false);
+      //   return;
+      // }
 
       // Create FormData object
       const formDataObj = new FormData();
       formDataObj.append("email", formData.email);
-      formDataObj.append("recaptcha-token", recaptchaToken);
+      // formDataObj.append("recaptcha-token", recaptchaToken);
 
       const response = await handleAuth(formDataObj);
 
@@ -170,16 +171,18 @@ export default function CreateOrLoginForm() {
       if (process.env.RECAPTCHA_SECRET_KEY) {
         // Get reCAPTCHA token for OTP verification
         const recaptchaToken = await getRecaptchaToken("verify_otp");
+        console.log("VerifyOTP");
+        console.log(recaptchaToken);
 
-        if (!recaptchaToken) {
-          setServerError(
-            "Security check failed. Please refresh the page and try again.",
-          );
-          setIsSubmitting(false);
-          return;
-        }
+        // if (!recaptchaToken) {
+        //   setServerError(
+        //     "Security check failed. Please refresh the page and try again.",
+        //   );
+        //   setIsSubmitting(false);
+        //   return;
+        // }
 
-        formDataObj.append("recaptcha-token", recaptchaToken);
+        // formDataObj.append("recaptcha-token", recaptchaToken);
       }
 
       formDataObj.append("email", formData.email);

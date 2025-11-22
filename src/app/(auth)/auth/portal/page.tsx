@@ -1,4 +1,5 @@
 ﻿import React from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 import CreateOrLoginForm from "@/src/components/auth/create-or-login-form";
 
 export const metadata = {

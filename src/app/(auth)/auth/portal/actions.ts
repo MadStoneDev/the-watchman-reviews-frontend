@@ -59,26 +59,26 @@ export async function handleAuth(formData: FormData): Promise<AuthResponse> {
     };
   }
 
-  if (!recaptchaToken) {
-    return {
-      error: "Security check failed. Please refresh the page and try again.",
-      success: false,
-    };
-  }
+  // if (!recaptchaToken) {
+  //   return {
+  //     error: "Security check failed. Please refresh the page and try again.",
+  //     success: false,
+  //   };
+  // }
 
   try {
-    if (process.env.RECAPTCHA_SECRET_KEY) {
-      // First check: reCAPTCHA verification
-      const isHuman = await verifyRecaptcha(recaptchaToken);
-
-      if (!isHuman) {
-        return {
-          error:
-            "🤖 Beep boop! Our robot detector thinks you might be a bot. Please try again.",
-          success: false,
-        };
-      }
-    }
+    // if (process.env.RECAPTCHA_SECRET_KEY) {
+    //   // First check: reCAPTCHA verification
+    //   const isHuman = await verifyRecaptcha(recaptchaToken);
+    //
+    //   if (!isHuman) {
+    //     return {
+    //       error:
+    //         "🤖 Beep boop! Our robot detector thinks you might be a bot. Please try again.",
+    //       success: false,
+    //     };
+    //   }
+    // }
 
     // Second check: Rate limiting by email
     const { success: rateLimiter } = await rateLimit.limit(email.toLowerCase());
@@ -153,25 +153,25 @@ export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
     };
   }
 
-  if (process.env.RECAPTCHA_SECRET_KEY && !recaptchaToken) {
-    return {
-      error: "Security check failed. Please refresh the page and try again.",
-      success: false,
-    };
-  }
+  // if (process.env.RECAPTCHA_SECRET_KEY && !recaptchaToken) {
+  //   return {
+  //     error: "Security check failed. Please refresh the page and try again.",
+  //     success: false,
+  //   };
+  // }
 
   try {
-    if (process.env.RECAPTCHA_SECRET_KEY) {
-      // Verify reCAPTCHA for OTP verification too
-      const isHuman = await verifyRecaptcha(recaptchaToken);
-
-      if (!isHuman) {
-        return {
-          error: "🤖 Security check failed. Please try again.",
-          success: false,
-        };
-      }
-    }
+    // if (process.env.RECAPTCHA_SECRET_KEY) {
+    //   // Verify reCAPTCHA for OTP verification too
+    //   const isHuman = await verifyRecaptcha(recaptchaToken);
+    //
+    //   if (!isHuman) {
+    //     return {
+    //       error: "🤖 Security check failed. Please try again.",
+    //       success: false,
+    //     };
+    //   }
+    // }
 
     const supabase = await createClient();
 
