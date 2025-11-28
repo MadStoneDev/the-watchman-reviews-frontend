@@ -5,8 +5,7 @@ import localFont from "next/font/local";
 
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/src/components/providers/theme-provider";
-
-import mixpanel from "mixpanel-browser";
+import {AnalyticsProvider} from "@/src/components/providers/analytics-provider";
 
 const montserrat = localFont({
   src: "./fonts/Montserrat.ttf",
@@ -19,13 +18,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Create an instance of the Mixpanel object, your token is already added to this snippet
-  mixpanel.init('6e7486bfdb45e97af1c275b9a0a6fd45', {
-    autocapture: true,
-    record_sessions_percent: 100,
-  });
-
-  
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -37,6 +29,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <AnalyticsProvider>
           {children}
           <Toaster
             position={"bottom-right"}
@@ -44,6 +37,7 @@ export default function RootLayout({
             richColors
             closeButton
           />
+          </AnalyticsProvider>
         </ThemeProvider>
       </body>
     </html>
