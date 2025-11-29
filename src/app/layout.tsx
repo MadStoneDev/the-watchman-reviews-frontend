@@ -3,8 +3,9 @@ import "./globals.css";
 import React from "react";
 import localFont from "next/font/local";
 
-import { ThemeProvider } from "@/src/components/theme-provider";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "@/src/components/providers/theme-provider";
+import {AnalyticsProvider} from "@/src/components/providers/analytics-provider";
 
 const montserrat = localFont({
   src: "./fonts/Montserrat.ttf",
@@ -28,6 +29,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <AnalyticsProvider>
           {children}
           <Toaster
             position={"bottom-right"}
@@ -35,6 +37,7 @@ export default function RootLayout({
             richColors
             closeButton
           />
+          </AnalyticsProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -9,6 +9,7 @@ import { IconStarFilled } from "@tabler/icons-react";
 interface MediaItem {
   id: string;
   title: string;
+  type?: "movie" | "series";
   poster_path: string | null;
   backdrop_path?: string | null;
   release_year: string | null;
@@ -17,7 +18,7 @@ interface MediaItem {
 
 interface BrowseMediaRowProps {
   data: MediaItem[];
-  linkType: "movie" | "series"; // Determines URL structure
+  linkType?: "movie" | "series"; // Determines URL structure
   title?: string;
   max?: number;
   type?: "newest" | "movies" | "series" | "kids"; // Optional: for tracking/analytics
@@ -25,8 +26,8 @@ interface BrowseMediaRowProps {
 
 export function BrowseMediaRow({
   data = [],
-  linkType = "movie",
   title = "Media",
+  linkType,
   max = 20,
   type, // Optional prop for tracking
 }: BrowseMediaRowProps) {
@@ -34,7 +35,13 @@ export function BrowseMediaRow({
 
   // Determine the base URL for links
   const getMediaUrl = (item: MediaItem) => {
-    return linkType === "movie" ? `/movies/${item.id}` : `/series/${item.id}`;
+    if (linkType) {
+      return linkType === "movie" ? `/movies/${item.id}` : `/series/${item.id}`;
+    } else if (item.type) {
+        return item.type === "movie" ? `/movies/${item.id}` : `/series/${item.id}`;
+    } else {
+        return "";
+    }
   };
 
   return (

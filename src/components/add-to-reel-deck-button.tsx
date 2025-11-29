@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/client";
 import { IconPlaylistAdd, IconCheck } from "@tabler/icons-react";
+import { toast } from "sonner";
 
 interface AddToReelDeckButtonProps {
   mediaId: string;
@@ -21,21 +22,28 @@ export default function AddToReelDeckButton({
   const [loading, setLoading] = useState(false);
   const [inReelDeck, setInReelDeck] = useState(isInReelDeck);
 
-  const handleToggleReelDeck = async () => {
-    try {
-      setLoading(true);
+  const handleToggleReelDeck = async (e: React.MouseEvent) => {
+    e.stopPropagation();
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push("/auth/portal");
-        return;
-      }
+    if (!user) {
+      router.push("/auth/portal");
+      return;
+    }
 
-      if (inReelDeck) {
-        // Remove from reel deck
+    if (inReelDeck) {
+      // Remove from reel deck
+      const toastId = toast.loading("Removing from Reel Deck...");
+
+      // Optimistic update
+      setInReelDeck(false);
+
+      try {
+        setLoading(true);
+
         const { error } = await supabase
           .from("reel_deck")
           .delete()
@@ -45,27 +53,64 @@ export default function AddToReelDeckButton({
 
         if (error) throw error;
 
-        setInReelDeck(false);
-      } else {
-        // Add to reel deck with "watching" status
+        toast.success("Removed from Reel Deck", { id: toastId });
+
+        // ✅ Keep optimistic state - it's now the source of truth
+      } catch (error) {
+        console.error("Error removing from reel deck:", error);
+        setInReelDeck(true); // Revert on error
+        toast.error("Failed to remove from Reel Deck", { id: toastId });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Add to reel deck
+      const toastId = toast.loading("Adding to Reel Deck...");
+
+      // Optimistic update
+      setInReelDeck(true);
+
+      try {
+        setLoading(true);
+
+        const response = await fetch("/api/media/ensure", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tmdb_id: mediaId,
+            media_type: mediaType,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create media record");
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.error || "Failed to create media record");
+        }
+
         const { error } = await supabase.from("reel_deck").insert({
           user_id: user.id,
-          media_id: mediaId,
+          media_id: result.media_id,
           media_type: mediaType,
           status: "watching",
         });
 
         if (error) throw error;
 
-        setInReelDeck(true);
-      }
+        toast.success("Added to Reel Deck", { id: toastId });
 
-      router.refresh();
-    } catch (error) {
-      console.error("Error toggling reel deck:", error);
-      alert(`Failed to ${inReelDeck ? "remove from" : "add to"} reel deck`);
-    } finally {
-      setLoading(false);
+        // ✅ Keep optimistic state - it's now the source of truth
+      } catch (error) {
+        console.error("Error adding to reel deck:", error);
+        setInReelDeck(false); // Revert on error
+        toast.error("Failed to add to Reel Deck", { id: toastId });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 

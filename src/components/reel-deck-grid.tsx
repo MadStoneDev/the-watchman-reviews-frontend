@@ -249,7 +249,7 @@ ReelDeckCard.displayName = "ReelDeckCard";
 // OPTIMIZATION 7: Memoize the entire grid component
 function ReelDeckGrid({ items, username, userId }: ReelDeckGridProps) {
   return (
-    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-4">
       {items.map((item) => (
         <ReelDeckCard key={item.id} item={item} username={username} />
       ))}

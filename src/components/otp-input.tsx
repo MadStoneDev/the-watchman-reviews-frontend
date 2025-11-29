@@ -136,9 +136,7 @@ const OTPInput = forwardRef<OTPInputHandle, OTPInputProps>(
         const digitsToUse = pasteData.slice(0, length);
 
         // Fill in the inputs with the pasted digits
-        onChange(
-          digitsToUse.padEnd(value.length, value.slice(digitsToUse.length)),
-        );
+        onChange(digitsToUse);
 
         // Focus on the next empty input or last input
         const nextEmptyIndex =

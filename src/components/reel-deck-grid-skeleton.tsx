@@ -8,7 +8,7 @@ export default function ReelDeckGridSkeleton({
   count = 12,
 }: ReelDeckGridSkeletonProps) {
   return (
-    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+    <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 lg.5:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
       {Array.from({ length: count }).map((_, index) => (
         <article
           key={index}
