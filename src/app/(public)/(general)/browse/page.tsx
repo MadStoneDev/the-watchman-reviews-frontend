@@ -36,10 +36,10 @@ export default async function BrowsePage() {
     .order("release_year", { ascending: false })
     .limit(10);
 
-  const newestRaw: MediaItem[] = [
-    ...(newestMovies || []),
-    ...(newestSeries || []),
-  ];
+    const newestRaw: MediaItem[] = [
+        ...(newestMovies?.map(movie => ({ ...movie, type: 'movie' as const })) || []),
+        ...(newestSeries?.map(series => ({ ...series, type: 'series' as const })) || []),
+    ];
 
   newestRaw.sort((a, b) => {
     const yearA = parseInt(a.release_year!) || 0;
@@ -59,6 +59,7 @@ export default async function BrowsePage() {
   const newest: MediaItem[] = (newestRaw || []).map((item: any) => ({
     id: item.id,
     title: item.title,
+    type: item.type,
     poster_path: item.poster_path,
     release_year: item.release_year,
     vote_average: item.vote_average,
@@ -138,7 +139,6 @@ export default async function BrowsePage() {
         title="Newest Additions"
         data={newest}
         type="newest"
-        linkType="movie"
       />
 
       <BrowseMediaRow
