@@ -130,7 +130,7 @@ export default async function SeriesProgressPage({
         currentUserId={currentUserId}
       />
 
-      <div className="mt-14 lg:mt-20 mb-6">
+      <div className="mt-6 lg:mt-8 mb-6">
         {/* Back Button */}
         <Link
           href={`/${username}/reel-deck`}

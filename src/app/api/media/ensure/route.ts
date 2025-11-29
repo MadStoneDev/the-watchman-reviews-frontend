@@ -66,7 +66,11 @@ export async function POST(request: NextRequest) {
           },
         );
 
-        if (tmdbResponse.ok) {
+        if (!tmdbResponse.ok) {
+          console.warn(
+            `Failed to refresh media ${tmdb_id}, using existing data`,
+          );
+        } else {
           const tmdbData = await tmdbResponse.json();
 
           // Update with fresh data
@@ -200,10 +204,18 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error ensuring media exists:", error);
+
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error && typeof error === "object" && "message" in error) {
+      errorMessage = String(error.message);
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errorMessage,
       },
       { status: 500 },
     );

@@ -60,7 +60,7 @@ export default async function SettingsPage() {
       />
 
       <section
-        className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
+        className={`mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out`}
       >
         <h1 className={`mb-8 max-w-3xl text-2xl sm:3xl md:text-4xl font-bold`}>
           Settings

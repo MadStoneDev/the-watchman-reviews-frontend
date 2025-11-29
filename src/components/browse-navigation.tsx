@@ -74,7 +74,7 @@ export default function BrowseNavigation({
 
   return (
     <nav
-      className={`relative flex gap-5 md:gap-10 transition-all duration-300 ease-in-out`}
+      className={`pb-3 relative flex gap-5 md:gap-10 border-b border-neutral-700 transition-all duration-300 ease-in-out`}
     >
       {navigationItems.map(({ label, href, color }, index) => (
         <Link
@@ -97,7 +97,7 @@ export default function BrowseNavigation({
 
       <div
         ref={highlightRef}
-        className={`absolute top-0 h-full transition-all duration-300 ease-in-out ${highlightColor}`}
+        className={`absolute top-0 bottom-3 transition-all duration-300 ease-in-out ${highlightColor}`}
         style={{ ...highlightStyle }}
       ></div>
     </nav>

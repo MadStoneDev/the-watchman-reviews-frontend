@@ -248,7 +248,7 @@ export default async function NextUpPage({
         currentUserId={currentUserId || ""}
       />
 
-      <div className="flex gap-6 mt-14 lg:mt-20 mb-6">
+      <div className="flex gap-6 mt-6 lg:mt-8 mb-6">
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           {/* Back Link */}

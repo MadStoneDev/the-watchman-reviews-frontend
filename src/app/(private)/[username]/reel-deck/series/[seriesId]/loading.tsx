@@ -3,7 +3,7 @@ import { IconArrowLeft } from "@tabler/icons-react";
 
 export default function SeriesProgressLoading() {
   return (
-    <div className="mt-14 lg:mt-20 mb-6">
+    <div className="mt-6 lg:mt-8 mb-6">
       {/* Back Button Skeleton */}
       <div className="inline-flex items-center gap-2 text-neutral-600 mb-6">
         <IconArrowLeft size={20} />

@@ -43,7 +43,7 @@ export default async function Home() {
       />
 
       <section
-        className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
+        className={`mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out`}
       >
         <h1 className={`max-w-64 text-2xl sm:3xl md:text-4xl font-bold`}>
           What to Watch Next?

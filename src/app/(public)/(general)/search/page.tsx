@@ -157,7 +157,7 @@ export default async function SearchPage() {
   logTimer("📊 Total server-side data fetch", pageStart);
 
   return (
-    <section className="mt-0 md:mt-14 lg:mt-20 mb-10 flex flex-col gap-5 transition-all duration-300 ease-in-out">
+    <section className="mt-0 md:mt-6 lg:mt-8 mb-10 flex flex-col gap-5 transition-all duration-300 ease-in-out">
       <h1 className="max-w-60 text-2xl sm:3xl md:text-4xl font-bold">Search</h1>
 
       <Suspense fallback={<SearchSkeletonBoundary />}>

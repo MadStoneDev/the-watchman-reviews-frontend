@@ -12,7 +12,7 @@ export default function AdminSearchPage() {
   return (
     <>
       <section
-        className={`mt-0 md:mt-14 lg:mt-20 mb-10 flex flex-col gap-5 transition-all duration-300 ease-in-out`}
+        className={`mt-0 md:mt-6 lg:mt-8 mb-10 flex flex-col gap-5 transition-all duration-300 ease-in-out`}
       >
         <h1 className={`text-2xl sm:3xl md:text-4xl font-bold`}>
           Admin Search
