@@ -163,13 +163,14 @@ export default async function MoviePage({ params }: MoviePageProps) {
                   <IconExternalLink size={16} />
                 </Link>
 
-                {currentUserId && (
-                  <AddToReelDeckButton
-                    mediaId={movieId}
-                    mediaType="movie"
-                    isInReelDeck={!!reelDeckItem}
-                  />
-                )}
+                {/*{currentUserId && (*/}
+                {/*  <AddToReelDeckButton*/}
+                {/*    tmdbId={movie.tmdbId}*/}
+                {/*    databaseId={movieId}*/}
+                {/*    mediaType="movie"*/}
+                {/*    isInReelDeck={!!reelDeckItem}*/}
+                {/*  />*/}
+                {/*)}*/}
               </div>
             </div>
           </div>

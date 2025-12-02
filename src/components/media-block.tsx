@@ -125,7 +125,6 @@ export default function MediaBlock({
       router.push(path);
     } catch (err) {
       console.error("Error navigating to details:", err);
-      toast.error("Failed to load media details");
     } finally {
       setLoading(false);
     }

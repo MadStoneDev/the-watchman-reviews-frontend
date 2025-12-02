@@ -9,7 +9,6 @@ import BrowseNavigation from "@/src/components/browse-navigation";
 import { MediaItem } from "@/src/lib/types";
 
 const fetchCollection = async (id: string) => {
-  // Supabase
   const supabase = await createClient();
 
   const { data: collection } = await supabase
@@ -21,9 +20,9 @@ const fetchCollection = async (id: string) => {
   return collection;
 };
 
-// This function will only be used for initial SSR rendering
-// The client component will handle further data fetching
+// ✅ OPTIMIZED: Fetch media items in parallel
 const fetchInitialMedia = async (id: string) => {
+  console.time("📊 fetchInitialMedia");
   const supabase = await createClient();
 
   const { data: mediaEntries } = await supabase
@@ -32,87 +31,87 @@ const fetchInitialMedia = async (id: string) => {
     .eq("collection_id", id)
     .order("position", { ascending: true });
 
-  if (mediaEntries && mediaEntries.length > 0) {
-    const movieIds = mediaEntries
-      .filter((item) => item.media_type === "movie")
-      .map((item) => item.media_id);
-    const seriesIds = mediaEntries
-      .filter((item) => item.media_type === "tv")
-      .map((item) => item.media_id);
-
-    const mediaItems: MediaItem[] = [];
-
-    if (movieIds.length > 0) {
-      const { data: movies } = await supabase
-        .from("movies")
-        .select("*")
-        .in("id", movieIds);
-
-      if (movies) {
-        const movieItems: MediaItem[] = movies.map((movie) => {
-          const entry = mediaEntries.find(
-            (e) => e.media_id === movie.id && e.media_type === "movie",
-          );
-
-          return {
-            id: movie.id,
-            title: movie.title,
-            overview: movie.overview,
-            posterPath: movie.poster_path,
-            backdropPath: movie.backdrop_path,
-            tmdbId: movie.tmdb_id,
-            mediaType: "movie",
-            releaseYear: movie.release_year,
-            collectionEntryId: entry?.id,
-            mediaId: movie.id,
-            position: entry?.position ?? 0, // ADD THIS LINE
-          };
-        });
-
-        mediaItems.push(...movieItems);
-      }
-    }
-
-    if (seriesIds.length > 0) {
-      const { data: series } = await supabase
-        .from("series")
-        .select("*")
-        .in("id", seriesIds);
-
-      if (series) {
-        const seriesItems: MediaItem[] = series.map((series) => {
-          const entry = mediaEntries.find(
-            (e) => e.media_id === series.id && e.media_type === "tv",
-          );
-
-          return {
-            id: series.id,
-            title: series.title,
-            overview: series.overview,
-            posterPath: series.poster_path,
-            backdropPath: series.backdrop_path,
-            tmdbId: series.tmdb_id,
-            mediaType: "tv",
-            releaseYear: series.release_year,
-            collectionEntryId: entry?.id,
-            mediaId: series.id,
-            position: entry?.position ?? 0,
-          };
-        });
-
-        mediaItems.push(...seriesItems);
-      }
-    }
-
-    // ADD THIS: Sort by position after combining
-    const sortedMediaItems = mediaItems.sort(
-      (a, b) => (a.position ?? 0) - (b.position ?? 0),
-    );
-
-    return sortedMediaItems; // Return sorted items
+  if (!mediaEntries || mediaEntries.length === 0) {
+    console.timeEnd("📊 fetchInitialMedia");
+    return [];
   }
 
-  return [];
+  const movieIds = mediaEntries
+    .filter((item) => item.media_type === "movie")
+    .map((item) => item.media_id);
+  const seriesIds = mediaEntries
+    .filter((item) => item.media_type === "tv")
+    .map((item) => item.media_id);
+
+  // ✅ Fetch movies and series in PARALLEL
+  const [moviesResult, seriesResult] = await Promise.all([
+    movieIds.length > 0
+      ? supabase.from("movies").select("*").in("id", movieIds)
+      : Promise.resolve({ data: null }),
+    seriesIds.length > 0
+      ? supabase.from("series").select("*").in("id", seriesIds)
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const mediaItems: MediaItem[] = [];
+
+  // Process movies
+  if (moviesResult.data) {
+    const movieItems: MediaItem[] = moviesResult.data.map((movie) => {
+      const entry = mediaEntries.find(
+        (e) => e.media_id === movie.id && e.media_type === "movie",
+      );
+
+      return {
+        id: movie.id,
+        title: movie.title,
+        overview: movie.overview,
+        posterPath: movie.poster_path,
+        backdropPath: movie.backdrop_path,
+        tmdbId: movie.tmdb_id,
+        mediaType: "movie" as const,
+        releaseYear: movie.release_year,
+        collectionEntryId: entry?.id,
+        mediaId: movie.id,
+        position: entry?.position ?? 0,
+      };
+    });
+
+    mediaItems.push(...movieItems);
+  }
+
+  // Process series
+  if (seriesResult.data) {
+    const seriesItems: MediaItem[] = seriesResult.data.map((series) => {
+      const entry = mediaEntries.find(
+        (e) => e.media_id === series.id && e.media_type === "tv",
+      );
+
+      return {
+        id: series.id,
+        title: series.title,
+        overview: series.overview,
+        posterPath: series.poster_path,
+        backdropPath: series.backdrop_path,
+        tmdbId: series.tmdb_id,
+        mediaType: "tv" as const,
+        releaseYear: series.release_year,
+        collectionEntryId: entry?.id,
+        mediaId: series.id,
+        position: entry?.position ?? 0,
+      };
+    });
+
+    mediaItems.push(...seriesItems);
+  }
+
+  // Sort by position
+  const sortedMediaItems = mediaItems.sort(
+    (a, b) => (a.position ?? 0) - (b.position ?? 0),
+  );
+
+  console.timeEnd("📊 fetchInitialMedia");
+  return sortedMediaItems;
 };
 
 export async function generateMetadata({
@@ -126,13 +125,13 @@ export async function generateMetadata({
   if (!collection) {
     return {
       title: `Collection | JustReel`,
-      description: `Collections on  JustReel`,
+      description: `Collections on JustReel`,
     };
   }
 
   return {
     title: `${collection.title} | JustReel`,
-    description: `${collection.title} collection on  JustReel`,
+    description: `${collection.title} collection on JustReel`,
   };
 }
 
@@ -141,76 +140,94 @@ export default async function CollectionPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  console.time("🎬 Collection Page Load");
+
   const { id } = await params;
-
-  // Supabase
   const supabase = await createClient();
-  const { data: user, error: userError } = await supabase.auth.getClaims();
 
-  let userId = null;
-
-  if (user) {
-    userId = user.claims.sub;
-  }
-
-  // Check if collection exists
-  const collection = await fetchCollection(id);
+  // ✅ OPTIMIZED: Fetch everything in parallel
+  const [collection, userResult, initialMedias, mediaCountResult] =
+    await Promise.all([
+      fetchCollection(id),
+      supabase.auth.getClaims(),
+      fetchInitialMedia(id),
+      supabase
+        .from("medias_collections")
+        .select("*", { count: "exact", head: true })
+        .eq("collection_id", id),
+    ]);
 
   if (!collection) {
     notFound();
   }
 
-  // Fetch initial media for SSR
-  // This provides better initial page load and SEO
-  const initialMedias = await fetchInitialMedia(id);
+  const user = userResult.data;
+  const userId = user?.claims?.sub || null;
+  const itemCount = mediaCountResult.count || 0;
 
+  // Fetch profile and access checks in parallel
   let profile = null;
-
-  if (user) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.claims.sub)
-      .single();
-    profile = data;
-  }
-
+  let accessType: "owner" | "shared" | "public" | "none" = "none";
   const isOwner = collection.owner === userId;
-  let accessType: "owner" | "shared" | "public" | "none" = "owner";
 
-  if (!isOwner) {
-    const isPublic = collection.is_public;
-    accessType = isPublic ? "public" : "none";
-
-    const { data: sharedWithUser } = await supabase
-      .from("shared_collection")
-      .select("id")
-      .eq("collection_id", id)
-      .eq("user_id", userId);
-
-    if (sharedWithUser && sharedWithUser.length > 0) accessType = "shared";
-
-    if (accessType === "none") {
-      return (
-        <div className="flex-grow flex flex-col items-center justify-center px-4 text-center">
-          <h1 className="text-4xl font-bold mb-4">Thou Shalt Not Pass!</h1>
-          <p className="text-2xl font-semibold mb-2">
-            Did someone send you here?
-          </p>
-          <p className="text-neutral-400 mb-8">
-            If they did, they didn't give you a key.
-          </p>
-        </div>
-      );
-    }
+  if (isOwner) {
+    accessType = "owner";
   }
 
-  const { count: mediaCount, error: countError } = await supabase
-    .from("medias_collections")
-    .select("*", { count: "exact", head: true })
-    .eq("collection_id", id);
+  const accessChecks = [];
 
-  const itemCount = mediaCount || 0;
+  if (user && userId) {
+    accessChecks.push(
+      supabase.from("profiles").select("*").eq("id", userId).single(),
+    );
+  }
+
+  if (!isOwner && userId) {
+    accessChecks.push(
+      supabase
+        .from("shared_collection")
+        .select("id")
+        .eq("collection_id", id)
+        .eq("user_id", userId)
+        .single(),
+    );
+  }
+
+  if (accessChecks.length > 0) {
+    const results = await Promise.all(accessChecks);
+
+    if (user && userId) {
+      profile = results[0]?.data;
+    }
+
+    if (!isOwner) {
+      const isPublic = collection.is_public;
+      accessType = isPublic ? "public" : "none";
+
+      if (!isOwner && userId && results.length > 1) {
+        const sharedWithUser = results[1]?.data;
+        if (sharedWithUser) accessType = "shared";
+      }
+    }
+  } else if (!isOwner) {
+    accessType = collection.is_public ? "public" : "none";
+  }
+
+  if (accessType === "none") {
+    return (
+      <div className="flex-grow flex flex-col items-center justify-center px-4 text-center">
+        <h1 className="text-4xl font-bold mb-4">Thou Shalt Not Pass!</h1>
+        <p className="text-2xl font-semibold mb-2">
+          Did someone send you here?
+        </p>
+        <p className="text-neutral-400 mb-8">
+          If they did, they didn't give you a key.
+        </p>
+      </div>
+    );
+  }
+
+  console.timeEnd("🎬 Collection Page Load");
 
   return (
     <>

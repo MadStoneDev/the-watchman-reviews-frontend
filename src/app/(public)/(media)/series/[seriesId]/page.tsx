@@ -196,7 +196,8 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 
                 {currentUserId && (
                   <AddToReelDeckButton
-                    mediaId={seriesId}
+                    tmdbId={series.tmdb_id}
+                    databaseId={seriesId} // For deletion
                     mediaType="tv"
                     isInReelDeck={!!reelDeckItem}
                   />

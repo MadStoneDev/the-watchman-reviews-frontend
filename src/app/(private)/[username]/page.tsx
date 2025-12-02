@@ -69,7 +69,7 @@ export default async function PrivatePage({
       />
 
       <section
-        className={`mt-14 lg:mt-20 mb-6 transition-all duration-300 ease-in-out`}
+        className={`mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out`}
       >
         <EditableUsername
           username={profileData.username}

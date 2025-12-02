@@ -7,13 +7,15 @@ import { IconPlaylistAdd, IconCheck } from "@tabler/icons-react";
 import { toast } from "sonner";
 
 interface AddToReelDeckButtonProps {
-  mediaId: string;
+  tmdbId: number;
+  databaseId?: string;
   mediaType: "movie" | "tv";
   isInReelDeck: boolean;
 }
 
 export default function AddToReelDeckButton({
-  mediaId,
+  tmdbId,
+  databaseId,
   mediaType,
   isInReelDeck,
 }: AddToReelDeckButtonProps) {
@@ -26,6 +28,13 @@ export default function AddToReelDeckButton({
   const handleToggleReelDeck = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
+    console.log("🎯 BUTTON CLICKED - Initial state:", {
+      inReelDeck,
+      isInReelDeck,
+      tmdbId,
+      databaseId,
+    });
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -36,6 +45,8 @@ export default function AddToReelDeckButton({
     }
 
     if (inReelDeck) {
+      console.log("❌ Removing from reel deck with databaseId:", databaseId);
+
       // Remove from reel deck
       const toastId = toast.loading("Removing from Reel Deck...");
 
@@ -49,7 +60,7 @@ export default function AddToReelDeckButton({
           .from("reel_deck")
           .delete()
           .eq("user_id", user.id)
-          .eq("media_id", mediaId)
+          .eq("media_id", databaseId)
           .eq("media_type", mediaType);
 
         if (error) throw error;
@@ -67,6 +78,8 @@ export default function AddToReelDeckButton({
         setLoading(false);
       }
     } else {
+      console.log("✅ Adding to reel deck with tmdbId:", tmdbId);
+
       // Add to reel deck
       const toastId = toast.loading("Adding to Reel Deck...");
 
@@ -80,12 +93,22 @@ export default function AddToReelDeckButton({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            tmdb_id: mediaId,
+            tmdb_id: tmdbId,
             media_type: mediaType,
           }),
         });
 
+        console.log(
+          "📡 Response status:",
+          response.status,
+          response.statusText,
+        ); // ADD THIS
+
         if (!response.ok) {
+          const errorText = await response.text(); // ADD THIS
+
+          console.log("❌ Response error body:", errorText); // ADD THIS
+
           throw new Error("Failed to create media record");
         }
 
@@ -108,6 +131,7 @@ export default function AddToReelDeckButton({
         setFoundInReelDeck(true)
 
         // ✅ Keep optimistic state - it's now the source of truth
+        console.log("📦 API returned media_id:", result.media_id);
       } catch (error) {
         console.error("Error adding to reel deck:", error);
         setInReelDeck(false); // Revert on error

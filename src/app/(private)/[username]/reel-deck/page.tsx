@@ -189,7 +189,7 @@ export default async function ReelDeckPage({
         currentUserId={currentUserId}
       />
 
-      <div className="mt-14 lg:mt-20 mb-6">
+      <div className="mt-6 lg:mt-8 mb-6">
         {/* Page Header */}
         <section className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
@@ -203,11 +203,11 @@ export default async function ReelDeckPage({
             </div>
 
             {/* Type Filter */}
-            <TypeFilters
-              username={username}
-              filterType={filterType}
-              typeCounts={typeCounts}
-            />
+            {/*<TypeFilters*/}
+            {/*  username={username}*/}
+            {/*  filterType={filterType}*/}
+            {/*  typeCounts={typeCounts}*/}
+            {/*/>*/}
           </div>
         </section>
 
@@ -521,7 +521,7 @@ function renderEmptyState(
         profileId={urlProfile.id}
         currentUserId={currentUserId}
       />
-      <div className="mt-14 lg:mt-20 mb-6">
+      <div className="mt-6 lg:mt-8 mb-6">
         <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-8 text-center">
           <p className="text-neutral-400">
             {filterType
