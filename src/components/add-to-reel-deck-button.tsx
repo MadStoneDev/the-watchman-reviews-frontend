@@ -21,6 +21,7 @@ export default function AddToReelDeckButton({
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [inReelDeck, setInReelDeck] = useState(isInReelDeck);
+  const [foundInReelDeck, setFoundInReelDeck] = useState(isInReelDeck);
 
   const handleToggleReelDeck = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -54,10 +55,12 @@ export default function AddToReelDeckButton({
         if (error) throw error;
 
         toast.success("Removed from Reel Deck", { id: toastId });
+        setFoundInReelDeck(false)
 
         // ✅ Keep optimistic state - it's now the source of truth
       } catch (error) {
         console.error("Error removing from reel deck:", error);
+        setInReelDeck(true); // Revert on error
         setInReelDeck(true); // Revert on error
         toast.error("Failed to remove from Reel Deck", { id: toastId });
       } finally {
@@ -102,11 +105,13 @@ export default function AddToReelDeckButton({
         if (error) throw error;
 
         toast.success("Added to Reel Deck", { id: toastId });
+        setFoundInReelDeck(true)
 
         // ✅ Keep optimistic state - it's now the source of truth
       } catch (error) {
         console.error("Error adding to reel deck:", error);
         setInReelDeck(false); // Revert on error
+        setFoundInReelDeck(false); // Revert on error
         toast.error("Failed to add to Reel Deck", { id: toastId });
       } finally {
         setLoading(false);
@@ -119,7 +124,7 @@ export default function AddToReelDeckButton({
       onClick={handleToggleReelDeck}
       disabled={loading}
       className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
-        inReelDeck
+          foundInReelDeck
           ? "bg-lime-400 text-neutral-900 hover:bg-lime-500"
           : "bg-neutral-800 hover:bg-neutral-700"
       }`}
@@ -127,7 +132,7 @@ export default function AddToReelDeckButton({
       {loading ? (
         <>
           <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
-          <span>{inReelDeck ? "Removing..." : "Adding..."}</span>
+          <span>{foundInReelDeck ? "Removing..." : "Adding..."}</span>
         </>
       ) : (
         <>

@@ -1010,13 +1010,8 @@ export default function SeriesProgressTracker({
             {/* Episodes List */}
             <div
               className={`border-t border-neutral-800 px-4 space-y-2 transition-all duration-300 ease-in-out overflow-hidden ${
-                isOpen ? "py-4" : "max-h-0 py-0"
+                isOpen ? `py-4 max-h-fit md:max-h-[${season.episodes.length * 80 + 100}px]` : "max-h-0 py-0"
               }`}
-              style={{
-                maxHeight: isOpen
-                  ? `${season.episodes.length * 80 + 100}px`
-                  : "0px",
-              }}
             >
               {isLoading && (
                 <div className="flex items-center justify-center py-8 text-neutral-400">
