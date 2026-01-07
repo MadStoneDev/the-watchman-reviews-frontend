@@ -59,34 +59,27 @@ export async function handleAuth(formData: FormData): Promise<AuthResponse> {
     };
   }
 
-  // if (!recaptchaToken) {
-  //   return {
-  //     error: "Security check failed. Please refresh the page and try again.",
-  //     success: false,
-  //   };
-  // }
-
   try {
-    // if (process.env.RECAPTCHA_SECRET_KEY) {
-    //   // First check: reCAPTCHA verification
-    //   const isHuman = await verifyRecaptcha(recaptchaToken);
-    //
-    //   if (!isHuman) {
-    //     return {
-    //       error:
-    //         "🤖 Beep boop! Our robot detector thinks you might be a bot. Please try again.",
-    //       success: false,
-    //     };
-    //   }
-    // }
+    // Only verify reCAPTCHA if a token was provided (production mode)
+    if (recaptchaToken && process.env.RECAPTCHA_SECRET_KEY) {
+      const isHuman = await verifyRecaptcha(recaptchaToken);
 
-    // Second check: Rate limiting by email
+      if (!isHuman) {
+        return {
+          error:
+              "🤖 Beep boop! Our robot detector thinks you might be a bot. Please try again.",
+          success: false,
+        };
+      }
+    }
+
+    // Rate limiting by email
     const { success: rateLimiter } = await rateLimit.limit(email.toLowerCase());
 
     if (!rateLimiter) {
       return {
         error:
-          "Woah! You're faster than post-credit scenes in Marvel movies. Try again in a bit, please?",
+            "Woah! You're faster than post-credit scenes in Marvel movies. Try again in a bit, please?",
         success: false,
       };
     }
@@ -106,7 +99,7 @@ export async function handleAuth(formData: FormData): Promise<AuthResponse> {
       if (authError.message.includes("Invalid email")) {
         return {
           error:
-            "That email looks more fictional than Wakanda. Please enter a real email address!",
+              "That email looks more fictional than Wakanda. Please enter a real email address!",
           success: false,
         };
       }
@@ -114,14 +107,14 @@ export async function handleAuth(formData: FormData): Promise<AuthResponse> {
       if (authError.message.includes("rate limit")) {
         return {
           error:
-            "You're sending emails faster than John Wick reloads! Please wait a few minutes before trying again.",
+              "You're sending emails faster than John Wick reloads! Please wait a few minutes before trying again.",
           success: false,
         };
       }
 
       return {
         error:
-          "Plot twist! Something went wrong with our authentication system. Try again in a bit?",
+            "Plot twist! Something went wrong with our authentication system. Try again in a bit?",
         success: false,
       };
     }
@@ -153,25 +146,18 @@ export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
     };
   }
 
-  // if (process.env.RECAPTCHA_SECRET_KEY && !recaptchaToken) {
-  //   return {
-  //     error: "Security check failed. Please refresh the page and try again.",
-  //     success: false,
-  //   };
-  // }
-
   try {
-    // if (process.env.RECAPTCHA_SECRET_KEY) {
-    //   // Verify reCAPTCHA for OTP verification too
-    //   const isHuman = await verifyRecaptcha(recaptchaToken);
-    //
-    //   if (!isHuman) {
-    //     return {
-    //       error: "🤖 Security check failed. Please try again.",
-    //       success: false,
-    //     };
-    //   }
-    // }
+    // Only verify reCAPTCHA if a token was provided (production mode)
+    if (recaptchaToken && process.env.RECAPTCHA_SECRET_KEY) {
+      const isHuman = await verifyRecaptcha(recaptchaToken);
+
+      if (!isHuman) {
+        return {
+          error: "🤖 Security check failed. Please try again.",
+          success: false,
+        };
+      }
+    }
 
     const supabase = await createClient();
 
@@ -206,7 +192,6 @@ export async function verifyOtp(formData: FormData): Promise<AuthResponse> {
 
     revalidatePath("/");
 
-    // Redirect to user profile after successful verification
     return {
       error: null,
       success: true,

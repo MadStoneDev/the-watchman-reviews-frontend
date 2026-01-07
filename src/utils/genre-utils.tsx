@@ -134,12 +134,12 @@ export async function refreshGenres(
     }
 
     console.log(
-      `Refreshed ${upsertedGenres?.length || 0} ${mediaType} genres from TMDB`,
+      `Refreshed ${upsertedGenres?.length || 0} ${mediaType} genres`,
     );
 
     return upsertedGenres || [];
   } catch (error) {
-    console.error("Error refreshing genres from TMDB:", error);
+    console.error("Error refreshing genres:", error);
     throw error;
   }
 }
@@ -154,7 +154,7 @@ export async function ensureGenresRefreshed(
   const needsRefresh = await genresNeedRefresh(mediaType);
 
   if (needsRefresh) {
-    console.log(`Refreshing ${mediaType} genres from TMDB (5-month check)...`);
+    console.log(`Refreshing ${mediaType} genres (5-month check)...`);
     await refreshGenres(mediaType);
   }
 }

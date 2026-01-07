@@ -77,7 +77,7 @@ export async function GET(
 
     // Fetch from TMDB if not fully cached
     console.log(
-      `[Episodes API] Fetching season ${seasonNum} from TMDB (have ${actualCount}/${expectedCount})`,
+      `[Episodes API] Fetching season ${seasonNum} (have ${actualCount}/${expectedCount})`,
     );
 
     const tmdbUrl = `https://api.themoviedb.org/3/tv/${series.tmdb_id}/season/${seasonNum}?language=en-US`;
@@ -90,13 +90,33 @@ export async function GET(
       next: { revalidate: 3600 }, // Cache TMDB response for 1 hour
     });
 
+    // In route.ts, update the TMDB fetch section:
+
     if (!tmdbResponse.ok) {
       console.error(`[Episodes API] TMDB API error: ${tmdbResponse.status}`);
+
+      // If it's a 404, the season doesn't exist on TMDB
+      if (tmdbResponse.status === 404) {
+        console.warn(
+            `[Episodes API] Season ${seasonNum} not found on TMDB for series ${seriesId}`
+        );
+
+        // Return existing cached episodes if we have any
+        if (existingEpisodes && existingEpisodes.length > 0) {
+          return NextResponse.json(existingEpisodes);
+        }
+
+        // Otherwise return empty array with 404
+        return NextResponse.json(
+            { error: 'Season not found on TMDB', episodes: [] },
+            { status: 404 }
+        );
+      }
 
       // If TMDB fails but we have some cached episodes, return those
       if (existingEpisodes && existingEpisodes.length > 0) {
         console.log(
-          `[Episodes API] TMDB failed, returning ${actualCount} cached episodes`,
+            `[Episodes API] TMDB failed, returning ${actualCount} cached episodes`
         );
         return NextResponse.json(existingEpisodes);
       }

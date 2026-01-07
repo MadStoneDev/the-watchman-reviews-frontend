@@ -104,7 +104,7 @@ export default function AddMediaForm({
 
         if (shouldRefresh) {
           console.log(
-            `${mediaType} data is stale (>30 days), refreshing from TMDB...`,
+            `${mediaType} data is stale (>30 days), refreshing...`,
           );
 
           // Fetch updated data from TMDB
@@ -164,7 +164,7 @@ export default function AddMediaForm({
             console.log(`${mediaType} data refreshed successfully`);
           } else {
             console.warn(
-              `Failed to refresh ${mediaType} data from TMDB, using cached data`,
+              `Failed to refresh ${mediaType} data, using cached data`,
             );
           }
         } else {
@@ -185,7 +185,7 @@ export default function AddMediaForm({
         const tmdbResponse = await fetch(`${tmdbEndpoint}?language=en-US`);
 
         if (!tmdbResponse.ok) {
-          throw new Error(`Failed to fetch ${mediaType} details from TMDB`);
+          throw new Error(`Failed to fetch ${mediaType} details`);
         }
 
         const tmdbData = await tmdbResponse.json();

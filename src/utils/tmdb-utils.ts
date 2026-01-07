@@ -68,7 +68,7 @@ export async function ensureSeasonMetadata(
     existingSeasons.some((s) => needsRefresh(s.last_fetched));
 
   if (needsFetch) {
-    console.log(`   📡 Fetching season metadata from TMDB...`);
+    console.log(`   📡 Fetching season metadata...`);
     await ensureSeasonDataWithCounts(seriesId, tmdbId);
     console.log(`   ✅ Season metadata updated`);
   } else {
@@ -121,7 +121,7 @@ export async function loadSeasonEpisodes(
 
   // Fetch from TMDB
   console.log(
-    `   📡 Fetching from TMDB (have ${actualCount}/${expectedCount})...`,
+    `   📡 Fetching (have ${actualCount}/${expectedCount})...`,
   );
 
   try {
@@ -299,7 +299,7 @@ async function ensureSeasonDataWithCounts(
 ): Promise<void> {
   const supabase = await createClient();
 
-  console.log(`   🔄 Fetching season metadata from TMDB...`);
+  console.log(`   🔄 Fetching season metadata...`);
 
   try {
     const url = `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`;
