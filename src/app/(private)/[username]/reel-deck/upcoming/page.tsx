@@ -233,56 +233,56 @@ export default async function UpcomingPage({
         </div>
 
         {/* Sidebar Filters */}
-        <aside className="hidden lg:block w-64 flex-shrink-0">
-          <div className="sticky top-24 space-y-6">
-            {/* Sort Options */}
-            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">
-              <h3 className="font-semibold mb-4">Sort By</h3>
-              <div className="space-y-2">
-                <Link
-                  href={`/${username}/reel-deck/upcoming`}
-                  className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
-                    sortOption === "next-episode"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  Next Episode
-                </Link>
-                <Link
-                  href={`/${username}/reel-deck/upcoming?sort=title-asc`}
-                  className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
-                    sortOption === "title-asc"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  Title (A-Z)
-                </Link>
-                <Link
-                  href={`/${username}/reel-deck/upcoming?sort=title-desc`}
-                  className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
-                    sortOption === "title-desc"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  Title (Z-A)
-                </Link>
-                <Link
-                  href={`/${username}/reel-deck/upcoming?sort=rating`}
-                  className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
-                    sortOption === "rating"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  Highest Rated
-                </Link>
-              </div>
-            </div>
-          </div>
-        </aside>
+        {/*<aside className="hidden lg:block w-64 flex-shrink-0">*/}
+        {/*  <div className="sticky top-24 space-y-6">*/}
+        {/*    /!* Sort Options *!/*/}
+        {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
+        {/*      <h3 className="font-semibold mb-4">Sort By</h3>*/}
+        {/*      <div className="space-y-2">*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/upcoming`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
+        {/*            sortOption === "next-episode"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          Next Episode*/}
+        {/*        </Link>*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/upcoming?sort=title-asc`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
+        {/*            sortOption === "title-asc"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          Title (A-Z)*/}
+        {/*        </Link>*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/upcoming?sort=title-desc`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
+        {/*            sortOption === "title-desc"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          Title (Z-A)*/}
+        {/*        </Link>*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/upcoming?sort=rating`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
+        {/*            sortOption === "rating"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          Highest Rated*/}
+        {/*        </Link>*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*  </div>*/}
+        {/*</aside>*/}
       </div>
     </>
   );
