@@ -143,7 +143,7 @@ export async function updateCollectionPositions(
 
     const { data: collection } = await supabase
       .from("collections")
-      .select("creator_id, editors")
+      .select("owner")
       .eq("id", collectionId)
       .single();
 
@@ -154,22 +154,30 @@ export async function updateCollectionPositions(
       };
     }
 
-    const isCreator = collection.creator_id === user.id;
-    const isEditor = collection.editors?.includes(user.id);
+    const isOwner = collection.owner === user.id;
 
-    if (!isCreator && !isEditor) {
+    if (!isOwner) {
       return {
         success: false,
         error: "You don't have permission to edit this collection",
       };
     }
 
-    // Update positions
-    for (const item of mediaItems) {
-      await supabase
+    // Update positions in parallel for better performance
+    const updatePromises = mediaItems.map((item) =>
+      supabase
         .from("medias_collections")
         .update({ position: item.position })
-        .eq("id", item.collectionEntryId);
+        .eq("id", item.collectionEntryId)
+    );
+
+    const results = await Promise.all(updatePromises);
+
+    // Check for any errors
+    const errors = results.filter((result) => result.error);
+    if (errors.length > 0) {
+      console.error("Errors updating positions:", errors);
+      throw new Error(`Failed to update ${errors.length} item(s)`);
     }
 
     // Revalidate the collection page
@@ -210,7 +218,7 @@ export async function deleteFromCollection(
 
     const { data: collection } = await supabase
       .from("collections")
-      .select("creator_id, editors")
+      .select("owner")
       .eq("id", collectionId)
       .single();
 
@@ -221,10 +229,9 @@ export async function deleteFromCollection(
       };
     }
 
-    const isCreator = collection.creator_id === user.id;
-    const isEditor = collection.editors?.includes(user.id);
+    const isOwner = collection.owner === user.id;
 
-    if (!isCreator && !isEditor) {
+    if (!isOwner) {
       return {
         success: false,
         error: "You don't have permission to edit this collection",

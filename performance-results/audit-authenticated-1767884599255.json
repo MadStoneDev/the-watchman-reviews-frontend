@@ -1,0 +1,187 @@
+{
+  "timestamp": "2026-01-08T15:03:19.255Z",
+  "username": "localhost:3030",
+  "summary": {
+    "totalFlowsTested": 8,
+    "averageTotalTime": 3765,
+    "averageApiCalls": 2
+  },
+  "results": [
+    {
+      "flowName": "Settings Page",
+      "apiCalls": [
+        {
+          "url": "/_next/image?url=https%3A%2F%2Fsupabase.justreel.app%2Fstorage%2Fv1%2Fobject%2Fpublic%2Favatars%2F29",
+          "method": "GET"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 4389,
+      "serverResponseTime": 1380,
+      "renderTime": 145,
+      "resourceCount": 40,
+      "transferSize": 1348,
+      "timestamp": "2026-01-08T15:03:11.326Z",
+      "apiCallCount": 3,
+      "domInteractive": 1383
+    },
+    {
+      "flowName": "Reel Deck Upcoming",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 4062,
+      "serverResponseTime": 2448,
+      "renderTime": 64,
+      "resourceCount": 36,
+      "transferSize": 1309,
+      "timestamp": "2026-01-08T15:02:57.082Z",
+      "apiCallCount": 2,
+      "domInteractive": 2513
+    },
+    {
+      "flowName": "Reel Deck Dashboard",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 4056,
+      "serverResponseTime": 2426,
+      "renderTime": 64,
+      "resourceCount": 39,
+      "transferSize": 1344,
+      "timestamp": "2026-01-08T15:02:49.118Z",
+      "apiCallCount": 3,
+      "domInteractive": 2490
+    },
+    {
+      "flowName": "Reel Deck Completed",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 3910,
+      "serverResponseTime": 2307,
+      "renderTime": 53,
+      "resourceCount": 39,
+      "transferSize": 1344,
+      "timestamp": "2026-01-08T15:03:01.146Z",
+      "apiCallCount": 2,
+      "domInteractive": 2361
+    },
+    {
+      "flowName": "Reel Deck Next Up",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 3903,
+      "serverResponseTime": 2299,
+      "renderTime": 60,
+      "resourceCount": 36,
+      "transferSize": 1309,
+      "timestamp": "2026-01-08T15:02:53.177Z",
+      "apiCallCount": 2,
+      "domInteractive": 2360
+    },
+    {
+      "flowName": "User Collections Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 3658,
+      "serverResponseTime": 1956,
+      "renderTime": 136,
+      "resourceCount": 38,
+      "transferSize": 1316,
+      "timestamp": "2026-01-08T15:03:05.058Z",
+      "apiCallCount": 2,
+      "domInteractive": 1959
+    },
+    {
+      "flowName": "Notifications Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 3535,
+      "serverResponseTime": 1835,
+      "renderTime": 126,
+      "resourceCount": 38,
+      "transferSize": 1311,
+      "timestamp": "2026-01-08T15:03:15.717Z",
+      "apiCallCount": 2,
+      "domInteractive": 1839
+    },
+    {
+      "flowName": "User Profile Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 2606,
+      "serverResponseTime": 834,
+      "renderTime": 166,
+      "resourceCount": 44,
+      "transferSize": 1604,
+      "timestamp": "2026-01-08T15:03:08.718Z",
+      "apiCallCount": 2,
+      "domInteractive": 837
+    }
+  ]
+}

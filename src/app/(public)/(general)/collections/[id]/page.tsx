@@ -20,22 +20,22 @@ const fetchCollection = async (id: string) => {
   return collection;
 };
 
-// ✅ OPTIMIZED: Fetch media items in parallel
+// ✅ OPTIMIZED: Single query with conditional logic
 const fetchInitialMedia = async (id: string) => {
-  console.time("📊 fetchInitialMedia");
   const supabase = await createClient();
 
+  // Get entries with position info
   const { data: mediaEntries } = await supabase
     .from("medias_collections")
-    .select("*")
+    .select("id, media_id, media_type, position")
     .eq("collection_id", id)
     .order("position", { ascending: true });
 
   if (!mediaEntries || mediaEntries.length === 0) {
-    console.timeEnd("📊 fetchInitialMedia");
     return [];
   }
 
+  // Separate and fetch in parallel
   const movieIds = mediaEntries
     .filter((item) => item.media_type === "movie")
     .map((item) => item.media_id);
@@ -43,24 +43,34 @@ const fetchInitialMedia = async (id: string) => {
     .filter((item) => item.media_type === "tv")
     .map((item) => item.media_id);
 
-  // ✅ Fetch movies and series in PARALLEL
   const [moviesResult, seriesResult] = await Promise.all([
     movieIds.length > 0
-      ? supabase.from("movies").select("*").in("id", movieIds)
+      ? supabase
+          .from("movies")
+          .select("id, title, overview, poster_path, backdrop_path, tmdb_id, release_year")
+          .in("id", movieIds)
       : Promise.resolve({ data: null }),
     seriesIds.length > 0
-      ? supabase.from("series").select("*").in("id", seriesIds)
+      ? supabase
+          .from("series")
+          .select("id, title, overview, poster_path, backdrop_path, tmdb_id, release_year")
+          .in("id", seriesIds)
       : Promise.resolve({ data: null }),
   ]);
 
-  const mediaItems: MediaItem[] = [];
+  // Create lookup maps for O(1) access
+  const movieMap = new Map(
+    moviesResult.data?.map((m) => [m.id, m]) || []
+  );
+  const seriesMap = new Map(
+    seriesResult.data?.map((s) => [s.id, s]) || []
+  );
 
-  // Process movies
-  if (moviesResult.data) {
-    const movieItems: MediaItem[] = moviesResult.data.map((movie) => {
-      const entry = mediaEntries.find(
-        (e) => e.media_id === movie.id && e.media_type === "movie",
-      );
+  // Build media items in order
+  const mediaItems: MediaItem[] = mediaEntries.map((entry) => {
+    if (entry.media_type === "movie") {
+      const movie = movieMap.get(entry.media_id);
+      if (!movie) return null;
 
       return {
         id: movie.id,
@@ -71,21 +81,13 @@ const fetchInitialMedia = async (id: string) => {
         tmdbId: movie.tmdb_id,
         mediaType: "movie" as const,
         releaseYear: movie.release_year,
-        collectionEntryId: entry?.id,
+        collectionEntryId: entry.id,
         mediaId: movie.id,
-        position: entry?.position ?? 0,
+        position: entry.position ?? 0,
       };
-    });
-
-    mediaItems.push(...movieItems);
-  }
-
-  // Process series
-  if (seriesResult.data) {
-    const seriesItems: MediaItem[] = seriesResult.data.map((series) => {
-      const entry = mediaEntries.find(
-        (e) => e.media_id === series.id && e.media_type === "tv",
-      );
+    } else {
+      const series = seriesMap.get(entry.media_id);
+      if (!series) return null;
 
       return {
         id: series.id,
@@ -96,22 +98,14 @@ const fetchInitialMedia = async (id: string) => {
         tmdbId: series.tmdb_id,
         mediaType: "tv" as const,
         releaseYear: series.release_year,
-        collectionEntryId: entry?.id,
+        collectionEntryId: entry.id,
         mediaId: series.id,
-        position: entry?.position ?? 0,
+        position: entry.position ?? 0,
       };
-    });
+    }
+  }).filter((item): item is MediaItem => item !== null);
 
-    mediaItems.push(...seriesItems);
-  }
-
-  // Sort by position
-  const sortedMediaItems = mediaItems.sort(
-    (a, b) => (a.position ?? 0) - (b.position ?? 0),
-  );
-
-  console.timeEnd("📊 fetchInitialMedia");
-  return sortedMediaItems;
+  return mediaItems;
 };
 
 export async function generateMetadata({
@@ -140,8 +134,6 @@ export default async function CollectionPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  console.time("🎬 Collection Page Load");
-
   const { id } = await params;
   const supabase = await createClient();
 
@@ -226,8 +218,6 @@ export default async function CollectionPage({
       </div>
     );
   }
-
-  console.timeEnd("🎬 Collection Page Load");
 
   return (
     <>

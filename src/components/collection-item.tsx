@@ -376,12 +376,12 @@ export default function CollectionItem({
             isHovered ? "opacity-100" : "lg:opacity-0"
           }`}
         >
-          <div className="flex justify-between items-center gap-2 mb-2 z-30">
+          <div className="flex items-center gap-2 mb-2 z-30">
             {/* Watch Toggle */}
             <button
               onClick={handleWatchToggle}
               disabled={isUpdatingWatch}
-              className={`py-2 px-2 lg:px-3 rounded-lg transition-colors ${
+              className={`flex-grow py-2 px-2 lg:px-3 rounded-lg transition-colors flex items-center justify-center ${
                 isWatched
                   ? "bg-lime-500 text-neutral-900 hover:bg-lime-400"
                   : "bg-neutral-700/80 text-neutral-200 hover:bg-neutral-700"
@@ -391,12 +391,12 @@ export default function CollectionItem({
               {isWatched ? (
                 <IconSquareX
                   size={18}
-                  className="mx-auto scale-90 lg:scale-100"
+                  className="scale-90 lg:scale-100"
                 />
               ) : (
                 <IconSquareCheck
                   size={18}
-                  className="mx-auto scale-90 lg:scale-100"
+                  className="scale-90 lg:scale-100"
                 />
               )}
             </button>
@@ -406,7 +406,7 @@ export default function CollectionItem({
               <button
                 onClick={handleWatchAllToggle}
                 disabled={isUpdatingWatch}
-                className={`py-2 px-2 lg:px-3 rounded-lg transition-colors ${
+                className={`flex-grow py-2 px-2 lg:px-3 rounded-lg transition-colors flex items-center justify-center ${
                   isWatchedByAll
                     ? "bg-lime-500 text-neutral-900 hover:bg-lime-400"
                     : "bg-neutral-700/80 text-neutral-200 hover:bg-neutral-700"
@@ -416,12 +416,12 @@ export default function CollectionItem({
                 {isWatchedByAll ? (
                   <IconCopyX
                     size={18}
-                    className="mx-auto scale-90 lg:scale-100"
+                    className="scale-90 lg:scale-100"
                   />
                 ) : (
                   <IconCopyCheck
                     size={18}
-                    className="mx-auto scale-90 lg:scale-100"
+                    className="scale-90 lg:scale-100"
                   />
                 )}
               </button>
@@ -431,12 +431,12 @@ export default function CollectionItem({
             {isOwner && (
               <button
                 onClick={onDelete}
-                className="py-2 px-2 lg:px-3 bg-red-600/80 text-neutral-50 hover:bg-red-600 rounded-lg transition-colors"
+                className="flex-grow py-2 px-2 lg:px-3 bg-red-600/80 text-neutral-50 hover:bg-red-600 rounded-lg transition-colors flex items-center justify-center"
                 title="Remove from collection"
               >
                 <IconTrash
                   size={18}
-                  className="mx-auto scale-90 lg:scale-100"
+                  className="scale-90 lg:scale-100"
                 />
               </button>
             )}

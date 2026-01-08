@@ -388,38 +388,169 @@ The main performance issue is **server-side rendering**, not database queries:
 
 ---
 
-## Testing Gaps: Authenticated Flows
+## Authenticated Flows Performance Results ✅
 
-The following flows require authenticated access and could not be automatically tested:
+**Testing Date:** January 9, 2026
+**Authentication Method:** Automated OTP entry via Playwright
+**Test User:** KingArthur
+**Total Flows Tested:** 8 authenticated flows
 
-### User Profile Flows
-- **User profile page** (`/[username]`)
-- **Settings page** (`/settings`)
-- **Notifications page** (`/[username]/notifications`)
+### 🟡 HIGH PRIORITY - Authenticated Flows Performance
 
-### Reel Deck Flows (Main Feature)
-- **Reel Deck dashboard** (`/[username]/reel-deck`)
-- **Next Up section** (`/[username]/reel-deck/next-up`)
-- **Upcoming section** (`/[username]/reel-deck/upcoming`)
-- **Completed section** (`/[username]/reel-deck/completed`)
-- **Series detail in Reel Deck** (`/[username]/reel-deck/series/[seriesId]`)
+#### 1. Settings Page - 4,389ms
+- **Total Time:** 4,389ms
+- **Server Response:** 1,380ms
+- **Render Time:** 145ms
+- **DOM Interactive:** 1,383ms
+- **API Calls:** 3 (1 avatar image + 2 Sentry)
+- **Data Transfer:** 1,348KB
 
-### Operations to Test
-- Toggle episode watch status
+**Issue:** Slowest authenticated page. Settings page is taking longer than most other authenticated routes.
+
+**Recommendations:**
+1. Lazy load avatar images
+2. Defer non-critical settings sections
+3. Implement client-side caching for settings data
+
+---
+
+#### 2. Reel Deck Upcoming - 4,062ms
+- **Total Time:** 4,062ms
+- **Server Response:** 2,448ms
+- **Render Time:** 64ms
+- **DOM Interactive:** 2,513ms
+- **API Calls:** 2 (Sentry only)
+- **Data Transfer:** 1,309KB
+
+**Issue:** High server response time (2.4s) suggests complex database queries or large dataset.
+
+**Recommendations:**
+1. Add pagination or virtual scrolling for large lists
+2. Optimize database queries for upcoming episodes
+3. Consider implementing ISR with 1-hour revalidation
+
+---
+
+#### 3. Reel Deck Dashboard - 4,056ms
+- **Total Time:** 4,056ms
+- **Server Response:** 2,426ms
+- **Render Time:** 64ms
+- **DOM Interactive:** 2,490ms
+- **API Calls:** 3 (Sentry only)
+- **Data Transfer:** 1,344KB
+
+**Issue:** Dashboard is slow with 2.4s server response. This is the main landing page after login.
+
+**Recommendations:**
+1. Implement streaming SSR with Suspense
+2. Load "Next Up" section first, defer others
+3. Add skeleton loading states
+4. Consider client-side caching for dashboard data (5 min TTL)
+
+---
+
+#### 4. Reel Deck Completed - 3,910ms
+- **Total Time:** 3,910ms
+- **Server Response:** 2,307ms
+- **Render Time:** 53ms
+- **API Calls:** 2 (Sentry only)
+- **Data Transfer:** 1,344KB
+
+**Recommendations:**
+1. Similar to Upcoming section - add pagination
+2. Consider infinite scroll for completed items
+3. Lazy load poster images
+
+---
+
+#### 5. Reel Deck Next Up - 3,903ms
+- **Total Time:** 3,903ms
+- **Server Response:** 2,299ms
+- **Render Time:** 60ms
+- **DOM Interactive:** 2,360ms
+- **API Calls:** 2 (Sentry only)
+- **Data Transfer:** 1,309KB
+
+**Recommendations:**
+1. This is the most critical section - should be < 1.5s
+2. Implement aggressive caching strategy
+3. Preload this data during login flow
+
+---
+
+### 🟢 GOOD PERFORMANCE - Authenticated Flows
+
+#### 6. User Collections Page - 3,658ms
+- **Total Time:** 3,658ms
+- **Server Response:** 1,956ms
+- **Render Time:** 136ms
+- **API Calls:** 2 (Sentry only)
+- **Data Transfer:** 1,316KB
+
+**Note:** Good performance for collections page. Render time is reasonable.
+
+---
+
+#### 7. Notifications Page - 3,535ms
+- **Total Time:** 3,535ms
+- **Server Response:** 1,835ms
+- **Render Time:** 126ms
+- **DOM Interactive:** 1,839ms
+- **API Calls:** 2 (Sentry only)
+- **Data Transfer:** 1,311KB
+
+**Note:** Good performance. Notifications load reasonably fast.
+
+---
+
+#### 8. User Profile Page - 2,606ms ⭐
+- **Total Time:** 2,606ms
+- **Server Response:** 834ms
+- **Render Time:** 166ms
+- **DOM Interactive:** 837ms
+- **API Calls:** 2 (Sentry only)
+- **Data Transfer:** 1,604KB
+
+**Note:** Best performing authenticated page! Profile page is fast with < 1s server response.
+
+---
+
+### Authenticated Flows Summary
+
+**Average Authenticated Page Load:** 3,765ms (3.8 seconds)
+**Fastest Authenticated Page:** User Profile (2.6s)
+**Slowest Authenticated Page:** Settings (4.4s)
+
+**Key Findings:**
+- All authenticated pages use SSR (no client-side API calls observed)
+- Reel Deck pages have consistently high server response times (2.3-2.4s)
+- Settings page is notably slower than other pages
+- Transfer sizes are consistent (~1.3-1.6MB per page)
+- Only Sentry and image loading make external requests
+
+**Overall Assessment:**
+Authenticated flows are performing reasonably well but have room for optimization. The main bottleneck is server-side rendering time (2-2.5s for Reel Deck pages). Target should be < 2s for all authenticated pages.
+
+---
+
+### Still Not Tested (Requires Manual Testing)
+
+The following interactions could not be automated and require manual testing:
+
+**Interactive Operations:**
+- Toggle episode watch status (client-side mutation)
 - Reset season progress
 - Reset series progress
 - Remove from Reel Deck
-- Episode loading performance (progressive loading)
-
-### Collections Management Flows
-- **User collections page** (`/[username]/collections`)
 - Create new collection
 - Add/remove media from collections
 - Drag-and-drop reordering performance
 - Share collection with other users
 
-### Recommendation
-Manual testing or authenticated automation should be performed for these critical user flows, as they represent the core functionality of JustReel.
+**Recommendation:** Manual performance testing for these interactive operations to measure:
+- API response times
+- Optimistic UI updates
+- Error handling performance
 
 ---
 

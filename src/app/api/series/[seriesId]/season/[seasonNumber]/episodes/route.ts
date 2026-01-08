@@ -18,6 +18,7 @@ export async function GET(
 
     // Validate season number
     if (isNaN(seasonNum) || seasonNum < 0) {
+      console.error(`[Episodes API] Invalid season number: ${seasonNumber}`);
       return NextResponse.json(
         { error: "Invalid season number" },
         { status: 400 },
@@ -64,10 +65,6 @@ export async function GET(
 
     // If we have all episodes cached, return them
     if (expectedCount > 0 && actualCount >= expectedCount && existingEpisodes) {
-      console.log(
-        `[Episodes API] Returning ${actualCount} cached episodes for season ${seasonNum}`,
-      );
-
       return NextResponse.json(existingEpisodes, {
         headers: {
           "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=1800",
@@ -76,10 +73,6 @@ export async function GET(
     }
 
     // Fetch from TMDB if not fully cached
-    console.log(
-      `[Episodes API] Fetching season ${seasonNum} (have ${actualCount}/${expectedCount})`,
-    );
-
     const tmdbUrl = `https://api.themoviedb.org/3/tv/${series.tmdb_id}/season/${seasonNum}?language=en-US`;
 
     const tmdbResponse = await fetch(tmdbUrl, {
@@ -115,9 +108,6 @@ export async function GET(
 
       // If TMDB fails but we have some cached episodes, return those
       if (existingEpisodes && existingEpisodes.length > 0) {
-        console.log(
-            `[Episodes API] TMDB failed, returning ${actualCount} cached episodes`
-        );
         return NextResponse.json(existingEpisodes);
       }
 
@@ -173,12 +163,6 @@ export async function GET(
         })),
       );
     }
-
-    console.log(
-      `[Episodes API] Successfully upserted ${
-        upsertedEpisodes?.length || 0
-      } episodes`,
-    );
 
     return NextResponse.json(upsertedEpisodes || [], {
       headers: {

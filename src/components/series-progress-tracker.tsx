@@ -415,8 +415,6 @@ export default function SeriesProgressTracker({
 
         const episodes = await response.json();
         const today = new Date().toISOString().split("T")[0];
-        
-        console.log(episodes)
 
         const transformedEpisodes = episodes
           .map((ep: any) => ({

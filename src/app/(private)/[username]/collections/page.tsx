@@ -4,12 +4,15 @@ import BrowseNavigation from "@/src/components/browse-navigation";
 import UserCollections from "@/src/components/user-collections-block";
 import { MediaCollection } from "@/src/lib/types";
 
+// ISR: Revalidate every 5 minutes for cached performance
+export const revalidate = 300;
+
 export default async function UserCollectionsPage({
   params,
 }: {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }) {
-  const { username } = params;
+  const { username } = await params;
 
   // Supabase
   const supabase = await createClient();
@@ -18,30 +21,32 @@ export default async function UserCollectionsPage({
   const { data: user } = await supabase.auth.getClaims();
   const currentUserId = user?.claims.sub || null;
 
-  // Get profile for the username in the URL
-  const { data: urlProfile } = await supabase
-    .from("profiles")
-    .select()
-    .eq("username", username)
-    .single();
+  // OPTIMIZATION: Parallel profile queries - fetch both profiles at once
+  const [urlProfileResult, currentProfileResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, username")
+      .eq("username", username)
+      .single(),
+    user && currentUserId
+      ? supabase
+          .from("profiles")
+          .select("id, username")
+          .eq("id", currentUserId)
+          .single()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
 
+  const urlProfile = urlProfileResult.data;
   if (!urlProfile) {
     return <div>User not found</div>;
   }
 
   // Check if this is the current user's profile
   const isCurrentUser = currentUserId === urlProfile?.id;
-  let currentUserProfile = isCurrentUser ? urlProfile : null;
-
-  if (user && !isCurrentUser) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select()
-      .eq("id", currentUserId)
-      .single();
-
-    currentUserProfile = profile;
-  }
+  const currentUserProfile = isCurrentUser
+    ? urlProfile
+    : currentProfileResult.data;
 
   // ✅ SERVER-SIDE: Fetch all collections data
   const collectionsData = await fetchAllCollections(
@@ -85,150 +90,126 @@ export default async function UserCollectionsPage({
   );
 }
 
-// ✅ SERVER-SIDE: Helper function to fetch all collections
+// ✅ OPTIMIZED: Helper function to fetch all collections
 async function fetchAllCollections(
   supabase: any,
   userId: string,
   currentUserId: string | null,
   isCurrentUser: boolean,
 ): Promise<MediaCollection[]> {
-  console.time("🎬 Total Collections Fetch (Server)");
-
   let allCollections: MediaCollection[] = [];
 
-  // 1. Owned Collections
-  console.time("📦 Owned Collections Query");
-  const ownedQuery = isCurrentUser
-    ? supabase.from("collections").select("*").eq("owner", userId)
-    : supabase
-        .from("collections")
-        .select("*")
-        .eq("owner", userId)
-        .eq("is_public", true);
+  // OPTIMIZATION: Fetch owned and shared collections in parallel
+  const [ownedResult, sharedResult] = await Promise.all([
+    // 1. Owned Collections
+    isCurrentUser
+      ? supabase
+          .from("collections")
+          .select("id, title, owner, is_public")
+          .eq("owner", userId)
+      : supabase
+          .from("collections")
+          .select("id, title, owner, is_public")
+          .eq("owner", userId)
+          .eq("is_public", true),
 
-  const { data: ownedCollections } = await ownedQuery;
-  console.timeEnd("📦 Owned Collections Query");
-  console.log("📦 Found collections:", ownedCollections?.length || 0);
+    // 2. Shared Collections (only for current user) - OPTIMIZATION: Use JOIN
+    isCurrentUser && currentUserId
+      ? supabase
+          .from("shared_collection")
+          .select(
+            `
+            collection_id,
+            collections!inner (
+              id,
+              title,
+              owner,
+              is_public
+            )
+          `,
+          )
+          .eq("user_id", currentUserId)
+      : Promise.resolve({ data: [] }),
+  ]);
 
-  if (ownedCollections && ownedCollections.length > 0) {
-    const ownedCollectionIds = ownedCollections.map((c: any) => c.id);
+  const ownedCollections = ownedResult.data || [];
+  const sharedCollections = sharedResult.data || [];
 
-    console.time("🖼️ Owned Collection Posters");
-    const { posterMap, countMap } = await fetchCollectionPosters(
-      supabase,
-      ownedCollectionIds,
-    );
-    console.timeEnd("🖼️ Owned Collection Posters");
+  // Get all collection IDs for fetching summaries
+  const ownedIds = ownedCollections.map((c: any) => c.id);
+  const sharedIds = sharedCollections.map((s: any) => s.collection_id);
+  const allIds = [...ownedIds, ...sharedIds];
 
-    allCollections = ownedCollections.map((collection: any) => ({
+  if (allIds.length === 0) {
+    return [];
+  }
+
+  // OPTIMIZATION: Use collection_summaries view instead of fetching all media items
+  const { data: summaries } = await supabase
+    .from("collection_summaries")
+    .select("*")
+    .in("collection_id", allIds);
+
+  // Create maps for fast lookup
+  const summaryMap = new Map(
+    (summaries || []).map((s: any) => [s.collection_id, s]),
+  );
+
+  // Map owned collections
+  allCollections = ownedCollections.map((collection: any) => {
+    const summary = summaryMap.get(collection.id);
+    return {
       id: collection.id,
       title: collection.title || "Untitled Collection",
       owner: collection.owner,
       is_public: collection.is_public,
       shared: false,
-      backdrop_path: posterMap.get(collection.id) || null,
-      item_count: countMap.get(collection.id) || 0,
-    }));
-  }
+      backdrop_path: summary?.first_media_type
+        ? null // Will be fetched below
+        : null,
+      item_count: summary?.item_count || 0,
+      _firstMediaId: summary?.first_media_id,
+      _firstMediaType: summary?.first_media_type,
+    };
+  });
 
-  // 2. Shared Collections (only for current user)
-  if (isCurrentUser && currentUserId) {
-    console.time("🤝 Shared Collections Query");
+  // Map shared collections - OPTIMIZATION: Already have collection data from JOIN
+  const sharedCollectionsData = sharedCollections.map((item: any) => {
+    const collection = item.collections;
+    const summary = summaryMap.get(item.collection_id);
+    return {
+      id: collection.id,
+      title: collection.title || "Untitled Shared Collection",
+      owner: collection.owner,
+      is_public: collection.is_public,
+      shared: true,
+      backdrop_path: summary?.first_media_type ? null : null,
+      item_count: summary?.item_count || 0,
+      _firstMediaId: summary?.first_media_id,
+      _firstMediaType: summary?.first_media_type,
+    };
+  });
 
-    const { data: sharedData } = await supabase
-      .from("shared_collection")
-      .select("collection_id")
-      .eq("user_id", currentUserId);
+  allCollections = [...allCollections, ...sharedCollectionsData];
 
-    console.timeEnd("🤝 Shared Collections Query");
-    console.log("🤝 Found shared collections:", sharedData?.length || 0);
+  // OPTIMIZATION: Fetch backdrops only for first media items
+  const posterMap = await fetchFirstPosters(supabase, allCollections);
 
-    const sharedCollectionIds =
-      sharedData?.map((item: any) => item.collection_id) || [];
-
-    if (sharedCollectionIds.length > 0) {
-      console.time("🤝 Shared Collections Details");
-
-      const { data: sharedCollections } = await supabase
-        .from("collections")
-        .select("*")
-        .in("id", sharedCollectionIds);
-
-      console.timeEnd("🤝 Shared Collections Details");
-
-      if (sharedCollections && sharedCollections.length > 0) {
-        console.time("🖼️ Shared Collection Posters");
-        const { posterMap, countMap } = await fetchCollectionPosters(
-          supabase,
-          sharedCollectionIds,
-        );
-        console.timeEnd("🖼️ Shared Collection Posters");
-
-        const sharedCollectionsData = sharedCollections.map(
-          (collection: any) => ({
-            id: collection.id,
-            title: collection.title || "Untitled Shared Collection",
-            owner: collection.owner,
-            is_public: collection.is_public,
-            shared: true,
-            backdrop_path: posterMap.get(collection.id) || null,
-            item_count: countMap.get(collection.id) || 0,
-          }),
-        );
-
-        allCollections = [...allCollections, ...sharedCollectionsData];
-      }
-    }
-  }
-
-  console.timeEnd("🎬 Total Collections Fetch (Server)");
-  return allCollections;
+  // Add backdrops to collections
+  return allCollections.map((col) => ({
+    ...col,
+    backdrop_path: posterMap.get(col.id) || null,
+  }));
 }
 
-// ✅ SERVER-SIDE: Fetch collection posters
-async function fetchCollectionPosters(
+// ✅ OPTIMIZED: Fetch only first poster for each collection
+async function fetchFirstPosters(
   supabase: any,
-  collectionIds: string[],
-): Promise<{
-  posterMap: Map<string, string>;
-  countMap: Map<string, number>;
-}> {
-  console.time("  ⏱️ fetchCollectionPosters");
+  collections: any[],
+): Promise<Map<string, string>> {
+  const posterMap = new Map<string, string>();
 
-  if (collectionIds.length === 0) {
-    console.timeEnd("  ⏱️ fetchCollectionPosters");
-    return { posterMap: new Map(), countMap: new Map() };
-  }
-
-  // Get all media items
-  console.time("  📊 Media Items Query");
-  const { data: mediaItems } = await supabase
-    .from("medias_collections")
-    .select("collection_id, media_id, media_type, position")
-    .in("collection_id", collectionIds)
-    .order("position", { ascending: true });
-
-  console.timeEnd("  📊 Media Items Query");
-  console.log("  📊 Media items found:", mediaItems?.length || 0);
-
-  // Count items per collection
-  const countMap = new Map<string, number>();
-  collectionIds.forEach((id) => countMap.set(id, 0));
-
-  mediaItems?.forEach((item: any) => {
-    const currentCount = countMap.get(item.collection_id) || 0;
-    countMap.set(item.collection_id, currentCount + 1);
-  });
-
-  // Get first media item per collection
-  const firstMediaPerCollection = new Map<string, (typeof mediaItems)[0]>();
-  mediaItems?.forEach((item: any) => {
-    if (!firstMediaPerCollection.has(item.collection_id)) {
-      firstMediaPerCollection.set(item.collection_id, item);
-    }
-  });
-
-  // Separate by type
+  // Separate by media type
   const movieIds: string[] = [];
   const seriesIds: string[] = [];
   const mediaTypeMap = new Map<
@@ -236,52 +217,54 @@ async function fetchCollectionPosters(
     { collectionId: string; type: string }
   >();
 
-  firstMediaPerCollection.forEach((item, collectionId) => {
-    if (item.media_type === "movie") {
-      movieIds.push(item.media_id);
-      mediaTypeMap.set(item.media_id, { collectionId, type: "movie" });
-    } else if (item.media_type === "tv") {
-      seriesIds.push(item.media_id);
-      mediaTypeMap.set(item.media_id, { collectionId, type: "tv" });
+  collections.forEach((col) => {
+    if (!col._firstMediaId || !col._firstMediaType) return;
+
+    if (col._firstMediaType === "movie") {
+      movieIds.push(col._firstMediaId);
+      mediaTypeMap.set(col._firstMediaId, {
+        collectionId: col.id,
+        type: "movie",
+      });
+    } else if (col._firstMediaType === "tv") {
+      seriesIds.push(col._firstMediaId);
+      mediaTypeMap.set(col._firstMediaId, {
+        collectionId: col.id,
+        type: "tv",
+      });
     }
   });
 
-  const posterMap = new Map<string, string>();
+  // OPTIMIZATION: Fetch movie and series backdrops in parallel
+  const [moviesResult, seriesResult] = await Promise.all([
+    movieIds.length > 0
+      ? supabase
+          .from("movies")
+          .select("id, backdrop_path")
+          .in("id", movieIds)
+      : Promise.resolve({ data: [] }),
+    seriesIds.length > 0
+      ? supabase
+          .from("series")
+          .select("id, backdrop_path")
+          .in("id", seriesIds)
+      : Promise.resolve({ data: [] }),
+  ]);
 
-  // Fetch movie backdrops
-  if (movieIds.length > 0) {
-    console.time("  🎬 Movies Query");
-    const { data: movies } = await supabase
-      .from("movies")
-      .select("id, backdrop_path")
-      .in("id", movieIds);
-    console.timeEnd("  🎬 Movies Query");
+  // Map backdrops to collections
+  moviesResult.data?.forEach((movie: any) => {
+    const mediaInfo = mediaTypeMap.get(movie.id);
+    if (mediaInfo && movie.backdrop_path) {
+      posterMap.set(mediaInfo.collectionId, movie.backdrop_path);
+    }
+  });
 
-    movies?.forEach((movie: any) => {
-      const mediaInfo = mediaTypeMap.get(movie.id);
-      if (mediaInfo && movie.backdrop_path) {
-        posterMap.set(mediaInfo.collectionId, movie.backdrop_path);
-      }
-    });
-  }
+  seriesResult.data?.forEach((show: any) => {
+    const mediaInfo = mediaTypeMap.get(show.id);
+    if (mediaInfo && show.backdrop_path) {
+      posterMap.set(mediaInfo.collectionId, show.backdrop_path);
+    }
+  });
 
-  // Fetch series backdrops
-  if (seriesIds.length > 0) {
-    console.time("  📺 Series Query");
-    const { data: series } = await supabase
-      .from("series")
-      .select("id, backdrop_path")
-      .in("id", seriesIds);
-    console.timeEnd("  📺 Series Query");
-
-    series?.forEach((show: any) => {
-      const mediaInfo = mediaTypeMap.get(show.id);
-      if (mediaInfo && show.backdrop_path) {
-        posterMap.set(mediaInfo.collectionId, show.backdrop_path);
-      }
-    });
-  }
-
-  console.timeEnd("  ⏱️ fetchCollectionPosters");
-  return { posterMap, countMap };
+  return posterMap;
 }

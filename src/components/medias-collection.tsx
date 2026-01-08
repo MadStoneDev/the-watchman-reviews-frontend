@@ -6,6 +6,7 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -57,6 +58,12 @@ export default function MediasCollection({
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8, // Helps distinguish between click and drag
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250, // 250ms hold before drag starts on mobile
+        tolerance: 5, // Allow 5px movement during the delay
       },
     }),
   );
