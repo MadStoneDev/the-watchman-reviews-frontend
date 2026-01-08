@@ -41,7 +41,7 @@ export async function updateSession(request: NextRequest) {
   const publicRoutes = [
     "/",
     "/browse",
-    "about",
+    "/about",
     "/collections",
     "/how-it-works",
     "/search",
@@ -50,6 +50,7 @@ export async function updateSession(request: NextRequest) {
     "/email-templates",
     "/movies",
     "/series",
+    "/api",
   ];
 
   const isPublicRoute = publicRoutes.some(
