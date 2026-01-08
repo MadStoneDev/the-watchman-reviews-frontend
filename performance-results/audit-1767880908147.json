@@ -1,0 +1,172 @@
+{
+  "timestamp": "2026-01-08T14:01:48.147Z",
+  "summary": {
+    "totalFlowsTested": 8,
+    "averageTotalTime": 2161,
+    "averageApiCalls": 2
+  },
+  "results": [
+    {
+      "flowName": "Public Collection View",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 5892,
+      "serverResponseTime": 1221,
+      "renderTime": 1077,
+      "resourceCount": 37,
+      "transferSize": 1242,
+      "timestamp": "2026-01-08T14:01:39.843Z",
+      "apiCallCount": 2,
+      "domInteractive": 3287
+    },
+    {
+      "flowName": "Browse Movies Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 2792,
+      "serverResponseTime": 1063,
+      "renderTime": 147,
+      "resourceCount": 38,
+      "transferSize": 1311,
+      "timestamp": "2026-01-08T14:01:26.744Z",
+      "apiCallCount": 3,
+      "domInteractive": 1072
+    },
+    {
+      "flowName": "Browse New Releases",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 2590,
+      "serverResponseTime": 871,
+      "renderTime": 141,
+      "resourceCount": 38,
+      "transferSize": 1311,
+      "timestamp": "2026-01-08T14:01:32.008Z",
+      "apiCallCount": 2,
+      "domInteractive": 876
+    },
+    {
+      "flowName": "Browse Series Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 2465,
+      "serverResponseTime": 767,
+      "renderTime": 113,
+      "resourceCount": 38,
+      "transferSize": 1311,
+      "timestamp": "2026-01-08T14:01:29.538Z",
+      "apiCallCount": 2,
+      "domInteractive": 769
+    },
+    {
+      "flowName": "About Page Load",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 1475,
+      "serverResponseTime": 765,
+      "renderTime": 149,
+      "resourceCount": 35,
+      "transferSize": 1309,
+      "timestamp": "2026-01-08T14:01:46.669Z",
+      "apiCallCount": 3,
+      "domInteractive": 775
+    },
+    {
+      "flowName": "Homepage Load",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 1148,
+      "serverResponseTime": 198,
+      "renderTime": 320,
+      "resourceCount": 36,
+      "transferSize": 1474,
+      "timestamp": "2026-01-08T14:01:25.591Z",
+      "apiCallCount": 1,
+      "domInteractive": 200
+    },
+    {
+      "flowName": "Navigation Between Pages",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry_key=5061743ff66e1a075e1a4d7a658a5302&sentry_client=sentry.javascript.nextjs%2F10.27.0",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 924,
+      "serverResponseTime": 117,
+      "renderTime": 146,
+      "resourceCount": 37,
+      "transferSize": 1311,
+      "timestamp": "2026-01-08T14:01:45.738Z",
+      "apiCallCount": 2,
+      "domInteractive": 120
+    },
+    {
+      "flowName": "Search Functionality",
+      "apiCalls": [],
+      "totalTime": 0,
+      "serverResponseTime": 0,
+      "renderTime": 0,
+      "resourceCount": 0,
+      "transferSize": 0,
+      "timestamp": "2026-01-08T14:01:34.601Z",
+      "error": "page.waitForSelector: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[type=\"search\"], input[placeholder*=\"Search\"], input[name=\"search\"]') to be visible\u001b[22m\n"
+    }
+  ]
+}

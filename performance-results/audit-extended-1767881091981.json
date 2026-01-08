@@ -1,0 +1,161 @@
+{
+  "timestamp": "2026-01-08T14:04:51.981Z",
+  "summary": {
+    "totalFlowsTested": 7,
+    "averageTotalTime": 4347,
+    "averageApiCalls": 2
+  },
+  "results": [
+    {
+      "flowName": "Browse Landing Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 7010,
+      "serverResponseTime": 3664,
+      "renderTime": 1590,
+      "resourceCount": 76,
+      "transferSize": 2864,
+      "timestamp": "2026-01-08T14:04:21.528Z",
+      "apiCallCount": 2,
+      "domInteractive": 3697
+    },
+    {
+      "flowName": "Search with Query",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "/api/tmdb/search?query=inception&page=1&language=en-US",
+          "method": "GET"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 6820,
+      "serverResponseTime": 199,
+      "renderTime": 171,
+      "resourceCount": 49,
+      "transferSize": 1532,
+      "timestamp": "2026-01-08T14:04:43.647Z",
+      "apiCallCount": 4,
+      "domInteractive": 201
+    },
+    {
+      "flowName": "Movie Detail Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 5535,
+      "serverResponseTime": 3962,
+      "renderTime": 21,
+      "resourceCount": 45,
+      "transferSize": 1604,
+      "timestamp": "2026-01-08T14:04:31.040Z",
+      "apiCallCount": 2,
+      "domInteractive": 3965
+    },
+    {
+      "flowName": "Series Detail Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 4137,
+      "serverResponseTime": 2598,
+      "renderTime": 2,
+      "resourceCount": 45,
+      "transferSize": 1604,
+      "timestamp": "2026-01-08T14:04:36.577Z",
+      "apiCallCount": 2,
+      "domInteractive": 2601
+    },
+    {
+      "flowName": "Search Page Load",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 2928,
+      "serverResponseTime": 1212,
+      "renderTime": 166,
+      "resourceCount": 39,
+      "transferSize": 1370,
+      "timestamp": "2026-01-08T14:04:40.717Z",
+      "apiCallCount": 2,
+      "domInteractive": 1214
+    },
+    {
+      "flowName": "Browse Kids Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        },
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 2494,
+      "serverResponseTime": 756,
+      "renderTime": 159,
+      "resourceCount": 38,
+      "transferSize": 1311,
+      "timestamp": "2026-01-08T14:04:28.543Z",
+      "apiCallCount": 2,
+      "domInteractive": 759
+    },
+    {
+      "flowName": "How It Works Page",
+      "apiCalls": [
+        {
+          "url": "https://o4510382223785984.ingest.us.sentry.io/api/4510382226866176/envelope/?sentry_version=7&sentry",
+          "method": "POST"
+        }
+      ],
+      "totalTime": 1508,
+      "serverResponseTime": 777,
+      "renderTime": 160,
+      "resourceCount": 35,
+      "transferSize": 1309,
+      "timestamp": "2026-01-08T14:04:50.469Z",
+      "apiCallCount": 1,
+      "domInteractive": 781
+    }
+  ]
+}
