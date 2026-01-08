@@ -105,7 +105,7 @@ export default function SeasonEpisodeTabs({
 
       setEpisodes(upsertedEpisodes || []);
     } catch (error) {
-      console.error("Error fetching episodes from TMDB:", error);
+      console.error("Error fetching episodes:", error);
     } finally {
       setLoading(false);
     }
@@ -125,8 +125,8 @@ export default function SeasonEpisodeTabs({
           <div className="animate-spin h-6 w-6 border-2 border-lime-400 border-t-transparent rounded-full"></div>
           <p className="text-neutral-400">
             {initialEpisodes.length > 0
-              ? "Refreshing episode data from TMDB..."
-              : "Loading episodes from TMDB..."}
+              ? "Refreshing episode data..."
+              : "Loading episodes..."}
           </p>
         </div>
       </div>

@@ -248,7 +248,7 @@ export default async function NextUpPage({
         currentUserId={currentUserId || ""}
       />
 
-      <div className="flex gap-6 mt-6 lg:mt-8 mb-6">
+      <div className="mt-6 lg:mt-8 mb-6">
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           {/* Back Link */}
@@ -276,27 +276,27 @@ export default async function NextUpPage({
                 <h2 className="text-xl font-semibold mb-2">
                   No unwatched content
                 </h2>
-                <p className="text-neutral-400 mb-6">
-                  {filterType
-                    ? "Try adjusting your filters or check your upcoming shows"
-                    : "You're all caught up! Check your upcoming shows or browse for new content."}
-                </p>
-                <div className="flex gap-3 justify-center">
-                  {filterType && (
-                    <Link
-                      href={`/${username}/reel-deck/next-up`}
-                      className="inline-flex px-6 py-3 bg-neutral-800 text-neutral-200 hover:bg-neutral-700 rounded-lg font-medium transition-colors"
-                    >
-                      Clear Filters
-                    </Link>
-                  )}
-                  <Link
-                    href="/search"
-                    className="inline-flex px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium transition-colors"
-                  >
-                    Browse Media
-                  </Link>
-                </div>
+                {/*<p className="text-neutral-400 mb-6">*/}
+                {/*  {filterType*/}
+                {/*    ? "Try adjusting your filters or check your upcoming shows"*/}
+                {/*    : "You're all caught up! Check your upcoming shows or browse for new content."}*/}
+                {/*</p>*/}
+                {/*<div className="flex gap-3 justify-center">*/}
+                {/*  {filterType && (*/}
+                {/*    <Link*/}
+                {/*      href={`/${username}/reel-deck/next-up`}*/}
+                {/*      className="inline-flex px-6 py-3 bg-neutral-800 text-neutral-200 hover:bg-neutral-700 rounded-lg font-medium transition-colors"*/}
+                {/*    >*/}
+                {/*      Clear Filters*/}
+                {/*    </Link>*/}
+                {/*  )}*/}
+                {/*  <Link*/}
+                {/*    href="/search"*/}
+                {/*    className="inline-flex px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium transition-colors"*/}
+                {/*  >*/}
+                {/*    Browse Media*/}
+                {/*  </Link>*/}
+                {/*</div>*/}
               </div>
             </div>
           ) : (
@@ -309,110 +309,110 @@ export default async function NextUpPage({
         </div>
 
         {/* Sidebar Filters */}
-        <aside className="hidden lg:block w-64 flex-shrink-0">
-          <div className="sticky top-24 space-y-6">
-            {/* Type Filter */}
-            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">
-              <h3 className="font-semibold mb-4">Type</h3>
-              <div className="space-y-2">
-                <Link
-                  href={`/${username}/reel-deck/next-up`}
-                  className={`block px-3 py-2 rounded-lg transition-colors ${
-                    !filterType
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>All</span>
-                    <span className="text-sm">{typeCounts.all}</span>
-                  </div>
-                </Link>
-                <Link
-                  href={`/${username}/reel-deck/next-up?type=movie`}
-                  className={`block px-3 py-2 rounded-lg transition-colors ${
-                    filterType === "movie"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>Movies</span>
-                    <span className="text-sm">{typeCounts.movie}</span>
-                  </div>
-                </Link>
-                <Link
-                  href={`/${username}/reel-deck/next-up?type=tv`}
-                  className={`block px-3 py-2 rounded-lg transition-colors ${
-                    filterType === "tv"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>TV Shows</span>
-                    <span className="text-sm">{typeCounts.tv}</span>
-                  </div>
-                </Link>
-              </div>
-            </div>
-
-            {/* Sort Options */}
-            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">
-              <h3 className="font-semibold mb-4">Sort By</h3>
-              <div className="space-y-2">
-                <Link
-                  href={`/${username}/reel-deck/next-up${
-                    filterType ? `?type=${filterType}` : ""
-                  }`}
-                  className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
-                    sortOption === "latest-aired"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  Latest Aired
-                </Link>
-                <Link
-                  href={`/${username}/reel-deck/next-up?sort=title-asc${
-                    filterType ? `&type=${filterType}` : ""
-                  }`}
-                  className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
-                    sortOption === "title-asc"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  Title (A-Z)
-                </Link>
-                <Link
-                  href={`/${username}/reel-deck/next-up?sort=title-desc${
-                    filterType ? `&type=${filterType}` : ""
-                  }`}
-                  className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
-                    sortOption === "title-desc"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  Title (Z-A)
-                </Link>
-                <Link
-                  href={`/${username}/reel-deck/next-up?sort=rating${
-                    filterType ? `&type=${filterType}` : ""
-                  }`}
-                  className={`block px-3 py-2 rounded-lg transition-colors text-sm ${
-                    sortOption === "rating"
-                      ? "bg-lime-400 text-neutral-900 font-medium"
-                      : "text-neutral-300 hover:bg-neutral-800"
-                  }`}
-                >
-                  Highest Rated
-                </Link>
-              </div>
-            </div>
-          </div>
-        </aside>
+        {/*<aside className="hidden lg:block w-64 flex-shrink-0">*/}
+        {/*  <div className="sticky top-24 space-y-6">*/}
+        {/*    /!* Type Filter *!/*/}
+        {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
+        {/*      <h3 className="font-semibold mb-4">Type</h3>*/}
+        {/*      <div className="space-y-2">*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/next-up`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors ${*/}
+        {/*            !filterType*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          <div className="flex items-center justify-between">*/}
+        {/*            <span>All</span>*/}
+        {/*            <span className="text-sm">{typeCounts.all}</span>*/}
+        {/*          </div>*/}
+        {/*        </Link>*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/next-up?type=movie`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors ${*/}
+        {/*            filterType === "movie"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          <div className="flex items-center justify-between">*/}
+        {/*            <span>Movies</span>*/}
+        {/*            <span className="text-sm">{typeCounts.movie}</span>*/}
+        {/*          </div>*/}
+        {/*        </Link>*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/next-up?type=tv`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors ${*/}
+        {/*            filterType === "tv"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          <div className="flex items-center justify-between">*/}
+        {/*            <span>TV Shows</span>*/}
+        {/*            <span className="text-sm">{typeCounts.tv}</span>*/}
+        {/*          </div>*/}
+        {/*        </Link>*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        
+        {/*    /!* Sort Options *!/*/}
+        {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
+        {/*      <h3 className="font-semibold mb-4">Sort By</h3>*/}
+        {/*      <div className="space-y-2">*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/next-up${*/}
+        {/*            filterType ? `?type=${filterType}` : ""*/}
+        {/*          }`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
+        {/*            sortOption === "latest-aired"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          Latest Aired*/}
+        {/*        </Link>*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/next-up?sort=title-asc${*/}
+        {/*            filterType ? `&type=${filterType}` : ""*/}
+        {/*          }`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
+        {/*            sortOption === "title-asc"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          Title (A-Z)*/}
+        {/*        </Link>*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/next-up?sort=title-desc${*/}
+        {/*            filterType ? `&type=${filterType}` : ""*/}
+        {/*          }`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
+        {/*            sortOption === "title-desc"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          Title (Z-A)*/}
+        {/*        </Link>*/}
+        {/*        <Link*/}
+        {/*          href={`/${username}/reel-deck/next-up?sort=rating${*/}
+        {/*            filterType ? `&type=${filterType}` : ""*/}
+        {/*          }`}*/}
+        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
+        {/*            sortOption === "rating"*/}
+        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
+        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
+        {/*          }`}*/}
+        {/*        >*/}
+        {/*          Highest Rated*/}
+        {/*        </Link>*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*  </div>*/}
+        {/*</aside>*/}
       </div>
     </>
   );

@@ -186,7 +186,7 @@ export default async function ReelDeckPage({
           },
         ]}
         profileId={urlProfile.id}
-        currentUserId={currentUserId}
+        currentUserId={currentUserId || ""}
       />
 
       <div className="mt-6 lg:mt-8 mb-6">
@@ -223,7 +223,7 @@ export default async function ReelDeckPage({
           route="next-up"
           emptyMessage={
             filterType
-              ? "No unwatched content in this category. Try a different filter!"
+              ? "No unwatched content in this category."
               : "You're all caught up! Check your upcoming shows or browse for new content."
           }
         />

@@ -125,22 +125,25 @@ const OTPInput = forwardRef<OTPInputHandle, OTPInputProps>(
       }
     };
 
-    // Handle paste
+    // Handle paste - Extract digits only
     const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
-      const pasteData = e.clipboardData.getData("text/plain").trim();
 
-      // Only process if the pasted data contains only digits
-      if (/^\d+$/.test(pasteData)) {
-        // Take only the needed length
-        const digitsToUse = pasteData.slice(0, length);
+      const pasteData = e.clipboardData.getData("text/plain");
+
+      // Extract only digits from the pasted content
+      const digits = pasteData.replace(/\D/g, "");
+
+      if (digits.length > 0) {
+        // Take only the first 'length' digits
+        const digitsToUse = digits.slice(0, length);
 
         // Fill in the inputs with the pasted digits
         onChange(digitsToUse);
 
         // Focus on the next empty input or last input
         const nextEmptyIndex =
-          digitsToUse.length < length ? digitsToUse.length : length - 1;
+            digitsToUse.length < length ? digitsToUse.length : length - 1;
         setActiveInput(nextEmptyIndex);
       }
     };

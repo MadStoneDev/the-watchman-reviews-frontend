@@ -34,8 +34,9 @@ export default async function SpecialBlockWrapper() {
       "id, title, overview, poster_path, backdrop_path, release_year, vote_average, tmdb_id",
     )
     .not("backdrop_path", "is", null) // Must have backdrop
-    .limit(10);
-
+    .order("created_at", { ascending: false })
+    .limit(50);
+  
   // Fetch featured series (high rated, recent)
   // const { data: featuredSeries } = await supabase
   //   .from("series")
@@ -47,13 +48,15 @@ export default async function SpecialBlockWrapper() {
   //   .gte("vote_average", 7.5)
   //   .order("vote_average", { ascending: false })
   //   .limit(10);
+  
   const { data: featuredSeries } = await supabase
     .from("series")
     .select(
       "id, title, overview, poster_path, backdrop_path, release_year, vote_average, tmdb_id",
     )
     .not("backdrop_path", "is", null)
-    .limit(10);
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   // Combine and shuffle
   const allFeatured: FeaturedMedia[] = [

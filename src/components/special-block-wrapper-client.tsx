@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import SpecialMediaBlock from "@/src/components/special-media-block";
+import SpecialMediaBlockSkeleton from "@/src/components/special-media-block-skeleton";
 
 const TIMER_DURATION = 10000;
 
@@ -31,8 +32,8 @@ interface SpecialBlockWrapperClientProps {
 }
 
 export default function SpecialBlockWrapperClient({
-  featuredMedia,
-}: SpecialBlockWrapperClientProps) {
+                                                    featuredMedia,
+                                                  }: SpecialBlockWrapperClientProps) {
   // States
   const [activeBlock, setActiveBlock] = useState(0);
   const [blocksToShow, setBlocksToShow] = useState(5);
@@ -57,45 +58,45 @@ export default function SpecialBlockWrapperClient({
 
   // Reset timer function
   const resetTimer = useCallback(
-    (shouldReset: boolean = true) => {
-      if (blockTimer.current) {
-        clearInterval(blockTimer.current);
-        blockTimer.current = null;
-      }
-
-      if (!timerMaster) {
-        setTimerRunning(false);
-        setTimerProgress(0);
-        return;
-      }
-
-      if (shouldReset) {
-        setTimerProgress(0);
-        startTime.current = Date.now();
-        pausedTime.current = null;
-      } else if (pausedTime.current !== null) {
-        startTime.current = Date.now() - pausedTime.current;
-        pausedTime.current = null;
-      }
-
-      blockTimer.current = setInterval(() => {
-        const elapsed = Date.now() - (startTime.current || 0);
-        const progress = Math.min((elapsed / TIMER_DURATION) * 100, 100);
-
-        setTimerProgress(progress);
-
-        if (progress >= 100) {
-          setActiveBlock((prev) => {
-            const nextBlock = (prev + 1) % blocksToShow;
-            return nextBlock;
-          });
-
-          startTime.current = Date.now();
-          setTimerProgress(0);
+      (shouldReset: boolean = true) => {
+        if (blockTimer.current) {
+          clearInterval(blockTimer.current);
+          blockTimer.current = null;
         }
-      }, 50);
-    },
-    [timerMaster, blocksToShow],
+
+        if (!timerMaster) {
+          setTimerRunning(false);
+          setTimerProgress(0);
+          return;
+        }
+
+        if (shouldReset) {
+          setTimerProgress(0);
+          startTime.current = Date.now();
+          pausedTime.current = null;
+        } else if (pausedTime.current !== null) {
+          startTime.current = Date.now() - pausedTime.current;
+          pausedTime.current = null;
+        }
+
+        blockTimer.current = setInterval(() => {
+          const elapsed = Date.now() - (startTime.current || 0);
+          const progress = Math.min((elapsed / TIMER_DURATION) * 100, 100);
+
+          setTimerProgress(progress);
+
+          if (progress >= 100) {
+            setActiveBlock((prev) => {
+              const nextBlock = (prev + 1) % blocksToShow;
+              return nextBlock;
+            });
+
+            startTime.current = Date.now();
+            setTimerProgress(0);
+          }
+        }, 50);
+      },
+      [timerMaster, blocksToShow],
   );
 
   const pauseTimer = useCallback(() => {
@@ -107,16 +108,16 @@ export default function SpecialBlockWrapperClient({
   }, []);
 
   const calculateBlocksToShow = useCallback(
-    (width: number): number => {
-      if (width > BREAKPOINTS["3xl"]) return Math.min(featuredMedia.length, 20);
-      if (width > BREAKPOINTS["2xl"]) return Math.min(featuredMedia.length, 12);
-      if (width > BREAKPOINTS.xl) return Math.min(featuredMedia.length, 6);
-      if (width > BREAKPOINTS.lg) return Math.min(featuredMedia.length, 3);
-      if (width > BREAKPOINTS.md) return 1;
-      if (width > BREAKPOINTS.sm) return Math.min(featuredMedia.length, 2);
-      return 1;
-    },
-    [featuredMedia.length],
+      (width: number): number => {
+        if (width > BREAKPOINTS["3xl"]) return Math.min(featuredMedia.length, 20);
+        if (width > BREAKPOINTS["2xl"]) return Math.min(featuredMedia.length, 12);
+        if (width > BREAKPOINTS.xl) return Math.min(featuredMedia.length, 6);
+        if (width > BREAKPOINTS.lg) return Math.min(featuredMedia.length, 3);
+        if (width > BREAKPOINTS.md) return 1;
+        if (width > BREAKPOINTS.sm) return Math.min(featuredMedia.length, 2);
+        return 1;
+      },
+      [featuredMedia.length],
   );
 
   const handleResize = useCallback(() => {
@@ -190,36 +191,46 @@ export default function SpecialBlockWrapperClient({
   // Return message if absolutely no media exists
   if (featuredMedia.length === 0) {
     return (
-      <div className="w-full p-12 bg-neutral-900 rounded-lg border border-neutral-800 text-center">
-        <p className="text-neutral-500">
-          No media available yet. Add some movies or series to get started!
-        </p>
-      </div>
+        <div className="w-full p-12 bg-neutral-900 rounded-lg border border-neutral-800 text-center">
+          <p className="text-neutral-500">
+            No media available yet. Add some movies or series to get started!
+          </p>
+        </div>
+    );
+  }
+
+  // Show skeleton loaders while loading
+  if (isLoading) {
+    return (
+        <>
+          {Array.from({ length: 5 }, (_, i) => (
+              <SpecialMediaBlockSkeleton key={`skeleton-${i}`} isActive={i === 0} />
+          ))}
+        </>
     );
   }
 
   return (
-    <>
-      {!isLoading &&
-        Array.from({ length: blocksToShow }, (_, i) => i).map((index) => {
+      <>
+        {Array.from({ length: blocksToShow }, (_, i) => i).map((index) => {
           // Get the media for this block (cycle through available media)
           const mediaIndex = index % featuredMedia.length;
           const media = featuredMedia[mediaIndex];
 
           return (
-            <SpecialMediaBlock
-              key={`${media.id}-${index}`}
-              myIndex={index}
-              activeIndex={activeBlock}
-              setActiveBlock={setActiveBlock}
-              timerProgress={timerProgress}
-              timerRunning={timerRunning}
-              setTimerProgress={setTimerProgress}
-              setTimerRunning={setTimerRunning}
-              media={media}
-            />
+              <SpecialMediaBlock
+                  key={`${media.id}-${index}`}
+                  myIndex={index}
+                  activeIndex={activeBlock}
+                  setActiveBlock={setActiveBlock}
+                  timerProgress={timerProgress}
+                  timerRunning={timerRunning}
+                  setTimerProgress={setTimerProgress}
+                  setTimerRunning={setTimerRunning}
+                  media={media}
+              />
           );
         })}
-    </>
+      </>
   );
 }

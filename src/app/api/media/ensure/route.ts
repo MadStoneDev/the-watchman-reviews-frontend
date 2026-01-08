@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
 
       if (!tmdbResponse.ok) {
         return NextResponse.json(
-          { success: false, error: "Failed to fetch from TMDB" },
+          { success: false, error: "Failed to fetch" },
           { status: 500 },
         );
       }

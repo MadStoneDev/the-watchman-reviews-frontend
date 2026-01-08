@@ -88,7 +88,7 @@ async function ensureMovieExists(
     );
 
     if (!tmdbResponse.ok) {
-      throw new Error("Failed to fetch movie from TMDB");
+      throw new Error("Failed to fetch movie");
     }
 
     const tmdbMovie = await tmdbResponse.json();
@@ -179,7 +179,7 @@ async function ensureSeriesExists(
     );
 
     if (!tmdbResponse.ok) {
-      throw new Error("Failed to fetch series from TMDB");
+      throw new Error("Failed to fetch series");
     }
 
     const tmdbSeries = await tmdbResponse.json();

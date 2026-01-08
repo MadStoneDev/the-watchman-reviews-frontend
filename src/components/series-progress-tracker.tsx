@@ -65,18 +65,55 @@ const formatAirDate = (airDate: string | null): string => {
 const getRelativeAirDate = (airDate: string | null): string | null => {
   if (!airDate) return null;
 
-  const date = new Date(airDate);
+  const airDateTime = new Date(airDate);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  airDateTime.setHours(0, 0, 0, 0);
 
-  const diffTime = date.getTime() - today.getTime();
+  const diffTime = airDateTime.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) return null;
   if (diffDays === 0) return "Airs today";
   if (diffDays === 1) return "Airs tomorrow";
-  if (diffDays <= 7) return `Airs in ${diffDays} days`;
-  if (diffDays <= 30) return `Airs in ${Math.ceil(diffDays / 7)} weeks`;
+  if (diffDays === 2) return "Airs in 2 days";
+
+  // Get day name for dates beyond 2 days
+  const dayName = airDateTime.toLocaleDateString("en-US", { weekday: "long" });
+
+  // Calculate calendar weeks (Sunday-based)
+  const currentSunday = new Date(today);
+  currentSunday.setDate(today.getDate() - today.getDay());
+  currentSunday.setHours(0, 0, 0, 0);
+
+  const airSunday = new Date(airDateTime);
+  airSunday.setDate(airDateTime.getDate() - airDateTime.getDay());
+  airSunday.setHours(0, 0, 0, 0);
+
+  const weeksDiff = Math.round(
+      (airSunday.getTime() - currentSunday.getTime()) / (1000 * 60 * 60 * 24 * 7)
+  );
+
+  // Same week (after 2 days threshold)
+  if (weeksDiff === 0) return `Airs this week, on ${dayName}`;
+
+  // Next week
+  if (weeksDiff === 1) return `Airs next week, on ${dayName}`;
+
+  // 2-4 weeks out
+  if (weeksDiff <= 4) return `Airs in ${weeksDiff} weeks, on ${dayName}`;
+
+  // Calculate months for dates beyond 4 weeks
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const airMonth = airDateTime.getMonth();
+  const airYear = airDateTime.getFullYear();
+
+  const monthsDiff = (airYear - currentYear) * 12 + (airMonth - currentMonth);
+
+  if (monthsDiff === 1) return "Airs next month";
+  if (monthsDiff > 1) return `Airs in ${monthsDiff} months`;
+
   return null;
 };
 
@@ -356,8 +393,21 @@ export default function SeriesProgressTracker({
 
       try {
         const response = await fetch(
-          `/api/series/${seriesId}/season/${seasonNumber}/episodes`,
+            `/api/series/${seriesId}/season/${seasonNumber}/episodes`,
         );
+
+        // Handle 404 - season doesn't exist
+        if (response.status === 404) {
+          console.warn(`Season ${seasonNumber} not found, removing from display`);
+
+          // Remove this season from the list
+          setSeasons((prevSeasons) =>
+              prevSeasons.filter((s) => s.id !== seasonId)
+          );
+
+          setLoadedSeasons((prev) => new Set(prev).add(seasonId));
+          return;
+        }
 
         if (!response.ok) {
           throw new Error("Failed to load episodes");
@@ -365,6 +415,8 @@ export default function SeriesProgressTracker({
 
         const episodes = await response.json();
         const today = new Date().toISOString().split("T")[0];
+        
+        console.log(episodes)
 
         const transformedEpisodes = episodes
           .map((ep: any) => ({
@@ -1010,13 +1062,8 @@ export default function SeriesProgressTracker({
             {/* Episodes List */}
             <div
               className={`border-t border-neutral-800 px-4 space-y-2 transition-all duration-300 ease-in-out overflow-hidden ${
-                isOpen ? "py-4" : "max-h-0 py-0"
+                isOpen ? `py-4 max-h-fit md:max-h-[${season.episodes.length * 80 + 100}px]` : "max-h-0 py-0"
               }`}
-              style={{
-                maxHeight: isOpen
-                  ? `${season.episodes.length * 80 + 100}px`
-                  : "0px",
-              }}
             >
               {isLoading && (
                 <div className="flex items-center justify-center py-8 text-neutral-400">

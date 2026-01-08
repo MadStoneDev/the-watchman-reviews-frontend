@@ -103,7 +103,7 @@ export default function SeriesSeasonTabs({
         setSelectedSeason(upsertedSeasons[0]);
       }
     } catch (error) {
-      console.error("Error fetching seasons from TMDB:", error);
+      console.error("Error fetching seasons:", error);
     } finally {
       setLoading(false);
     }
@@ -116,8 +116,8 @@ export default function SeriesSeasonTabs({
           <div className="animate-spin h-6 w-6 border-2 border-lime-400 border-t-transparent rounded-full"></div>
           <p className="text-neutral-400">
             {initialSeasons.length > 0
-              ? "Refreshing season data from TMDB..."
-              : "Loading seasons from TMDB..."}
+              ? "Refreshing season data..."
+              : "Loading seasons..."}
           </p>
         </div>
       </div>

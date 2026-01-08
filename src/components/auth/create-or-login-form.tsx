@@ -1,10 +1,11 @@
 ﻿"use client";
 
 import React, { useState, useEffect } from "react";
+
 import { useRouter } from "next/navigation";
+import OTPInput from "@/src/components/otp-input";
 import { IconCheck, IconMail } from "@tabler/icons-react";
 import { handleAuth, verifyOtp } from "@/src/app/(auth)/auth/portal/actions";
-import OTPInput from "@/src/components/otp-input";
 
 // reCAPTCHA types
 declare global {
@@ -20,7 +21,10 @@ declare global {
 }
 
 export default function CreateOrLoginForm() {
+  // Hooks
   const router = useRouter();
+  const recaptchaEnabled = !!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
   // States
   const [isValidEmail, setIsValidEmail] = useState(false);
   const [isEmailDirty, setIsEmailDirty] = useState(false);
@@ -37,22 +41,32 @@ export default function CreateOrLoginForm() {
 
   // Check if reCAPTCHA is loaded
   useEffect(() => {
+    // If reCAPTCHA is not enabled, mark it as "loaded" (skipped)
+    if (!recaptchaEnabled) {
+      setRecaptchaLoaded(true);
+      return;
+    }
+
     const checkRecaptcha = () => {
       if (typeof window !== "undefined" && window.grecaptcha) {
         window.grecaptcha.ready(() => {
           setRecaptchaLoaded(true);
         });
       } else {
-        // Retry after a short delay if reCAPTCHA hasn't loaded yet
         setTimeout(checkRecaptcha, 100);
       }
     };
 
     checkRecaptcha();
-  }, []);
+  }, [recaptchaEnabled]);
 
   // Get reCAPTCHA token
   const getRecaptchaToken = async (action: string): Promise<string | null> => {
+    // If reCAPTCHA is not enabled, return null (skip verification)
+    if (!recaptchaEnabled) {
+      return null;
+    }
+
     if (!recaptchaLoaded || !window.grecaptcha) {
       console.warn("reCAPTCHA not loaded yet");
       return null;
@@ -112,21 +126,24 @@ export default function CreateOrLoginForm() {
     setServerError(null);
 
     try {
-      // Get reCAPTCHA token
-      const recaptchaToken = await getRecaptchaToken("login");
-
-      // if (!recaptchaToken) {
-      //   setServerError(
-      //     "Security check failed. Please refresh the page and try again.",
-      //   );
-      //   setIsSubmitting(false);
-      //   return;
-      // }
-
       // Create FormData object
       const formDataObj = new FormData();
       formDataObj.append("email", formData.email);
-      // formDataObj.append("recaptcha-token", recaptchaToken);
+
+      // Only get and append reCAPTCHA token if it's enabled
+      if (recaptchaEnabled) {
+        const recaptchaToken = await getRecaptchaToken("login");
+
+        if (!recaptchaToken) {
+          setServerError(
+            "Security check failed. Please refresh the page and try again.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        formDataObj.append("recaptcha-token", recaptchaToken);
+      }
 
       const response = await handleAuth(formDataObj);
 
@@ -169,10 +186,7 @@ export default function CreateOrLoginForm() {
 
       if (process.env.RECAPTCHA_SECRET_KEY) {
         // Get reCAPTCHA token for OTP verification
-        const recaptchaToken = await getRecaptchaToken("verify_otp");
-        console.log("VerifyOTP");
-        console.log(recaptchaToken);
-
+        // const recaptchaToken = await getRecaptchaToken("verify_otp");
         // if (!recaptchaToken) {
         //   setServerError(
         //     "Security check failed. Please refresh the page and try again.",
@@ -180,7 +194,6 @@ export default function CreateOrLoginForm() {
         //   setIsSubmitting(false);
         //   return;
         // }
-
         // formDataObj.append("recaptcha-token", recaptchaToken);
       }
 
@@ -225,6 +238,7 @@ export default function CreateOrLoginForm() {
       >
         <h3 className="text-base font-medium text-lime-400">
           Enter the 6-digit code sent to your email
+          {formData.email ? ` (${formData.email})` : ""}.
         </h3>
 
         <div className="mt-2">
@@ -348,37 +362,36 @@ export default function CreateOrLoginForm() {
           className={`p-3 rounded-lg bg-lime-400 text-neutral-900 font-bold ${
             isSubmitting ? "opacity-70" : ""
           }`}
-          disabled={!isValidEmail || isSubmitting || !recaptchaLoaded}
+          disabled={!isValidEmail || isSubmitting}
+          // Removed: || !recaptchaLoaded (this was blocking in dev)
         >
-          {isSubmitting
-            ? "Sending..."
-            : !recaptchaLoaded
-              ? "Loading..."
-              : "Get Access"}
+          {isSubmitting ? "Sending..." : "Get Access"}
         </button>
 
-        {/* reCAPTCHA disclaimer */}
-        <p className="text-xs text-center text-neutral-500 mt-2">
-          This site is protected by reCAPTCHA and the Google{" "}
-          <a
-            href="https://policies.google.com/privacy"
-            className="text-lime-400 underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Privacy Policy
-          </a>{" "}
-          and{" "}
-          <a
-            href="https://policies.google.com/terms"
-            className="text-lime-400 underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Terms of Service
-          </a>{" "}
-          apply.
-        </p>
+        {/* reCAPTCHA disclaimer - only show if enabled */}
+        {recaptchaEnabled && (
+          <p className="text-xs text-center text-neutral-500 mt-2">
+            This site is protected by reCAPTCHA and the Google{" "}
+            <a
+              href="https://policies.google.com/privacy"
+              className="text-lime-400 underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Privacy Policy
+            </a>{" "}
+            and{" "}
+            <a
+              href="https://policies.google.com/terms"
+              className="text-lime-400 underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Terms of Service
+            </a>{" "}
+            apply.
+          </p>
+        )}
       </form>
     </>
   );

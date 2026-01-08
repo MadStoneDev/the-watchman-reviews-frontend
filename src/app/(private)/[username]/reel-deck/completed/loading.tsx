@@ -20,35 +20,35 @@ export default function CompletedLoading() {
       </div>
 
       {/* Sidebar Skeleton */}
-      <aside className="hidden lg:block w-64 flex-shrink-0">
-        <div className="sticky top-24 space-y-6">
-          {/* Type Filter Skeleton */}
-          <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">
-            <div className="h-5 w-16 bg-neutral-800 rounded animate-pulse mb-4" />
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-10 bg-neutral-800 rounded animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Sort Options Skeleton */}
-          <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">
-            <div className="h-5 w-20 bg-neutral-800 rounded animate-pulse mb-4" />
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="h-9 bg-neutral-800 rounded animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </aside>
+      {/*<aside className="hidden lg:block w-64 flex-shrink-0">*/}
+      {/*  <div className="sticky top-24 space-y-6">*/}
+      {/*    /!* Type Filter Skeleton *!/*/}
+      {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
+      {/*      <div className="h-5 w-16 bg-neutral-800 rounded animate-pulse mb-4" />*/}
+      {/*      <div className="space-y-2">*/}
+      {/*        {[1, 2, 3].map((i) => (*/}
+      {/*          <div*/}
+      {/*            key={i}*/}
+      {/*            className="h-10 bg-neutral-800 rounded animate-pulse"*/}
+      {/*          />*/}
+      {/*        ))}*/}
+      {/*      </div>*/}
+      {/*    </div>*/}
+      
+      {/*    /!* Sort Options Skeleton *!/*/}
+      {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
+      {/*      <div className="h-5 w-20 bg-neutral-800 rounded animate-pulse mb-4" />*/}
+      {/*      <div className="space-y-2">*/}
+      {/*        {[1, 2, 3, 4, 5].map((i) => (*/}
+      {/*          <div*/}
+      {/*            key={i}*/}
+      {/*            className="h-9 bg-neutral-800 rounded animate-pulse"*/}
+      {/*          />*/}
+      {/*        ))}*/}
+      {/*      </div>*/}
+      {/*    </div>*/}
+      {/*  </div>*/}
+      {/*</aside>*/}
     </div>
   );
 }
