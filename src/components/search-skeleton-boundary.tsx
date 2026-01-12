@@ -9,7 +9,7 @@ export default function SearchSkeletonBoundary() {
     <section className={`flex flex-col gap-10 opacity-75`}>
       <div className={`flex flex-row gap-3 items-center`}>
         <div
-          className={`flex-grow h-10 bg-neutral-800/50 rounded-md animate-skeleton`}
+          className={`grow h-10 bg-neutral-800/50 rounded-md animate-skeleton`}
           style={{
             animationDelay: `${randomDelay}ms`,
           }}
@@ -38,7 +38,7 @@ export default function SearchSkeletonBoundary() {
               <div className={`w-[342px] h-[342px] bg-neutral-800/50`}></div>
             </div>
 
-            <section className={`flex-grow flex flex-col gap-2`}>
+            <section className={`grow flex flex-col gap-2`}>
               <div className={`w-[100px] h-6 bg-neutral-800/50`}></div>
               <h4 className={`w-full h-4 bg-neutral-800/50`}></h4>
             </section>

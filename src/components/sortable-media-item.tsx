@@ -32,7 +32,7 @@ export default function SortableMediaItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="relative flex-shrink-0 w-24 aspect-[2/3] rounded overflow-hidden group cursor-grab"
+      className="relative shrink-0 w-24 aspect-2/3 rounded-sm overflow-hidden group cursor-grab"
       {...attributes}
       {...listeners}
     >

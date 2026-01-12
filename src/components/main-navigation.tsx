@@ -55,7 +55,7 @@ export default function MainNavigation({
         <Logo className={`hidden lg:block`} />
 
         <article
-          className={`lg:flex-grow lg:mt-20 flex lg:flex-col justify-center lg:justify-start items-center lg:items-start gap-5 md:gap-10 lg:gap-14`}
+          className={`lg:grow lg:mt-20 flex lg:flex-col justify-center lg:justify-start items-center lg:items-start gap-5 md:gap-10 lg:gap-14`}
         >
           {items.map(({ icon, label, href }) => (
             <Link
@@ -106,11 +106,11 @@ export default function MainNavigation({
         <article className={`flex items-center gap-2 lg:w-full`}>
           {isUser ? (
             <div
-              className={`flex-grow flex flex-row-reverse items-center gap-2`}
+              className={`grow flex flex-row-reverse items-center gap-2`}
             >
               <Link
                 href={"/me"}
-                className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
+                className={`grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
                 title={`Profile`}
               >
                 <IconUser size={26} />
@@ -136,7 +136,7 @@ export default function MainNavigation({
           ) : (
             <Link
               href={"/auth/portal"}
-              className={`flex-grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
+              className={`grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
               title={`Login`}
             >
               <IconUser size={26} />

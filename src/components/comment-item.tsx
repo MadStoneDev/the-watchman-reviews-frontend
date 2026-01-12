@@ -169,13 +169,13 @@ export default function CommentItem({
     <div className={`relative ${depth > 0 ? "ml-8 md:ml-14" : ""}`}>
       {/* Thread connection line for replies */}
       {depth > 0 && (
-        <div className="absolute -left-4 md:-left-7 top-0 bottom-0 w-0.5 bg-gradient-to-b from-neutral-700 to-transparent" />
+        <div className="absolute -left-4 md:-left-7 top-0 bottom-0 w-0.5 bg-linear-to-b from-neutral-700 to-transparent" />
       )}
 
       <div className="flex gap-2 md:gap-4 group py-4 hover:bg-neutral-900/30 -mx-2 md:-mx-4 px-2 md:px-4 rounded-lg transition-colors">
         {/* Avatar */}
-        <div className="flex-shrink-0">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-neutral-800 to-neutral-900 border-2 border-neutral-700/50 overflow-hidden ring-2 ring-transparent transition-all">
+        <div className="shrink-0">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-linear-to-br from-neutral-800 to-neutral-900 border-2 border-neutral-700/50 overflow-hidden ring-2 ring-transparent transition-all">
             {comment.user.avatar_path ? (
               <Image
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${comment.user.avatar_path}`}
@@ -268,7 +268,7 @@ export default function CommentItem({
               />
             </div>
           ) : (
-            <p className="text-base leading-relaxed text-neutral-300 whitespace-pre-wrap break-words mb-3">
+            <p className="text-base leading-relaxed text-neutral-300 whitespace-pre-wrap wrap-break-word mb-3">
               {comment.content}
             </p>
           )}

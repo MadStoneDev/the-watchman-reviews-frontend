@@ -67,7 +67,7 @@ export default async function SeasonPage({ params }: SeasonPageProps) {
       {/* Season Header */}
       <div className="flex flex-col md:flex-row gap-6 mb-12">
         {/* Season Poster */}
-        <div className="relative w-32 md:w-48 aspect-[2/3] rounded-lg overflow-hidden shadow-xl flex-shrink-0 border-2 border-neutral-800">
+        <div className="relative w-32 md:w-48 aspect-2/3 rounded-lg overflow-hidden shadow-xl shrink-0 border-2 border-neutral-800">
           {season.poster_path ? (
             <Image
               src={`https://image.tmdb.org/t/p/w500${season.poster_path}`}

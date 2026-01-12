@@ -160,7 +160,7 @@ export default function SeriesSeasonTabs({
           <div className="flex gap-6 p-6">
             {/* Season Poster */}
             {selectedSeason.poster_path && (
-              <div className="w-32 h-48 rounded-lg overflow-hidden flex-shrink-0 bg-neutral-800">
+              <div className="w-32 h-48 rounded-lg overflow-hidden shrink-0 bg-neutral-800">
                 <img
                   src={`https://image.tmdb.org/t/p/w300${selectedSeason.poster_path}`}
                   alt={selectedSeason.title || ""}

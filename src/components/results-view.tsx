@@ -85,7 +85,7 @@ export default function ResultsView({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Top Genres */}
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
             <Tag className="mr-2" size={18} />
             Your Top Genres
@@ -133,7 +133,7 @@ export default function ResultsView({
                   .map((genre) => (
                     <span
                       key={`disliked-${genre.id}`}
-                      className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs"
+                      className="bg-red-50 text-red-600 px-2 py-1 rounded-sm text-xs"
                     >
                       {genre.name}
                     </span>
@@ -144,7 +144,7 @@ export default function ResultsView({
         </div>
 
         {/* Favorite Decades */}
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
             <Clock className="mr-2" size={18} />
             Your Favorite Decades
@@ -180,7 +180,7 @@ export default function ResultsView({
         </div>
 
         {/* Themes You Enjoy */}
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
             <BookOpen className="mr-2" size={18} />
             Themes You Enjoy
@@ -190,7 +190,7 @@ export default function ResultsView({
               {results.likedThemes.slice(0, 15).map((theme) => (
                 <span
                   key={`theme-${theme.word}`}
-                  className="bg-green-50 text-green-700 px-2 py-1 rounded text-sm"
+                  className="bg-green-50 text-green-700 px-2 py-1 rounded-sm text-sm"
                   style={{
                     fontSize: `${Math.max(
                       0.75,
@@ -210,7 +210,7 @@ export default function ResultsView({
         </div>
 
         {/* Themes You May Not Enjoy */}
-        <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
             <Flag className="mr-2" size={18} />
             Themes You May Not Enjoy
@@ -220,7 +220,7 @@ export default function ResultsView({
               {results.dislikedThemes.slice(0, 15).map((theme) => (
                 <span
                   key={`disliked-theme-${theme.word}`}
-                  className="bg-red-50 text-red-700 px-2 py-1 rounded text-sm"
+                  className="bg-red-50 text-red-700 px-2 py-1 rounded-sm text-sm"
                   style={{
                     fontSize: `${Math.max(
                       0.75,
@@ -247,7 +247,7 @@ export default function ResultsView({
             View Complete Results Data
           </summary>
           <div className="mt-4">
-            <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-96 text-xs">
+            <pre className="bg-gray-100 p-4 rounded-sm overflow-auto max-h-96 text-xs">
               {JSON.stringify(results, null, 2)}
             </pre>
           </div>
@@ -256,7 +256,7 @@ export default function ResultsView({
 
       <div className="flex justify-between items-center">
         <button
-          className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+          className="px-4 py-2 bg-gray-200 text-gray-800 rounded-sm hover:bg-gray-300"
           onClick={onStartOver}
         >
           <div className="flex items-center">
@@ -266,7 +266,7 @@ export default function ResultsView({
         </button>
 
         <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700"
           onClick={() => {
             // Here you could save the preferences to your backend
             alert("Preferences saved successfully!");

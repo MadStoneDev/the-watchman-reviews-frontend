@@ -35,7 +35,7 @@ export default function BrowseNavigation({
     currentUserId !== "" &&
     profileId === currentUserId;
   const navigationItems = isOwnProfile
-    ? [...items, { label: "Settings", href: "/settings", textColor: "text-neutral-300", bgColor: "bg-neutral-300" }]
+    ? [...items, { label: "Settings", href: "/settings", textColor: "hover:text-neutral-300", bgColor: "bg-neutral-300" }]
     : items;
 
   useEffect(() => {
@@ -89,10 +89,10 @@ export default function BrowseNavigation({
           className={`px-2 md:px-4 py-2 flex max-w-fit ${
             pathname === href
               ? "text-neutral-900"
-              : `text-neutral-500 ${textColor ? `hover:${textColor}` : "hover:text-lime-400"}`
+              : `text-neutral-500 ${textColor ? textColor : "hover:text-lime-400"}`
           } text-sm md:text-base font-bold transition-all duration-300 ease-in-out z-50`}
         >
-          <span>{label}-{textColor}</span>
+          <span>{label}</span>
         </Link>
       ))}
 

@@ -112,17 +112,17 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-neutral-950 via-neutral-950/60 to-transparent" />
           </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-b from-neutral-900 to-neutral-950" />
+          <div className="absolute inset-0 bg-linear-to-b from-neutral-900 to-neutral-950" />
         )}
 
         {/* Content overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-5 md:p-10 xl:px-24">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-end">
             {/* Poster */}
-            <div className="relative w-32 md:w-48 aspect-[2/3] rounded-lg overflow-hidden shadow-2xl flex-shrink-0 border-2 border-neutral-800">
+            <div className="relative w-32 md:w-48 aspect-2/3 rounded-lg overflow-hidden shadow-2xl shrink-0 border-2 border-neutral-800">
               {series.poster_path ? (
                 <Image
                   src={`https://image.tmdb.org/t/p/w500${series.poster_path}`}

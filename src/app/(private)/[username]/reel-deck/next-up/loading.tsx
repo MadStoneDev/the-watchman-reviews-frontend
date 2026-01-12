@@ -7,12 +7,12 @@ export default function NextUpLoading() {
       {/* Main Content */}
       <div className="flex-1 min-w-0">
         {/* Back Link Skeleton */}
-        <div className="h-5 w-32 bg-neutral-800 rounded animate-pulse mb-6" />
+        <div className="h-5 w-32 bg-neutral-800 rounded-sm animate-pulse mb-6" />
 
         {/* Header Skeleton */}
         <section className="mb-8">
-          <div className="h-10 w-48 bg-neutral-800 rounded animate-pulse mb-2" />
-          <div className="h-5 w-96 bg-neutral-800 rounded animate-pulse" />
+          <div className="h-10 w-48 bg-neutral-800 rounded-sm animate-pulse mb-2" />
+          <div className="h-5 w-96 bg-neutral-800 rounded-sm animate-pulse" />
         </section>
 
         {/* Grid Skeleton */}
@@ -20,16 +20,16 @@ export default function NextUpLoading() {
       </div>
 
       {/* Sidebar Skeleton */}
-      {/*<aside className="hidden lg:block w-64 flex-shrink-0">*/}
+      {/*<aside className="hidden lg:block w-64 shrink-0">*/}
       {/*  <div className="sticky top-24 space-y-6">*/}
       {/*    /!* Type Filter Skeleton *!/*/}
       {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
-      {/*      <div className="h-5 w-16 bg-neutral-800 rounded animate-pulse mb-4" />*/}
+      {/*      <div className="h-5 w-16 bg-neutral-800 rounded-sm animate-pulse mb-4" />*/}
       {/*      <div className="space-y-2">*/}
       {/*        {[1, 2, 3].map((i) => (*/}
       {/*          <div*/}
       {/*            key={i}*/}
-      {/*            className="h-10 bg-neutral-800 rounded animate-pulse"*/}
+      {/*            className="h-10 bg-neutral-800 rounded-sm animate-pulse"*/}
       {/*          />*/}
       {/*        ))}*/}
       {/*      </div>*/}
@@ -37,12 +37,12 @@ export default function NextUpLoading() {
       
       {/*    /!* Sort Options Skeleton *!/*/}
       {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
-      {/*      <div className="h-5 w-20 bg-neutral-800 rounded animate-pulse mb-4" />*/}
+      {/*      <div className="h-5 w-20 bg-neutral-800 rounded-sm animate-pulse mb-4" />*/}
       {/*      <div className="space-y-2">*/}
       {/*        {[1, 2, 3, 4].map((i) => (*/}
       {/*          <div*/}
       {/*            key={i}*/}
-      {/*            className="h-9 bg-neutral-800 rounded animate-pulse"*/}
+      {/*            className="h-9 bg-neutral-800 rounded-sm animate-pulse"*/}
       {/*          />*/}
       {/*        ))}*/}
       {/*      </div>*/}

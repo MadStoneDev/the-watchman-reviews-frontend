@@ -311,7 +311,7 @@ export default function CreateOrLoginForm() {
           <input
             className={`pr-3 pl-12 h-12 rounded-lg bg-neutral-200 placeholder:text-neutral-600/80 placeholder:text-sm ${
               showEmailFeedback ? "border-2 border-red-500" : ""
-            } focus:outline-none`}
+            } focus:outline-hidden`}
             name="email"
             type="email"
             placeholder="Email"

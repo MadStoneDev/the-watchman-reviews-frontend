@@ -333,7 +333,7 @@ export default function AddMediaForm({
               searchResults.length > 0 && "mb-4"
             } transition-all duration-300 ease-in-out`}
           >
-            <div className="flex-grow relative">
+            <div className="grow relative">
               <input
                 type="text"
                 value={searchQuery}
@@ -342,7 +342,7 @@ export default function AddMediaForm({
                   setHasSearched(false);
                 }}
                 placeholder="Search for movies or TV shows..."
-                className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg focus:outline-none focus:border-lime-400 transition-colors"
+                className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg focus:outline-hidden focus:border-lime-400 transition-colors"
                 autoFocus={isOpen}
               />
               {searchQuery && (
@@ -388,7 +388,7 @@ export default function AddMediaForm({
                   className="group relative bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 hover:border-neutral-700 transition-all"
                 >
                   {/* Poster */}
-                  <div className="relative aspect-[2/3] bg-neutral-800">
+                  <div className="relative aspect-2/3 bg-neutral-800">
                     {result.poster_path ? (
                       <Image
                         src={`https://image.tmdb.org/t/p/w342${result.poster_path}`}
@@ -414,7 +414,7 @@ export default function AddMediaForm({
                     )}
 
                     {/* Media Type Badge */}
-                    <div className="absolute top-2 right-2 px-2 py-0.5 bg-neutral-900/80 backdrop-blur-sm rounded text-xs font-medium">
+                    <div className="absolute top-2 right-2 px-2 py-0.5 bg-neutral-900/80 backdrop-blur-xs rounded-sm text-xs font-medium">
                       {result.media_type === "movie" ? "Movie" : "TV"}
                     </div>
                   </div>
@@ -433,7 +433,7 @@ export default function AddMediaForm({
                     <button
                       onClick={() => addToCollection(result)}
                       disabled={addingId === result.id}
-                      className="w-full px-3 py-2 bg-lime-400 text-neutral-900 text-sm font-medium rounded hover:bg-lime-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
+                      className="w-full px-3 py-2 bg-lime-400 text-neutral-900 text-sm font-medium rounded-sm hover:bg-lime-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1"
                     >
                       <IconPlus size={16} />
                       {addingId === result.id ? "Adding..." : "Add"}

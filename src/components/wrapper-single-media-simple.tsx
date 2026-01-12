@@ -82,7 +82,7 @@ export default function SingleMediaWrapperSimple({
           )}
 
           {/* Gradient Overlay for mobile */}
-          <div className="md:hidden absolute inset-0 bg-gradient-to-b from-black via-transparent to-black opacity-100"></div>
+          <div className="md:hidden absolute inset-0 bg-linear-to-b from-black via-transparent to-black opacity-100"></div>
         </section>
 
         {/* Title Section */}
@@ -115,7 +115,7 @@ export default function SingleMediaWrapperSimple({
         <article className="bg-neutral-900 rounded-lg border border-neutral-800 p-6 h-fit space-y-6">
           {/* Poster */}
           {mediaData.poster && (
-            <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border-2 border-neutral-800">
+            <div className="relative w-full aspect-2/3 rounded-lg overflow-hidden border-2 border-neutral-800">
               <Image
                 src={`https://image.tmdb.org/t/p/${posterSize}${mediaData.poster}`}
                 alt={`${mediaData.title} Poster`}

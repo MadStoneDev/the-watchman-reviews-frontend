@@ -1250,7 +1250,7 @@ DECLARE
     'victorious', 'triumphant', 'glorious', 'radiant', 'magnificent', 
     'eternal', 'relentless', 'immortal', 'cosmic', 'mystic', 
     'thunder', 'phantom', 'savage', 'rogue', 'rebel', 
-    'shadow', 'vengeance', 'justice', 'destiny', 'legacy', 
+    'shadow-sm', 'vengeance', 'justice', 'destiny', 'legacy', 
     'golden', 'silver', 'dark', 'bright', 'brave', 
     'fierce', 'iron', 'steel', 'blazing', 'storm', 
     'phoenix', 'titan', 'vigilant', 'royal', 'prime'

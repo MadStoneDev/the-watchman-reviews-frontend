@@ -207,7 +207,7 @@ export default async function CollectionPage({
 
   if (accessType === "none") {
     return (
-      <div className="flex-grow flex flex-col items-center justify-center px-4 text-center">
+      <div className="grow flex flex-col items-center justify-center px-4 text-center">
         <h1 className="text-4xl font-bold mb-4">Thou Shalt Not Pass!</h1>
         <p className="text-2xl font-semibold mb-2">
           Did someone send you here?
@@ -228,7 +228,7 @@ export default async function CollectionPage({
             {
               label: "Collections",
               href: `/${profile.username}/collections`,
-              texttextColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
+              texttextColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
             },
           ]}
         />

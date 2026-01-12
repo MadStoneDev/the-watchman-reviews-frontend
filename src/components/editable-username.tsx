@@ -153,7 +153,7 @@ export default function EditableUsername({
       {isEditing ? (
         <div className={`flex flex-col gap-1`}>
           <article
-            className={`p-2 flex flex-col gap-2 w-fit rounded bg-neutral-600 transition-all duration-300 ease-in-out`}
+            className={`p-2 flex flex-col gap-2 w-fit rounded-sm bg-neutral-600 transition-all duration-300 ease-in-out`}
           >
             <div className={`flex items-center gap-2`}>
               <input
@@ -163,7 +163,7 @@ export default function EditableUsername({
                 onKeyDown={handleKeyDown}
                 className={`p-2 border ${
                   error ? "border-red-500" : "border-neutral-300"
-                } bg-neutral-900 rounded focus:outline-none focus:border-lime-400 font-bold text-2xl sm:3xl md:text-4xl`}
+                } bg-neutral-900 rounded focus:outline-hidden focus:border-lime-400 font-bold text-2xl sm:3xl md:text-4xl`}
                 autoFocus
                 disabled={isSubmitting}
               />
@@ -182,7 +182,7 @@ export default function EditableUsername({
                 <button
                   onClick={cancelEdit}
                   disabled={isSubmitting}
-                  className={`p-1 hover:bg-neutral-400 text-neutral-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+                  className={`p-1 hover:bg-neutral-400 text-neutral-400 hover:text-neutral-900 rounded-sm transition-all duration-300 ease-in-out`}
                 >
                   <IconX size={20} />
                 </button>
@@ -222,7 +222,7 @@ export default function EditableUsername({
           {canEdit ? (
             <button
               onClick={handleEdit}
-              className={`p-1 hover:bg-lime-400 text-neutral-500 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+              className={`p-1 hover:bg-lime-400 text-neutral-500 hover:text-neutral-900 rounded-sm transition-all duration-300 ease-in-out`}
               title={`Edit username`}
             >
               <IconPencil size={20} />

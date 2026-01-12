@@ -75,7 +75,7 @@ export default async function UserCollectionsPage({
           {
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
-            textColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
+            textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={urlProfile.id}

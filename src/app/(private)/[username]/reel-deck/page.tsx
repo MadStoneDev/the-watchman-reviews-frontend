@@ -202,7 +202,7 @@ export default async function ReelDeckPage({
           {
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
-            textColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
+            textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={urlProfile.id}
@@ -461,7 +461,7 @@ function renderEmptyState(
           {
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
-            textColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
+            textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={urlProfile.id}

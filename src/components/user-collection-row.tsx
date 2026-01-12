@@ -109,7 +109,7 @@ export const UserCollectionRow = ({
         className={`absolute inset-0 ${
           showDeleteConfirm
             ? "bg-neutral-200"
-            : "bg-gradient-to-r from-neutral-900 via-neutral-900/30 to-transparent"
+            : "bg-linear-to-r from-neutral-900 via-neutral-900/30 to-transparent"
         }`}
       />
 
@@ -117,19 +117,19 @@ export const UserCollectionRow = ({
       <div className="relative z-10 flex items-center gap-2 w-full">
         {showDeleteConfirm ? (
           <>
-            <div className="flex-grow px-2 text-red-600">
+            <div className="grow px-2 text-red-600">
               <p>Are you sure you want to delete "{collection.title}"?</p>
             </div>
             <div className={`flex gap-1`}>
               <button
                 onClick={confirmDelete}
-                className={`p-1 hover:bg-rose-600 text-red-600 hover:text-neutral-100 rounded transition-all duration-300 ease-in-out`}
+                className={`p-1 hover:bg-rose-600 text-red-600 hover:text-neutral-100 rounded-sm transition-all duration-300 ease-in-out`}
               >
                 <IconCheck size={20} />
               </button>
               <button
                 onClick={cancelDelete}
-                className={`p-1 hover:bg-neutral-300 text-neutral-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+                className={`p-1 hover:bg-neutral-300 text-neutral-400 hover:text-neutral-900 rounded-sm transition-all duration-300 ease-in-out`}
               >
                 <IconX size={20} />
               </button>
@@ -149,7 +149,7 @@ export const UserCollectionRow = ({
 
             {isEditing ? (
               <>
-                <div className="flex-grow">
+                <div className="grow">
                   <input
                     type="text"
                     value={editTitle}
@@ -157,7 +157,7 @@ export const UserCollectionRow = ({
                     onKeyDown={handleKeyDown}
                     className={`w-full p-1 border ${
                       error ? "border-red-500" : "border-neutral-300"
-                    } rounded focus:outline-none focus:border-indigo-400`}
+                    } rounded focus:outline-hidden focus:border-indigo-400`}
                     autoFocus
                   />
                 </div>
@@ -175,7 +175,7 @@ export const UserCollectionRow = ({
                   </button>
                   <button
                     onClick={cancelEdit}
-                    className={`p-1 hover:bg-neutral-300 text-neutral-200 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+                    className={`p-1 hover:bg-neutral-300 text-neutral-200 hover:text-neutral-900 rounded-sm transition-all duration-300 ease-in-out`}
                   >
                     <IconX size={20} />
                   </button>
@@ -185,7 +185,7 @@ export const UserCollectionRow = ({
               <>
                 <Link
                   href={`/collections/${collection.id}`}
-                  className={`flex-grow flex flex-col justify-center h-10 hover:text-indigo-400 transition-all duration-300 ease-in-out`}
+                  className={`grow flex flex-col justify-center h-10 hover:text-indigo-400 transition-all duration-300 ease-in-out`}
                 >
                   <div className={`text-sm font-medium`}>
                     {collection.title}
@@ -202,13 +202,13 @@ export const UserCollectionRow = ({
                   >
                     <button
                       onClick={handleEdit}
-                      className={`p-1 grid place-content-center w-10 h-10 hover:bg-indigo-400 hover:text-neutral-900 rounded transition-all duration-300 ease-in-out`}
+                      className={`p-1 grid place-content-center w-10 h-10 hover:bg-indigo-400 hover:text-neutral-900 rounded-sm transition-all duration-300 ease-in-out`}
                     >
                       <IconPencil size={20} />
                     </button>
                     <button
                       onClick={handleDelete}
-                      className={`p-1 grid place-content-center w-10 h-10 hover:bg-red-600 hover:text-neutral-50 rounded transition-all duration-300 ease-in-out`}
+                      className={`p-1 grid place-content-center w-10 h-10 hover:bg-red-600 hover:text-neutral-50 rounded-sm transition-all duration-300 ease-in-out`}
                     >
                       <IconTrash size={20} />
                     </button>

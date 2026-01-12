@@ -60,9 +60,9 @@ export default async function PublicLayout({
       <div className={`md:min-w-[250px] min-h-[70px]`}></div>
 
       <main
-        className={`flex-grow flex flex-col w-full max-w-[2000px] overflow-x-hidden transition-all duration-300 ease-in-out`}
+        className={`grow flex flex-col w-full max-w-[2000px] overflow-x-hidden transition-all duration-300 ease-in-out`}
       >
-        <div className={`px-5 md:px-10 pt-5 md:pt-10 flex-grow`}>
+        <div className={`px-5 md:px-10 pt-5 md:pt-10 grow`}>
           {children}
         </div>
 

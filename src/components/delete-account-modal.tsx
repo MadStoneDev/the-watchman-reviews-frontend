@@ -84,7 +84,7 @@ export default function DeleteAccountModal({
               type="text"
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg focus:outline-none focus:border-red-500 text-neutral-200"
+              className="w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg focus:outline-hidden focus:border-red-500 text-neutral-200"
               placeholder={username}
               disabled={isDeleting}
             />

@@ -186,7 +186,7 @@ export default ({
       <Input
         type="search"
         placeholder="Search"
-        className="outline-none ring-none border-none bg-neutral-800 hover:bg-neutral-600 focus:bg-neutral-600 transition-all duration-300 ease-in-out"
+        className="outline-hidden ring-none border-none bg-neutral-800 hover:bg-neutral-600 focus:bg-neutral-600 transition-all duration-300 ease-in-out"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         onKeyUp={(e) => e.key === "Enter" && handleSearch(search)}

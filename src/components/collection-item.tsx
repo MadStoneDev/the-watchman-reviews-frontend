@@ -325,7 +325,7 @@ export default function CollectionItem({
       <section className={`p-1 flex flex-row items-center justify-between`}>
         {/* Drag Handle - Top Left */}
         <div
-          className="relative lg:absolute lg:top-2 lg:left-2 z-20 p-1.5 bg-neutral-900/80 backdrop-blur-sm rounded cursor-grab active:cursor-grabbing opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity"
+          className="relative lg:absolute lg:top-2 lg:left-2 z-20 p-1.5 bg-neutral-900/80 backdrop-blur-xs rounded-sm cursor-grab active:cursor-grabbing opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity"
           {...dragHandleProps}
           {...dragAttributes}
         >
@@ -344,7 +344,7 @@ export default function CollectionItem({
       </section>
 
       {/* Poster Image */}
-      <div className="relative aspect-[2/3] bg-neutral-800">
+      <div className="relative aspect-2/3 bg-neutral-800">
         {data.posterPath && !imageError ? (
           <Image
             src={
@@ -372,7 +372,7 @@ export default function CollectionItem({
 
         {/* Hover Overlay with Actions */}
         <div
-          className={`absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/20 lg:via-neutral-900/60 to-transparent flex flex-col justify-end p-2 transition-opacity ${
+          className={`absolute inset-0 bg-linear-to-t from-neutral-900 via-neutral-900/20 lg:via-neutral-900/60 to-transparent flex flex-col justify-end p-2 transition-opacity ${
             isHovered ? "opacity-100" : "lg:opacity-0"
           }`}
         >
@@ -381,7 +381,7 @@ export default function CollectionItem({
             <button
               onClick={handleWatchToggle}
               disabled={isUpdatingWatch}
-              className={`flex-grow py-2 px-2 lg:px-3 rounded-lg transition-colors flex items-center justify-center ${
+              className={`grow py-2 px-2 lg:px-3 rounded-lg transition-colors flex items-center justify-center ${
                 isWatched
                   ? "bg-lime-500 text-neutral-900 hover:bg-lime-400"
                   : "bg-neutral-700/80 text-neutral-200 hover:bg-neutral-700"
@@ -406,7 +406,7 @@ export default function CollectionItem({
               <button
                 onClick={handleWatchAllToggle}
                 disabled={isUpdatingWatch}
-                className={`flex-grow py-2 px-2 lg:px-3 rounded-lg transition-colors flex items-center justify-center ${
+                className={`grow py-2 px-2 lg:px-3 rounded-lg transition-colors flex items-center justify-center ${
                   isWatchedByAll
                     ? "bg-lime-500 text-neutral-900 hover:bg-lime-400"
                     : "bg-neutral-700/80 text-neutral-200 hover:bg-neutral-700"
@@ -431,7 +431,7 @@ export default function CollectionItem({
             {isOwner && (
               <button
                 onClick={onDelete}
-                className="flex-grow py-2 px-2 lg:px-3 bg-red-600/80 text-neutral-50 hover:bg-red-600 rounded-lg transition-colors flex items-center justify-center"
+                className="grow py-2 px-2 lg:px-3 bg-red-600/80 text-neutral-50 hover:bg-red-600 rounded-lg transition-colors flex items-center justify-center"
                 title="Remove from collection"
               >
                 <IconTrash

@@ -147,7 +147,7 @@ const ReelDeckCard = React.memo(
       <article className="group relative bg-neutral-900 rounded-lg border border-neutral-800 hover:border-neutral-700 transition-all overflow-hidden hover:shadow-lg hover:shadow-black/20">
         {/* Poster */}
         <Link href={detailUrl} className="block">
-          <div className="relative aspect-[2/3] bg-neutral-800 overflow-hidden">
+          <div className="relative aspect-2/3 bg-neutral-800 overflow-hidden">
             {/* OPTIMIZED: Using MediaImage component */}
             <MediaImage
               src={item.poster_path}
@@ -169,7 +169,7 @@ const ReelDeckCard = React.memo(
 
             {/* Progress Bar for TV Shows */}
             {showProgress && (
-              <div className="absolute bottom-0 left-0 right-0 bg-neutral-900/95 backdrop-blur-sm p-3 border-t border-neutral-800">
+              <div className="absolute bottom-0 left-0 right-0 bg-neutral-900/95 backdrop-blur-xs p-3 border-t border-neutral-800">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <IconProgress size={14} className="text-neutral-400" />

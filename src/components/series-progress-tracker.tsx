@@ -204,7 +204,7 @@ const EpisodeItem = React.memo(
 
         {/* Checkbox with Loading State */}
         <div
-          className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+          className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
             episode.isWatched
               ? "bg-lime-400 border-lime-400"
               : isDisabled

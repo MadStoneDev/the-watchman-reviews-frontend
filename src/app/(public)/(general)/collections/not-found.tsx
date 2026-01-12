@@ -1,6 +1,6 @@
 ﻿export default function NotFound() {
   return (
-    <div className="flex-grow flex flex-col items-center justify-center px-4 text-center">
+    <div className="grow flex flex-col items-center justify-center px-4 text-center">
       <h1 className="text-4xl font-bold mb-4">404</h1>
       <p className="text-2xl font-semibold mb-6">
         "Houston, we have a problem. This collection doesn't exist."

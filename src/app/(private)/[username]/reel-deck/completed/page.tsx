@@ -211,7 +211,7 @@ export default async function CompletedPage({
           {
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
-            textColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
+            textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={urlProfile.id}
@@ -279,7 +279,7 @@ export default async function CompletedPage({
         </div>
 
         {/* Sidebar Filters */}
-        {/*<aside className="hidden lg:block w-64 flex-shrink-0">*/}
+        {/*<aside className="hidden lg:block w-64 shrink-0">*/}
         {/*  <div className="sticky top-24 space-y-6">*/}
         {/*    /!* Type Filter *!/*/}
         {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}

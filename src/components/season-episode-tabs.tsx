@@ -156,7 +156,7 @@ export default function SeasonEpisodeTabs({
             <div className="flex gap-4">
               {/* Episode Still */}
               {episode.poster_path ? (
-                <div className="relative w-40 aspect-video rounded overflow-hidden flex-shrink-0 bg-neutral-800">
+                <div className="relative w-40 aspect-video rounded-sm overflow-hidden shrink-0 bg-neutral-800">
                   <img
                     src={`https://image.tmdb.org/t/p/w300${episode.poster_path}`}
                     alt={episode.title}
@@ -164,7 +164,7 @@ export default function SeasonEpisodeTabs({
                   />
                 </div>
               ) : (
-                <div className="relative w-40 aspect-video rounded overflow-hidden flex-shrink-0 bg-neutral-800 flex items-center justify-center">
+                <div className="relative w-40 aspect-video rounded-sm overflow-hidden shrink-0 bg-neutral-800 flex items-center justify-center">
                   <IconClock size={32} className="text-neutral-600" />
                 </div>
               )}

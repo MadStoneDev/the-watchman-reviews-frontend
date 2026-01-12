@@ -131,7 +131,7 @@ export default function SpecialMediaBlock({
       >
         {/* Main Block */}
         <div
-          className={`flex-grow relative flex w-full bg-transparent md:bg-transparent sm:lg:bg-neutral-800 rounded-2xl border-[1px] border-transparent md:border-transparent sm:lg:border-neutral-50/30 overflow-hidden transition-all duration-300 ease-in-out`}
+          className={`grow relative flex w-full bg-transparent md:bg-transparent sm:lg:bg-neutral-800 rounded-2xl border border-transparent md:border-transparent sm:lg:border-neutral-50/30 overflow-hidden transition-all duration-300 ease-in-out`}
           style={{
             backdropFilter: "blur(5px)",
           }}
@@ -185,7 +185,7 @@ export default function SpecialMediaBlock({
                 {renderStars()}
                 {media.vote_average && (
                   <>
-                    <div className="w-[1px] h-4 bg-neutral-600" />
+                    <div className="w-px h-4 bg-neutral-600" />
                     <span className="text-xs font-semibold">
                       {media.vote_average.toFixed(1)}
                     </span>
@@ -193,7 +193,7 @@ export default function SpecialMediaBlock({
                 )}
                 {media.release_year && (
                   <>
-                    <div className="w-[1px] h-4 bg-neutral-600" />
+                    <div className="w-px h-4 bg-neutral-600" />
                     <span className="text-xs">{media.release_year}</span>
                   </>
                 )}
@@ -202,7 +202,7 @@ export default function SpecialMediaBlock({
 
             {/* Overview */}
             {media.overview && (
-              <div className="flex-grow">
+              <div className="grow">
                 <p className="text-xs md:text-sm leading-relaxed text-neutral-300 line-clamp-4">
                   {media.overview}
                 </p>
@@ -266,7 +266,7 @@ export default function SpecialMediaBlock({
 
               {/* Backdrop overlay when not active */}
               {!activateMe && media.backdrop_path && (
-                <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-linear-to-t from-neutral-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               )}
             </div>
           </div>

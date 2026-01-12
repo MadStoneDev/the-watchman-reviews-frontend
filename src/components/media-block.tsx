@@ -395,7 +395,7 @@ export default function MediaBlock({
       {/* Poster */}
       <div
         onClick={handleViewDetails}
-        className="relative aspect-[2/3] bg-neutral-800 overflow-hidden cursor-pointer"
+        className="relative aspect-2/3 bg-neutral-800 overflow-hidden cursor-pointer"
       >
         <MediaImage
           src={data.posterPath}
@@ -406,7 +406,7 @@ export default function MediaBlock({
         />
 
         {/* Action Buttons Overlay - Only show on hover and for users */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="absolute bottom-4 left-2 right-2 flex gap-2">
             {isUser && (
               <>
@@ -527,7 +527,7 @@ export default function MediaBlock({
 
       {/* Collections Modal */}
       {showCollections && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/80 backdrop-blur-xs">
           <div className="w-full max-w-md bg-neutral-800 rounded-lg shadow-xl border border-neutral-700 max-h-[90vh] flex flex-col">
             {/* Header */}
             <div className="flex justify-between items-start border-b border-neutral-700 p-6">

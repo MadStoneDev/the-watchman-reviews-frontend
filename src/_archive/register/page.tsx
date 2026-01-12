@@ -35,11 +35,11 @@
 //       </p>
 //
 //       {/*<div className={`relative flex justify-center items-center`}>*/}
-//       {/*  <div className={`w-full h-[1px] bg-neutral-200`}></div>*/}
+//       {/*  <div className={`w-full h-px bg-neutral-200`}></div>*/}
 //       {/*  <h4 className={`p-3 min-w-fit text-sm z-10`}>*/}
 //       {/*    or <span className={`font-bold`}>Register</span> with*/}
 //       {/*  </h4>*/}
-//       {/*  <div className={`w-full h-[1px] bg-neutral-200`}></div>*/}
+//       {/*  <div className={`w-full h-px bg-neutral-200`}></div>*/}
 //       {/*</div>*/}
 //
 //       {/*<article className={`mt-4 flex flex-col gap-4`}>*/}

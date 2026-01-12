@@ -46,7 +46,7 @@ export default function CommentForm({
         disabled={isPending}
         className={`w-full ${minHeight} px-4 py-3 bg-neutral-900/50 border-2 border-neutral-800 rounded-xl
           text-neutral-200 placeholder-neutral-600 resize-none text-base leading-relaxed
-          focus:outline-none focus:border-lime-400/50 focus:bg-neutral-900
+          focus:outline-hidden focus:border-lime-400/50 focus:bg-neutral-900
           disabled:opacity-50 disabled:cursor-not-allowed
           transition-all duration-200`}
       />

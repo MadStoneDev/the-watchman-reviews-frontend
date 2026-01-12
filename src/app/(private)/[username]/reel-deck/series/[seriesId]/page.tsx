@@ -123,7 +123,7 @@ export default async function SeriesProgressPage({
           {
             label: "Collections",
             href: `/${username}/collections`,
-            textColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
+            textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={urlProfile.id}
@@ -144,7 +144,7 @@ export default async function SeriesProgressPage({
         <div className="bg-neutral-900 rounded-lg border border-neutral-800 overflow-hidden mb-6">
           <div className="flex flex-col md:flex-row gap-6 p-6">
             {/* Poster */}
-            <div className="w-32 md:w-48 aspect-[2/3] rounded-lg overflow-hidden flex-shrink-0 bg-neutral-800 border-2 border-neutral-700">
+            <div className="w-32 md:w-48 aspect-2/3 rounded-lg overflow-hidden shrink-0 bg-neutral-800 border-2 border-neutral-700">
               {series.poster_path ? (
                 <Image
                   src={`https://image.tmdb.org/t/p/w500${series.poster_path}`}

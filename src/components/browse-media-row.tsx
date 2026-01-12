@@ -90,8 +90,8 @@ export function BrowseMediaRow({
                   )}
                 </div>
 
-                <section className={`flex-grow flex flex-col gap-1 mt-4`}>
-                  <div className={`flex-grow w-full`}>
+                <section className={`grow flex flex-col gap-1 mt-4`}>
+                  <div className={`grow w-full`}>
                     <h3
                       className={`text-neutral-200 whitespace-nowrap truncate text-sm font-semibold group-hover:text-lime-400 transition-colors`}
                       title={media.title}

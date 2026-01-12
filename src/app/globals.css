@@ -1,57 +1,124 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  --breakpoint-*: initial;
+  --breakpoint-xs: 380px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-lg_5: 1140px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  --animate-bouncing: bouncing 1s infinite;
+  --animate-skeleton: skeleton 2s infinite;
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
+  @keyframes bouncing {
+    0%,
+    100% {
+      transform: translateY(-50%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+    50% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+  @keyframes skeleton {
+    0%,
+    100% {
+      opacity: 1;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+    }
+    50% {
+      opacity: 0;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1);
+    }
+  }
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    50% {
+      opacity: 0;
+    }
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: "Montserrat", sans-serif;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
 }
 
-.special-scrollbar::-webkit-scrollbar {
-  height: 4px;
-  
-  transition: opacity 1s ease;
-}
-
-.special-scrollbar::-webkit-scrollbar-track {
-}
-
-.special-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(163, 230, 53, 0);
-  border-radius: 10px;
-  
-  transition: all 1s ease;
-}
-
-.special-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(163, 230, 53, 1);
-}
-
-.special-scrollbar {
-  scrollbar-face-color: rgba(163, 230, 53, 0);
-  transition: all 1s ease;
-}
-
-.special-scrollbar:hover {
-  scrollbar-face-color: rgba(163, 230, 53, 1);
+@utility text-balance {
+  text-wrap: balance;
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #0a0a0a;
+      --foreground: #ededed;
+    }
+  }
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .special-scrollbar::-webkit-scrollbar {
+    height: 4px;
+
+    transition: opacity 1s ease;
+  }
+
+  .special-scrollbar::-webkit-scrollbar-track {
+  }
+
+  .special-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(163, 230, 53, 0);
+    border-radius: 10px;
+
+    transition: all 1s ease;
+  }
+
+  .special-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(163, 230, 53, 1);
+  }
+
+  .special-scrollbar {
+    scrollbar-face-color: rgba(163, 230, 53, 0);
+    transition: all 1s ease;
+  }
+
+  .special-scrollbar:hover {
+    scrollbar-face-color: rgba(163, 230, 53, 1);
   }
 }
 
