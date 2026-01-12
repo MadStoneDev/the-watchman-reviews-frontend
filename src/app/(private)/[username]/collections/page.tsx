@@ -3,9 +3,13 @@ import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import UserCollections from "@/src/components/user-collections-block";
 import { MediaCollection } from "@/src/lib/types";
+import { Tables } from "@/src/types/supabase";
 
 // ISR: Revalidate every 5 minutes for cached performance
 export const revalidate = 300;
+
+// Use generated type for collection_summaries view
+type CollectionSummary = Tables<"collection_summaries">;
 
 export default async function UserCollectionsPage({
   params,
@@ -25,13 +29,17 @@ export default async function UserCollectionsPage({
   const [urlProfileResult, currentProfileResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, username")
+      .select(
+        "id, username, created_at, settings, last_username_change, role, avatar_path, profile_visibility",
+      )
       .eq("username", username)
       .single(),
     user && currentUserId
       ? supabase
           .from("profiles")
-          .select("id, username")
+          .select(
+            "id, username, created_at, settings, last_username_change, role, avatar_path, profile_visibility",
+          )
           .eq("id", currentUserId)
           .single()
       : Promise.resolve({ data: null, error: null }),
@@ -151,8 +159,8 @@ async function fetchAllCollections(
     .in("collection_id", allIds);
 
   // Create maps for fast lookup
-  const summaryMap = new Map(
-    (summaries || []).map((s: any) => [s.collection_id, s]),
+  const summaryMap = new Map<string, CollectionSummary>(
+    (summaries || []).map((s) => [s.collection_id!, s]),
   );
 
   // Map owned collections
@@ -238,16 +246,10 @@ async function fetchFirstPosters(
   // OPTIMIZATION: Fetch movie and series backdrops in parallel
   const [moviesResult, seriesResult] = await Promise.all([
     movieIds.length > 0
-      ? supabase
-          .from("movies")
-          .select("id, backdrop_path")
-          .in("id", movieIds)
+      ? supabase.from("movies").select("id, backdrop_path").in("id", movieIds)
       : Promise.resolve({ data: [] }),
     seriesIds.length > 0
-      ? supabase
-          .from("series")
-          .select("id, backdrop_path")
-          .in("id", seriesIds)
+      ? supabase.from("series").select("id, backdrop_path").in("id", seriesIds)
       : Promise.resolve({ data: [] }),
   ]);
 

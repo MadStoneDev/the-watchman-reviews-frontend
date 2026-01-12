@@ -10,6 +10,12 @@ import {
   IconUser,
 } from "@tabler/icons-react";
 import CommentForm from "./comment-form";
+import {
+  toggleCommentReaction,
+  type CommentReactions,
+} from "@/src/app/actions/comments";
+import { REACTION_TYPES, type ReactionType } from "@/src/lib/reactions-config";
+import { toast } from "sonner";
 
 export interface CommentData {
   id: string;
@@ -23,6 +29,7 @@ export interface CommentData {
     avatar_path: string | null;
   };
   replies?: CommentData[];
+  reactions?: CommentReactions;
 }
 
 interface CommentItemProps {
@@ -31,6 +38,7 @@ interface CommentItemProps {
   onReply: (content: string, parentId: string) => Promise<void>;
   onEdit: (commentId: string, content: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
+  onReactionUpdate?: (commentId: string, reactions: CommentReactions) => void;
   depth?: number;
   maxDepth?: number;
 }
@@ -41,6 +49,7 @@ export default function CommentItem({
   onReply,
   onEdit,
   onDelete,
+  onReactionUpdate,
   depth = 0,
   maxDepth = 5,
 }: CommentItemProps) {
@@ -48,6 +57,14 @@ export default function CommentItem({
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [reactions, setReactions] = useState<CommentReactions>(
+    comment.reactions || {
+      positive: 0,
+      negative: 0,
+      popcorn: 0,
+      userReaction: null,
+    },
+  );
 
   const isOwner = currentUserId === comment.user.id;
   const canReply = depth < maxDepth;
@@ -91,25 +108,85 @@ export default function CommentItem({
     }
   };
 
-  console.log(comment.user.avatar_path);
+  const handleReaction = async (reactionType: ReactionType) => {
+    if (!currentUserId) {
+      toast.error("You must be logged in to react");
+      return;
+    }
+
+    // Optimistic update
+    const previousReactions = { ...reactions };
+    const wasActiveReaction = reactions.userReaction === reactionType;
+
+    // Calculate new reactions optimistically
+    let newReactions: CommentReactions;
+
+    if (wasActiveReaction) {
+      // Removing reaction
+      newReactions = {
+        ...reactions,
+        [reactionType]: Math.max(0, reactions[reactionType] - 1),
+        userReaction: null,
+      };
+    } else if (reactions.userReaction) {
+      // Changing reaction
+      newReactions = {
+        ...reactions,
+        [reactions.userReaction]: Math.max(
+          0,
+          reactions[reactions.userReaction] - 1,
+        ),
+        [reactionType]: reactions[reactionType] + 1,
+        userReaction: reactionType,
+      };
+    } else {
+      // Adding new reaction
+      newReactions = {
+        ...reactions,
+        [reactionType]: reactions[reactionType] + 1,
+        userReaction: reactionType,
+      };
+    }
+
+    setReactions(newReactions);
+
+    // Update server
+    startTransition(async () => {
+      const result = await toggleCommentReaction(comment.id, reactionType);
+
+      if (result.success && result.reactions) {
+        setReactions(result.reactions);
+        onReactionUpdate?.(comment.id, result.reactions);
+      } else {
+        // Revert on error
+        setReactions(previousReactions);
+        toast.error(result.error || "Failed to update reaction");
+      }
+    });
+  };
 
   return (
-    <div className={`${depth > 0 ? "ml-6 md:ml-12" : ""}`}>
-      <div className="flex gap-3 group">
+    <div className={`relative ${depth > 0 ? "ml-8 md:ml-14" : ""}`}>
+      {/* Thread connection line for replies */}
+      {depth > 0 && (
+        <div className="absolute -left-4 md:-left-7 top-0 bottom-0 w-0.5 bg-gradient-to-b from-neutral-700 to-transparent" />
+      )}
+
+      <div className="flex gap-2 md:gap-4 group py-4 hover:bg-neutral-900/30 -mx-2 md:-mx-4 px-2 md:px-4 rounded-lg transition-colors">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-neutral-800 border border-neutral-700 overflow-hidden">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-neutral-800 to-neutral-900 border-2 border-neutral-700/50 overflow-hidden ring-2 ring-transparent transition-all">
             {comment.user.avatar_path ? (
               <Image
                 src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${comment.user.avatar_path}`}
                 alt={comment.user.username}
-                width={40}
-                height={40}
+                width={48}
+                height={48}
                 className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <IconUser size={20} className="text-neutral-600" />
+                <IconUser size={24} className="text-neutral-600" />
               </div>
             )}
           </div>
@@ -118,15 +195,62 @@ export default function CommentItem({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-semibold text-sm text-neutral-200">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="font-bold text-base text-neutral-100">
               {comment.user.username}
             </span>
-            <span className="text-xs text-neutral-500">
+            <span className="text-xs text-neutral-500">•</span>
+            <span className="text-sm text-neutral-500">
               {formatDate(comment.created_at)}
             </span>
             {comment.updated_at !== comment.created_at && (
-              <span className="text-xs text-neutral-500 italic">(edited)</span>
+              <span className={`text-[12px] text-neutral-500/80`}>
+                (Edited)
+              </span>
+            )}
+
+            {/* Owner menu - moved to header on desktop */}
+            {isOwner && !isEditing && (
+              <div className="relative ml-auto">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-1 text-neutral-600 hover:text-neutral-400 opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <IconDotsVertical size={18} />
+                </button>
+
+                {showMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowMenu(false)}
+                    />
+                    <div className="absolute right-0 top-8 bg-neutral-800 border border-neutral-700 rounded-lg shadow-2xl z-20 py-1 min-w-[140px]">
+                      <button
+                        onClick={() => {
+                          setIsEditing(true);
+                          setShowMenu(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm text-neutral-300 hover:bg-neutral-700 flex items-center gap-2 transition-colors"
+                      >
+                        <IconEdit size={16} />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleDelete();
+                          setShowMenu(false);
+                        }}
+                        disabled={isPending}
+                        className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-neutral-700 flex items-center gap-2 disabled:opacity-50 transition-colors"
+                      >
+                        <IconTrash size={16} />
+                        {isPending ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
 
@@ -144,66 +268,68 @@ export default function CommentItem({
               />
             </div>
           ) : (
-            <p className="text-sm text-neutral-300 whitespace-pre-wrap break-words mb-2">
+            <p className="text-base leading-relaxed text-neutral-300 whitespace-pre-wrap break-words mb-3">
               {comment.content}
             </p>
           )}
 
           {/* Actions */}
           {!isEditing && (
-            <div className="flex items-center gap-4 text-xs">
-              {canReply && currentUserId && (
-                <button
-                  onClick={() => setIsReplying(!isReplying)}
-                  className="text-neutral-500 hover:text-lime-400 transition-colors flex items-center gap-1"
-                >
-                  <IconMessageReply size={14} />
-                  Reply
-                </button>
-              )}
-
-              {isOwner && (
-                <div className="relative">
+            <div className="flex items-center justify-between gap-4 text-sm">
+              {/* Left side - Reply button */}
+              <div className="flex items-center gap-4">
+                {canReply && currentUserId && (
                   <button
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="text-neutral-500 hover:text-neutral-300 transition-colors"
+                    onClick={() => setIsReplying(!isReplying)}
+                    className="text-neutral-500 hover:text-lime-400 transition-colors flex items-center gap-1.5 font-medium"
                   >
-                    <IconDotsVertical size={16} />
+                    <IconMessageReply size={20} />
+                    Reply
                   </button>
+                )}
+              </div>
 
-                  {showMenu && (
-                    <div className="absolute left-0 top-6 bg-neutral-800 border border-neutral-700 rounded-lg shadow-xl z-10 py-1 min-w-[120px]">
+              {/* Right side - Reaction buttons */}
+              <div className="flex items-center gap-1 md:gap-2">
+                {(Object.keys(REACTION_TYPES) as ReactionType[]).map(
+                  (reactionType) => {
+                    const config = REACTION_TYPES[reactionType];
+                    const Icon = config.icon;
+                    const count = reactions[reactionType];
+                    const isActive = reactions.userReaction === reactionType;
+                    const showCount = isOwner && count > 0;
+
+                    return (
                       <button
-                        onClick={() => {
-                          setIsEditing(true);
-                          setShowMenu(false);
-                        }}
-                        className="w-full px-3 py-2 text-left text-sm text-neutral-300 hover:bg-neutral-700 flex items-center gap-2"
+                        key={reactionType}
+                        onClick={() => handleReaction(reactionType)}
+                        disabled={!currentUserId}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-colors ${
+                          isActive
+                            ? `${config.activeBg} ${config.activeColor}`
+                            : `text-neutral-500 ${config.hoverColor} hover:bg-neutral-800/50`
+                        } ${
+                          !currentUserId ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                        title={
+                          !currentUserId ? "Sign in to react" : config.label
+                        }
                       >
-                        <IconEdit size={14} />
-                        Edit
+                        <Icon size={20} strokeWidth={2} />
+                        {showCount && (
+                          <span className="text-xs font-medium">{count}</span>
+                        )}
                       </button>
-                      <button
-                        onClick={() => {
-                          handleDelete();
-                          setShowMenu(false);
-                        }}
-                        disabled={isPending}
-                        className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-neutral-700 flex items-center gap-2 disabled:opacity-50"
-                      >
-                        <IconTrash size={14} />
-                        {isPending ? "Deleting..." : "Delete"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                    );
+                  },
+                )}
+              </div>
             </div>
           )}
 
           {/* Reply Form */}
           {isReplying && (
-            <div className="mt-3">
+            <div className="mt-4 pt-4 border-t border-neutral-800">
               <CommentForm
                 onSubmit={handleReply}
                 onCancel={() => setIsReplying(false)}
@@ -217,7 +343,7 @@ export default function CommentItem({
 
           {/* Nested Replies */}
           {comment.replies && comment.replies.length > 0 && (
-            <div className="mt-4 space-y-4">
+            <div className="mt-2 space-y-0">
               {comment.replies.map((reply) => (
                 <CommentItem
                   key={reply.id}
@@ -226,6 +352,7 @@ export default function CommentItem({
                   onReply={onReply}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onReactionUpdate={onReactionUpdate}
                   depth={depth + 1}
                   maxDepth={maxDepth}
                 />

@@ -44,9 +44,9 @@ export default function CommentForm({
         placeholder={placeholder}
         autoFocus={autoFocus}
         disabled={isPending}
-        className={`w-full ${minHeight} px-4 py-3 bg-neutral-900 border border-neutral-700 rounded-lg 
-          text-neutral-200 placeholder-neutral-500 resize-none
-          focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent
+        className={`w-full ${minHeight} px-4 py-3 bg-neutral-900/50 border-2 border-neutral-800 rounded-xl
+          text-neutral-200 placeholder-neutral-600 resize-none text-base leading-relaxed
+          focus:outline-none focus:border-lime-400/50 focus:bg-neutral-900
           disabled:opacity-50 disabled:cursor-not-allowed
           transition-all duration-200`}
       />
@@ -57,11 +57,10 @@ export default function CommentForm({
             type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 
+            className="px-4 py-2 text-neutral-400 hover:text-neutral-200
               rounded-lg transition-colors duration-200 flex items-center gap-2
-              disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
-            <IconX size={18} />
             Cancel
           </button>
         )}
@@ -69,12 +68,13 @@ export default function CommentForm({
         <button
           type="submit"
           disabled={!content.trim() || isPending}
-          className="px-4 py-2 bg-lime-400 hover:bg-lime-500 text-neutral-900 font-medium
-            rounded-lg transition-colors duration-200 flex items-center gap-2
-            disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-5 py-2.5 bg-lime-400 hover:bg-lime-500 text-neutral-900 font-semibold
+            rounded-lg transition-all duration-200 flex items-center gap-2
+            disabled:opacity-50 disabled:cursor-not-allowed
+            shadow-lg shadow-lime-400/20 hover:shadow-lime-400/30"
         >
-          <IconSend size={18} />
           {isPending ? "Posting..." : submitLabel}
+          <IconSend size={16} />
         </button>
       </div>
     </form>

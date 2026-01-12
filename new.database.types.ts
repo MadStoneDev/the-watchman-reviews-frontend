@@ -646,36 +646,7 @@ export type Database = {
       }
     }
     Views: {
-      collection_summaries: {
-        Row: {
-          collection_id: string | null
-          item_count: number | null
-          first_media_id: string | null
-          first_media_type: string | null
-        }
-        Insert: {
-          [_ in never]: never
-        }
-        Update: {
-          [_ in never]: never
-        }
-        Relationships: []
-      }
-      user_series_stats: {
-        Row: {
-          user_id: string | null
-          series_id: string | null
-          episode_id: string | null
-          air_date: string | null
-        }
-        Insert: {
-          [_ in never]: never
-        }
-        Update: {
-          [_ in never]: never
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never

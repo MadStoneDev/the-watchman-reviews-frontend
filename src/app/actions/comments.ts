@@ -2,8 +2,17 @@
 
 import { createClient } from "@/src/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { isValidReactionType, type ReactionType } from "@/src/lib/reactions-config";
 
 export type CommentMediaType = "movie" | "series" | "season" | "episode";
+
+export interface CommentReactions {
+  [key: string]: number | ReactionType | null;
+  positive: number;
+  negative: number;
+  popcorn: number;
+  userReaction: ReactionType | null;
+}
 
 interface CommentWithUser {
   id: string;
@@ -16,6 +25,7 @@ interface CommentWithUser {
     username: string;
     avatar_path: string | null;
   };
+  reactions?: CommentReactions;
   replies?: CommentWithUser[];
 }
 
@@ -40,6 +50,10 @@ export async function getComments(
     const supabase = await createClient();
     const table = getCommentTable(mediaType);
     const mediaIdField = getMediaIdField(mediaType);
+
+    // Get current user for reactions
+    const { data: userData } = await supabase.auth.getClaims();
+    const currentUserId = userData?.claims?.sub || null;
 
     const { data: comments, error } = await supabase
       .from(table)
@@ -76,6 +90,11 @@ export async function getComments(
     // Create user lookup map
     const userMap = new Map(users?.map((u) => [u.id, u]) || []);
 
+    // Fetch reactions for all comments
+    const commentIds = comments.map((c: any) => c.id);
+    const reactionsResult = await getCommentReactions(commentIds, currentUserId);
+    const reactionsMap = reactionsResult.reactions || {};
+
     // Build comment tree with user data - Add explicit typing
     const commentsWithUsers: CommentWithUser[] = comments.map(
       (comment: any) => ({
@@ -89,6 +108,7 @@ export async function getComments(
           username: "Unknown User",
           avatar_path: null,
         },
+        reactions: reactionsMap[comment.id],
         replies: [],
       }),
     );
@@ -296,5 +316,153 @@ export async function deleteComment(
   } catch (error) {
     console.error("Error in deleteComment:", error);
     return { success: false, error: "Failed to delete comment" };
+  }
+}
+
+/**
+ * Get reactions for specific comments
+ */
+export async function getCommentReactions(
+  commentIds: string[],
+  currentUserId?: string | null,
+): Promise<{ success: boolean; reactions?: Record<string, CommentReactions>; error?: string }> {
+  try {
+    if (commentIds.length === 0) {
+      return { success: true, reactions: {} };
+    }
+
+    const supabase = await createClient();
+
+    // Fetch all reactions for these comments
+    const { data: reactions, error } = await supabase
+      .from("comment_reactions")
+      .select("comment_id, reaction_type, user_id")
+      .in("comment_id", commentIds);
+
+    if (error) {
+      console.error("Error fetching reactions:", error);
+      return { success: false, error: error.message };
+    }
+
+    // Aggregate reactions by comment
+    const reactionsByComment: Record<string, CommentReactions> = {};
+
+    commentIds.forEach((id) => {
+      reactionsByComment[id] = {
+        positive: 0,
+        negative: 0,
+        popcorn: 0,
+        userReaction: null,
+      };
+    });
+
+    reactions?.forEach((reaction) => {
+      const commentReactions = reactionsByComment[reaction.comment_id];
+      if (commentReactions) {
+        commentReactions[reaction.reaction_type as ReactionType]++;
+        if (currentUserId && reaction.user_id === currentUserId) {
+          commentReactions.userReaction = reaction.reaction_type as ReactionType;
+        }
+      }
+    });
+
+    return { success: true, reactions: reactionsByComment };
+  } catch (error) {
+    console.error("Error in getCommentReactions:", error);
+    return { success: false, error: "Failed to fetch reactions" };
+  }
+}
+
+/**
+ * Toggle a reaction on a comment
+ */
+export async function toggleCommentReaction(
+  commentId: string,
+  reactionType: ReactionType,
+): Promise<{ success: boolean; reactions?: CommentReactions; error?: string }> {
+  try {
+    // Validate reaction type
+    if (!isValidReactionType(reactionType)) {
+      return {
+        success: false,
+        error: "Invalid reaction type",
+      };
+    }
+
+    const supabase = await createClient();
+
+    // Get current user
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        success: false,
+        error: "You must be logged in to react",
+      };
+    }
+
+    // Check if user already has a reaction on this comment
+    const { data: existingReaction } = await supabase
+      .from("comment_reactions")
+      .select("reaction_type")
+      .eq("comment_id", commentId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (existingReaction) {
+      // If same reaction type, remove it (toggle off)
+      if (existingReaction.reaction_type === reactionType) {
+        const { error } = await supabase
+          .from("comment_reactions")
+          .delete()
+          .eq("comment_id", commentId)
+          .eq("user_id", user.id);
+
+        if (error) {
+          console.error("Error removing reaction:", error);
+          return { success: false, error: error.message };
+        }
+      } else {
+        // Different reaction type, update it
+        const { error } = await supabase
+          .from("comment_reactions")
+          .update({ reaction_type: reactionType })
+          .eq("comment_id", commentId)
+          .eq("user_id", user.id);
+
+        if (error) {
+          console.error("Error updating reaction:", error);
+          return { success: false, error: error.message };
+        }
+      }
+    } else {
+      // No existing reaction, insert new one
+      const { error } = await supabase
+        .from("comment_reactions")
+        .insert({
+          comment_id: commentId,
+          user_id: user.id,
+          reaction_type: reactionType,
+        });
+
+      if (error) {
+        console.error("Error adding reaction:", error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    // Fetch updated reactions for this comment
+    const result = await getCommentReactions([commentId], user.id);
+
+    if (result.success && result.reactions) {
+      return { success: true, reactions: result.reactions[commentId] };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in toggleCommentReaction:", error);
+    return { success: false, error: "Failed to toggle reaction" };
   }
 }

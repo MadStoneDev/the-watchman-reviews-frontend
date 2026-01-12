@@ -11,7 +11,7 @@ SELECT DISTINCT ON (mc.collection_id)
   COUNT(*) OVER (PARTITION BY mc.collection_id) as item_count,
   mc.media_id as first_media_id,
   mc.media_type as first_media_type
-FROM medias_collections mc
+FROM medias_collections mcHey,
 ORDER BY mc.collection_id, mc.position ASC;
 
 -- Add comment for documentation

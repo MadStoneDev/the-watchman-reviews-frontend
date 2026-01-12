@@ -194,32 +194,39 @@ export default function CommentSection({
   const commentCount = countComments(optimisticComments);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <IconMessageCircle size={24} className="text-lime-400" />
-        <h2 className="text-2xl font-bold">
-          Comments {commentCount > 0 && `(${commentCount})`}
-        </h2>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <IconMessageCircle size={28} className="text-lime-400" />
+          <h2 className="text-2xl md:text-3xl font-bold">
+            Discussion
+          </h2>
+          {commentCount > 0 && (
+            <span className="text-lg text-neutral-500 font-normal">
+              {commentCount}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Add Comment Form */}
       {currentUserId ? (
-        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4">
+        <div className="pb-6 border-b border-neutral-800">
           <CommentForm
             onSubmit={(content) => handleAddComment(content)}
-            placeholder="Share your thoughts..."
+            placeholder="What did you think?"
           />
         </div>
       ) : (
-        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6 text-center">
-          <p className="text-neutral-400">You must be logged in to comment.</p>
+        <div className="py-8 border-y border-neutral-800 text-center">
+          <p className="text-neutral-500">Sign in to join the discussion</p>
         </div>
       )}
 
       {/* Comments List */}
       {optimisticComments.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-1">
           {optimisticComments.map((comment) => (
             <CommentItem
               key={comment.id}
@@ -234,13 +241,13 @@ export default function CommentSection({
           ))}
         </div>
       ) : (
-        <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-12 text-center">
+        <div className="py-16 text-center">
           <IconMessageCircle
-            size={48}
-            className="text-neutral-700 mx-auto mb-3"
+            size={56}
+            className="text-neutral-800 mx-auto mb-4"
           />
-          <p className="text-neutral-500">
-            No comments yet. Be the first to share your thoughts!
+          <p className="text-neutral-500 text-lg">
+            No comments yet. Start the conversation!
           </p>
         </div>
       )}
