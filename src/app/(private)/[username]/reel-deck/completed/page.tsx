@@ -211,7 +211,7 @@ export default async function CompletedPage({
           {
             label: "Collections",
             href: `/${urlProfile.username}/collections`,
-            color: `indigo-500`,
+            textColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={urlProfile.id}

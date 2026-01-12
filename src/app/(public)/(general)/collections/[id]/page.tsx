@@ -228,7 +228,7 @@ export default async function CollectionPage({
             {
               label: "Collections",
               href: `/${profile.username}/collections`,
-              color: `indigo-500`,
+              texttextColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
             },
           ]}
         />

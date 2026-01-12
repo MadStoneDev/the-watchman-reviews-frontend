@@ -52,7 +52,7 @@ export default async function SettingsPage() {
           {
             label: "Collections",
             href: `/${profileData.username}/collections`,
-            color: `indigo-500`,
+              textColor: `text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={profileData.id}

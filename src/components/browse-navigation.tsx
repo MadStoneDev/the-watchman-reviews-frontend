@@ -8,7 +8,8 @@ import { usePathname } from "next/navigation";
 interface NavigationItem {
   label: string;
   href: string;
-  color?: string;
+  textColor?: string;
+  bgColor?: string;
 }
 
 export default function BrowseNavigation({
@@ -34,7 +35,7 @@ export default function BrowseNavigation({
     currentUserId !== "" &&
     profileId === currentUserId;
   const navigationItems = isOwnProfile
-    ? [...items, { label: "Settings", href: "/settings", color: "neutral-500" }]
+    ? [...items, { label: "Settings", href: "/settings", textColor: "text-neutral-300", bgColor: "bg-neutral-300" }]
     : items;
 
   useEffect(() => {
@@ -54,8 +55,8 @@ export default function BrowseNavigation({
           width: `${offsetWidth}px`,
         });
         setHighlightColor(
-          navigationItems[getIndex]?.color
-            ? `bg-${navigationItems[getIndex].color}`
+          navigationItems[getIndex]?.bgColor
+            ? navigationItems[getIndex].bgColor
             : "bg-lime-400",
         );
       } else {
@@ -76,7 +77,7 @@ export default function BrowseNavigation({
     <nav
       className={`pb-3 relative flex gap-5 md:gap-10 border-b border-neutral-700 transition-all duration-300 ease-in-out`}
     >
-      {navigationItems.map(({ label, href, color }, index) => (
+      {navigationItems.map(({ label, href, textColor }, index) => (
         <Link
           key={href}
           ref={(el) => {
@@ -88,10 +89,10 @@ export default function BrowseNavigation({
           className={`px-2 md:px-4 py-2 flex max-w-fit ${
             pathname === href
               ? "text-neutral-900"
-              : `text-neutral-500 hover:text-${color ? color : "lime-400"}`
+              : `text-neutral-500 ${textColor ? `hover:${textColor}` : "hover:text-lime-400"}`
           } text-sm md:text-base font-bold transition-all duration-300 ease-in-out z-50`}
         >
-          <span>{label}</span>
+          <span>{label}-{textColor}</span>
         </Link>
       ))}
 
