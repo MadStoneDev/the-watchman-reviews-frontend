@@ -21,7 +21,7 @@ const fetchCollection = async (id: string) => {
 };
 
 // ✅ OPTIMIZED: Single query with conditional logic
-const fetchInitialMedia = async (id: string) => {
+const fetchInitialMedia = async (id: string): Promise<MediaItem[]> => {
   const supabase = await createClient();
 
   // Get entries with position info
@@ -67,7 +67,7 @@ const fetchInitialMedia = async (id: string) => {
   );
 
   // Build media items in order
-  const mediaItems: MediaItem[] = mediaEntries.map((entry) => {
+  const mediaItems = mediaEntries.map((entry): MediaItem | null => {
     if (entry.media_type === "movie") {
       const movie = movieMap.get(entry.media_id);
       if (!movie) return null;
@@ -79,7 +79,7 @@ const fetchInitialMedia = async (id: string) => {
         posterPath: movie.poster_path,
         backdropPath: movie.backdrop_path,
         tmdbId: movie.tmdb_id,
-        mediaType: "movie" as const,
+        mediaType: "movie",
         releaseYear: movie.release_year,
         collectionEntryId: entry.id,
         mediaId: movie.id,
@@ -96,7 +96,7 @@ const fetchInitialMedia = async (id: string) => {
         posterPath: series.poster_path,
         backdropPath: series.backdrop_path,
         tmdbId: series.tmdb_id,
-        mediaType: "tv" as const,
+        mediaType: "tv",
         releaseYear: series.release_year,
         collectionEntryId: entry.id,
         mediaId: series.id,

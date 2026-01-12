@@ -1,6 +1,5 @@
 ﻿import React from "react";
 
-import SingleMediaWrapper from "@/src/components/wrapper-single-media";
 import SingleMediaWrapperSimple from "@/src/components/wrapper-single-media-simple";
 
 interface SearchParams {

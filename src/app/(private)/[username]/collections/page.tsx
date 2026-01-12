@@ -160,7 +160,7 @@ async function fetchAllCollections(
 
   // Create maps for fast lookup
   const summaryMap = new Map<string, CollectionSummary>(
-    (summaries || []).map((s) => [s.collection_id!, s]),
+    (summaries || []).map((s: any) => [s.collection_id!, s]),
   );
 
   // Map owned collections
