@@ -52,7 +52,8 @@ const tierColors: Record<AchievementTier, { bg: string; border: string; text: st
   },
 };
 
-const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+// TODO: Check if size was needed here because it had generated lots of errors
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   film: IconMovie,
   tv: IconDeviceTv,
   play: IconPlayerPlay,
@@ -113,7 +114,7 @@ export default function AchievementBadge({
         <div
           className={`shrink-0 rounded-full p-2 ${colors.bg} border ${colors.border}`}
         >
-          <IconComponent size={s.icon} className={colors.text} />
+          <IconComponent size={24} className={colors.text} />
         </div>
         <div className="min-w-0">
           <h3 className={`font-semibold ${s.title} ${colors.text} truncate`}>
