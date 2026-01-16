@@ -3,6 +3,27 @@ export type ProfileRole = {
   [key: number]: string;
 };
 
+// Follow System
+export type VisibilityLevel = "everyone" | "mutuals" | "followers" | "nobody";
+
+export interface FollowStatus {
+  isFollowing: boolean;
+  isFollowedBy: boolean;
+  isMutual: boolean;
+}
+
+export interface FollowCounts {
+  followers: number;
+  following: number;
+}
+
+export interface UserListProfile {
+  id: string;
+  username: string;
+  avatar_path: string | null;
+  followStatus?: FollowStatus;
+}
+
 // Media
 export interface MediaCollection {
   id: string;

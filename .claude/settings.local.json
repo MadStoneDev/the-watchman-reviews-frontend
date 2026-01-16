@@ -4,7 +4,13 @@
       "Bash(curl:*)",
       "Bash(node:*)",
       "Bash(npm run dev:*)",
-      "Bash(tasklist /FI \"PID eq 28720\" /FO LIST)"
+      "Bash(tasklist /FI \"PID eq 28720\" /FO LIST)",
+      "WebSearch",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)"
     ]
   }
 }

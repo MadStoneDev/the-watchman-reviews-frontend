@@ -15,7 +15,11 @@ import {
   IconDownload,
   IconUpload,
   IconUser,
+  IconUsers,
+  IconUserPlus,
+  IconMessage,
 } from "@tabler/icons-react";
+import type { VisibilityLevel } from "@/src/lib/types";
 import DeleteAccountModal from "./delete-account-modal";
 
 interface SettingsContentProps {
@@ -38,6 +42,9 @@ export default function SettingsContent({
     email_notifications: true,
     show_watching_deck: true,
     default_collection_privacy: "private",
+    show_collections_to: "everyone" as VisibilityLevel,
+    show_watch_progress_to: "everyone" as VisibilityLevel,
+    allow_messages_from: "everyone" as VisibilityLevel,
     ...profileData.settings,
   };
 
@@ -387,6 +394,100 @@ export default function SettingsContent({
               Public
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Social Privacy Section */}
+      <section className="bg-neutral-900 rounded-lg p-6 border border-neutral-800">
+        <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+          <IconUsers size={24} />
+          Social Privacy
+        </h2>
+
+        {/* Show Collections To */}
+        <div className="mb-6">
+          <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
+            <IconEye size={18} />
+            Who can see your collections
+          </label>
+          <p className="text-sm text-neutral-500 mb-3">
+            Control who can view your public collections
+          </p>
+          <select
+            value={settings.show_collections_to}
+            onChange={(e) =>
+              updateSettings({
+                ...settings,
+                show_collections_to: e.target.value as VisibilityLevel,
+              })
+            }
+            disabled={isSaving}
+            className={`w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 focus:outline-none focus:border-lime-400 ${
+              isSaving ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            <option value="everyone">Everyone</option>
+            <option value="followers">Followers only</option>
+            <option value="mutuals">Mutuals only</option>
+            <option value="nobody">Only me</option>
+          </select>
+        </div>
+
+        {/* Show Watch Progress To */}
+        <div className="mb-6">
+          <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
+            <IconUserPlus size={18} />
+            Who can see your watch progress
+          </label>
+          <p className="text-sm text-neutral-500 mb-3">
+            Control who can see what you're watching and your progress
+          </p>
+          <select
+            value={settings.show_watch_progress_to}
+            onChange={(e) =>
+              updateSettings({
+                ...settings,
+                show_watch_progress_to: e.target.value as VisibilityLevel,
+              })
+            }
+            disabled={isSaving}
+            className={`w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 focus:outline-none focus:border-lime-400 ${
+              isSaving ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            <option value="everyone">Everyone</option>
+            <option value="followers">Followers only</option>
+            <option value="mutuals">Mutuals only</option>
+            <option value="nobody">Only me</option>
+          </select>
+        </div>
+
+        {/* Allow Messages From */}
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
+            <IconMessage size={18} />
+            Who can message you
+          </label>
+          <p className="text-sm text-neutral-500 mb-3">
+            Control who can send you direct messages
+          </p>
+          <select
+            value={settings.allow_messages_from}
+            onChange={(e) =>
+              updateSettings({
+                ...settings,
+                allow_messages_from: e.target.value as VisibilityLevel,
+              })
+            }
+            disabled={isSaving}
+            className={`w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 focus:outline-none focus:border-lime-400 ${
+              isSaving ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            <option value="everyone">Everyone</option>
+            <option value="mutuals">Mutuals only</option>
+            <option value="nobody">Nobody</option>
+          </select>
         </div>
       </section>
 

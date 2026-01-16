@@ -2,9 +2,12 @@
 import { redirect, notFound } from "next/navigation";
 
 import { createClient } from "@/src/utils/supabase/server";
+import { checkFollowStatus, getFollowCounts } from "@/src/app/actions/follows";
 
 import BrowseNavigation from "@/src/components/browse-navigation";
 import EditableUsername from "@/src/components/editable-username";
+import FollowButton from "@/src/components/follow-button";
+import FollowCountsDisplay from "@/src/components/follow-counts";
 
 export default async function PrivatePage({
   params,
@@ -48,6 +51,25 @@ export default async function PrivatePage({
     );
   }
 
+  // Get follow data
+  const isOwnProfile = profileData.id === user.claims.sub;
+  const [followStatusResult, followCountsResult] = await Promise.all([
+    isOwnProfile
+      ? Promise.resolve({ success: true, status: { isFollowing: false, isFollowedBy: false, isMutual: false } })
+      : checkFollowStatus(profileData.id),
+    getFollowCounts(profileData.id),
+  ]);
+
+  const followStatus = followStatusResult.status || {
+    isFollowing: false,
+    isFollowedBy: false,
+    isMutual: false,
+  };
+  const followCounts = followCountsResult.counts || {
+    followers: 0,
+    following: 0,
+  };
+
   return (
     <>
       <BrowseNavigation
@@ -63,6 +85,16 @@ export default async function PrivatePage({
             href: `/${profileData.username}/collections`,
             textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
+          {
+            label: "Followers",
+            href: `/${profileData.username}/followers`,
+            textColor: `hover:text-amber-400`, bgColor: `bg-amber-400`,
+          },
+          {
+            label: "Following",
+            href: `/${profileData.username}/following`,
+            textColor: `hover:text-cyan-400`, bgColor: `bg-cyan-400`,
+          },
         ]}
         profileId={profileData.id}
         currentUserId={user.claims.sub}
@@ -71,15 +103,30 @@ export default async function PrivatePage({
       <section
         className={`mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out`}
       >
-        <EditableUsername
-          username={profileData.username}
-          lastUsernameChange={profileData.last_username_change}
-          daysSinceLastChange={
-            daysSinceLastChange !== null ? daysSinceLastChange : 999
-          }
-          profileId={profileData.id}
-          currentUserId={user.claims.sub}
-        />
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-4 flex-wrap">
+            <EditableUsername
+              username={profileData.username}
+              lastUsernameChange={profileData.last_username_change}
+              daysSinceLastChange={
+                daysSinceLastChange !== null ? daysSinceLastChange : 999
+              }
+              profileId={profileData.id}
+              currentUserId={user.claims.sub}
+            />
+            {!isOwnProfile && (
+              <FollowButton
+                targetUserId={profileData.id}
+                targetUsername={profileData.username}
+                initialStatus={followStatus}
+              />
+            )}
+          </div>
+          <FollowCountsDisplay
+            username={profileData.username}
+            counts={followCounts}
+          />
+        </div>
       </section>
     </>
   );
