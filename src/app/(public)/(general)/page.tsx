@@ -31,16 +31,16 @@ export default async function Home() {
 
   return (
     <>
-      <BrowseNavigation
-        items={[
-          { label: "New", href: "/browse/new" },
-          { label: "Movies", href: "/browse/movies" },
-          { label: "Series", href: "/browse/series" },
-          { label: "Kids", href: "/browse/kids" },
-          // {label: "Popular", href: "/browse/popular"},
-          // {label: "Trending", href: "/browse/trending"},
-        ]}
-      />
+      {/*<BrowseNavigation*/}
+      {/*  items={[*/}
+      {/*    { label: "New", href: "/browse/new" },*/}
+      {/*    { label: "Movies", href: "/browse/movies" },*/}
+      {/*    { label: "Series", href: "/browse/series" },*/}
+      {/*    { label: "Kids", href: "/browse/kids" },*/}
+      {/*    // {label: "Popular", href: "/browse/popular"},*/}
+      {/*    // {label: "Trending", href: "/browse/trending"},*/}
+      {/*  ]}*/}
+      {/*/>*/}
 
       <section
         className={`mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out`}
