@@ -1,6 +1,7 @@
 ﻿import { createClient } from "@/src/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { checkWatchingAchievements } from "@/src/app/actions/achievements";
 
 /**
  * POST /api/reel-deck/toggle-episode
@@ -136,6 +137,11 @@ export async function POST(request: Request) {
         );
         // Don't fail the request if this update fails
       }
+
+      // Check watching achievements (don't await to avoid slowing down the response)
+      checkWatchingAchievements(userId).catch((err) =>
+        console.error("[Toggle Episode] Achievement check error:", err)
+      );
 
       console.log(
           `[Toggle Episode] Marked S${episode.season_number}E${episode.episode_number} as watched`,

@@ -117,7 +117,7 @@ export default function FollowButton({
     <button
       onClick={handleClick}
       disabled={isPending}
-      className={`${sizeClasses[size]} rounded-lg flex items-center gap-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed ${getButtonStyles()}`}
+      className={`${sizeClasses[size]} cursor-pointer rounded-lg flex items-center gap-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed ${getButtonStyles()}`}
     >
       {isPending ? (
         <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />

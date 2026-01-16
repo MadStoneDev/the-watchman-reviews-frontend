@@ -3,6 +3,7 @@
 import { createClient } from "@/src/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { FollowStatus, FollowCounts, UserListProfile } from "@/src/lib/types";
+import { checkFollowAchievements, checkFollowingAchievements } from "./achievements";
 
 /**
  * Follow a user
@@ -59,6 +60,12 @@ export async function followUser(
       console.error("Error following user:", error);
       return { success: false, error: error.message };
     }
+
+    // Check achievements for both users (don't await to avoid slowing down the response)
+    // The user who followed gets "first_follow" and potentially "first_mutual"
+    checkFollowingAchievements(user.id).catch(console.error);
+    // The user being followed gets "first_follower" etc.
+    checkFollowAchievements(targetUserId).catch(console.error);
 
     return { success: true };
   } catch (error) {

@@ -3,6 +3,7 @@
 import { createClient } from "@/src/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isValidReactionType, type ReactionType } from "@/src/lib/reactions-config";
+import { checkCommentAchievements } from "./achievements";
 
 export type CommentMediaType = "movie" | "series" | "season" | "episode";
 
@@ -201,6 +202,9 @@ export async function addComment(
       },
       replies: [],
     };
+
+    // Check comment achievements (don't await to avoid slowing down the response)
+    checkCommentAchievements(user.id).catch(console.error);
 
     // Revalidate the page
     revalidatePath(`/${mediaType}s/${mediaId}`);

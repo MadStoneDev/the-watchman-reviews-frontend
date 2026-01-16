@@ -59,18 +59,6 @@ export default async function FollowersPage({
             textColor: "hover:text-indigo-500",
             bgColor: "bg-indigo-500",
           },
-          {
-            label: "Followers",
-            href: `/${profile.username}/followers`,
-            textColor: "hover:text-amber-400",
-            bgColor: "bg-amber-400",
-          },
-          {
-            label: "Following",
-            href: `/${profile.username}/following`,
-            textColor: "hover:text-cyan-400",
-            bgColor: "bg-cyan-400",
-          },
         ]}
         profileId={profile.id}
         currentUserId={currentUserId || ""}

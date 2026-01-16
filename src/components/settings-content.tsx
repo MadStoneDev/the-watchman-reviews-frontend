@@ -337,7 +337,7 @@ export default function SettingsContent({
                 })
               }
               disabled={isSaving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 min-w-11 items-center rounded-full transition-colors ${
                 settings.show_watching_deck ? "bg-lime-400" : "bg-neutral-700"
               } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
             >
@@ -517,7 +517,7 @@ export default function SettingsContent({
                 })
               }
               disabled={isSaving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              className={`relative inline-flex h-6 min-w-11 items-center rounded-full transition-colors ${
                 settings.email_notifications ? "bg-lime-400" : "bg-neutral-700"
               } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
             >

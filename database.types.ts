@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievement_definitions: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          icon: string | null
+          category: string
+          tier: string | null
+          threshold: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id: string
+          name: string
+          description: string
+          icon?: string | null
+          category: string
+          tier?: string | null
+          threshold?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          icon?: string | null
+          category?: string
+          tier?: string | null
+          threshold?: number | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       medias_collections: {
         Row: {
           id: string
@@ -383,6 +416,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          message: string | null
+          data: Json | null
+          read: boolean | null
+          created_at: string | null
+          actor_id: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          title: string
+          message?: string | null
+          data?: Json | null
+          read?: boolean | null
+          created_at?: string | null
+          actor_id?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          title?: string
+          message?: string | null
+          data?: Json | null
+          read?: boolean | null
+          created_at?: string | null
+          actor_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           id: string
@@ -641,6 +710,33 @@ export type Database = {
           collection_id?: string | null
           user_id?: string | null
           access_level?: number | null
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          id: string
+          user_id: string
+          achievement_id: string
+          unlocked_at: string | null
+          progress: number | null
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          achievement_id: string
+          unlocked_at?: string | null
+          progress?: number | null
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          achievement_id?: string
+          unlocked_at?: string | null
+          progress?: number | null
+          metadata?: Json | null
         }
         Relationships: []
       }

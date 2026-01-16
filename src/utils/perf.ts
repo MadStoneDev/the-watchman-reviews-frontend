@@ -25,7 +25,7 @@ export async function measureQuery<T>(
   try {
     const result = await queryFn();
     const duration = performance.now() - start;
-    perfLog(name, duration);
+    // perfLog(name, duration);
     return result;
   } catch (error) {
     const duration = performance.now() - start;
@@ -40,5 +40,5 @@ export function startTimer() {
 
 export function logTimer(label: string, startTime: number) {
   if (!isPerfEnabled) return;
-  perfLog(label, performance.now() - startTime);
+  // perfLog(label, performance.now() - startTime);
 }

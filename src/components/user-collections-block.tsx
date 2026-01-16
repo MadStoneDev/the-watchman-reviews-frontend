@@ -117,7 +117,7 @@ export default function UserCollectionsBlock({
         <div className="mt-8 text-center text-neutral-500">
           {isCurrentUser
             ? "You don't have any collections yet. Create one to get started!"
-            : "This user doesn't have any public collections."}
+            : `${userProfile.username} doesn't have any public collections.`}
         </div>
       ) : (
         <section className="my-4 grid grid-cols-1 md:grid-cols-2 gap-4">

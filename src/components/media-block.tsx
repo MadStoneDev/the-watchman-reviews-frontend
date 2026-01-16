@@ -406,7 +406,7 @@ export default function MediaBlock({
         />
 
         {/* Action Buttons Overlay - Only show on hover and for users */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent lg:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="absolute bottom-4 left-2 right-2 flex gap-2">
             {isUser && (
               <>
@@ -415,7 +415,7 @@ export default function MediaBlock({
                   <button
                     onClick={handleAddToReelDeck}
                     disabled={reelDeckUpdating}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400 text-neutral-900 hover:bg-lime-500 disabled:bg-lime-400/30 disabled:cursor-not-allowed rounded-lg font-medium text-sm transition-colors"
+                    className="cursor-pointer flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400 text-neutral-900 hover:bg-lime-500 disabled:bg-lime-400/30 disabled:cursor-not-allowed rounded-lg font-medium text-sm transition-colors"
                     title="Add to Reel Deck"
                   >
                     {reelDeckUpdating ? (
@@ -429,7 +429,7 @@ export default function MediaBlock({
                 {/* In Reel Deck indicator */}
                 {data.mediaType === "tv" && reelDeckStatus && (
                   <button
-                    className="group/deck flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400/20 hover:bg-red-800/20 text-lime-400 hover:text-red-600 rounded-lg font-medium text-sm border border-lime-400/30 hover:border-red-600/30 transition-all duration-200"
+                    className="group/deck cursor-pointer flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-lime-400/20 hover:bg-red-800/20 text-lime-400 hover:text-red-600 rounded-lg font-medium text-sm border border-lime-400/30 hover:border-red-600/30 transition-all duration-200"
                     onClick={handleRemoveFromReelDeck}
                     disabled={reelDeckUpdating}
                   >
@@ -457,7 +457,7 @@ export default function MediaBlock({
                       e.stopPropagation();
                       setShowCollections(true);
                     }}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-indigo-500 text-neutral-900 hover:bg-indigo-600 rounded-lg font-medium text-sm transition-colors"
+                    className="cursor-pointer flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-indigo-500 text-neutral-900 hover:bg-indigo-600 rounded-lg font-medium text-sm transition-colors"
                     title="Add to collection"
                   >
                     <IconPlaylistAdd size={20} />
@@ -470,7 +470,7 @@ export default function MediaBlock({
             <button
               onClick={handleViewDetails}
               disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-neutral-500 text-neutral-900 hover:bg-neutral-600 disabled:bg-neutral-500/50 disabled:cursor-not-allowed rounded-lg font-medium text-sm transition-colors"
+              className="cursor-pointer flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-neutral-500 text-neutral-900 hover:bg-neutral-600 disabled:bg-neutral-500/50 disabled:cursor-not-allowed rounded-lg font-medium text-sm transition-colors"
               title="More info"
             >
               {loading ? (

@@ -75,7 +75,7 @@ export default function BrowseNavigation({
 
   return (
     <nav
-      className={`pb-3 relative flex gap-5 md:gap-10 border-b border-neutral-700 transition-all duration-300 ease-in-out`}
+      className={`pb-3 relative flex gap-2 md:gap-10 border-b border-neutral-700 transition-all duration-300 ease-in-out`}
     >
       {navigationItems.map(({ label, href, textColor }, index) => (
         <Link

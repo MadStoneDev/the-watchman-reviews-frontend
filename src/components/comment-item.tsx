@@ -196,9 +196,9 @@ export default function CommentItem({
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="font-bold text-base text-neutral-100">
+            <a href={`/${comment.user.username}`} className="font-bold text-base text-neutral-100">
               {comment.user.username}
-            </span>
+            </a>
             <span className="text-xs text-neutral-500">•</span>
             <span className="text-sm text-neutral-500">
               {formatDate(comment.created_at)}

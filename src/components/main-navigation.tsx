@@ -15,6 +15,7 @@ import {
 } from "@tabler/icons-react";
 
 import { createClient } from "@/src/utils/supabase/client";
+import NotificationBell from "./notification-bell";
 
 interface NavigationItem {
   icon: React.JSX.Element;
@@ -55,7 +56,7 @@ export default function MainNavigation({
         <Logo className={`hidden lg:block`} />
 
         <article
-          className={`lg:grow lg:mt-20 flex lg:flex-col justify-center lg:justify-start items-center lg:items-start gap-5 md:gap-10 lg:gap-14`}
+          className={`grow lg:mt-20 flex lg:flex-col justify-between lg:justify-start items-center lg:items-start gap-5 md:gap-10 lg:gap-14`}
         >
           {items.map(({ icon, label, href }) => (
             <Link
@@ -90,6 +91,39 @@ export default function MainNavigation({
             </Link>
           )}
 
+          {profile && (
+              <NotificationBell username={profile.username} />
+          )}
+
+          <article className={`flex lg:hidden items-center gap-2 lg:w-full`}>
+            {isUser ? (
+                <div
+                    className={`grow flex flex-row-reverse items-center gap-2`}
+                >
+                  <Link
+                      href={"/me"}
+                      className={`grow p-2 flex items-center justify-center gap-2 rounded-lg ${
+                          profile?.username && pathname.includes(profile?.username)
+                              ? "bg-lime-400 text-neutral-900"
+                              : "text-lime-400 hover:text-neutral-900"
+                      } hover:bg-lime-400 border-2 border-lime-400 font-bold transition-all duration-300 ease-in-out`}
+                      title={`Profile`}
+                  >
+                    <IconUser size={26} />
+                  </Link>
+                </div>
+            ) : (
+                <Link
+                    href={"/auth/portal"}
+                    className={`grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
+                    title={`Login`}
+                >
+                  <IconUser size={26} />
+                  <span className={`hidden lg:block text-sm`}>Login</span>
+                </Link>
+            )}
+          </article>
+
           {/*<Link*/}
           {/*  href={`/how-it-works`}*/}
           {/*  className={`flex gap-6 max-w-fit ${*/}
@@ -103,7 +137,7 @@ export default function MainNavigation({
           {/*</Link>*/}
         </article>
 
-        <article className={`flex items-center gap-2 lg:w-full`}>
+        <article className={`hidden lg:flex items-center gap-2 lg:w-full`}>
           {isUser ? (
             <div
               className={`grow flex flex-row-reverse items-center gap-2`}
@@ -115,6 +149,10 @@ export default function MainNavigation({
               >
                 <IconUser size={26} />
               </Link>
+
+              {profile && (
+                <NotificationBell username={profile.username} />
+              )}
 
               <button
                 onClick={async () => {

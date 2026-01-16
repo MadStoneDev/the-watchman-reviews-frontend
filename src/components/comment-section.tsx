@@ -194,12 +194,12 @@ export default function CommentSection({
   const commentCount = countComments(optimisticComments);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <IconMessageCircle size={28} className="text-lime-400" />
-          <h2 className="text-2xl md:text-3xl font-bold">
+          <h2 className="text-xl md:text-3xl font-bold">
             Discussion
           </h2>
           {commentCount > 0 && (

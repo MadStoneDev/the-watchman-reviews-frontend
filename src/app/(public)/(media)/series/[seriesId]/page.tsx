@@ -214,7 +214,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
           {/* Overview */}
           {series.overview && (
             <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-4">Overview</h2>
+              <h2 className="text-xl font-bold mb-4">Overview</h2>
               <p className="text-neutral-300 leading-relaxed text-lg">
                 {series.overview}
               </p>
@@ -223,7 +223,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 
           {/* Seasons Tabs */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-4">Seasons</h2>
+            <h2 className="text-xl font-bold mb-4">Seasons</h2>
             <SeriesSeasonTabs
               seriesId={seriesId}
               seriesTmdbId={series.tmdb_id}
