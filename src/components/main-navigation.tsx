@@ -92,7 +92,7 @@ export default function MainNavigation({
           )}
 
           {profile && (
-              <NotificationBell username={profile.username} />
+              <NotificationBell username={profile.username} pathname={pathname || ""} />
           )}
 
           <article className={`flex lg:hidden items-center gap-2 lg:w-full`}>
@@ -149,10 +149,6 @@ export default function MainNavigation({
               >
                 <IconUser size={26} />
               </Link>
-
-              {profile && (
-                <NotificationBell username={profile.username} />
-              )}
 
               <button
                 onClick={async () => {

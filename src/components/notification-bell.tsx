@@ -2,17 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { IconBell } from "@tabler/icons-react";
+import {IconBell, IconDeviceTv} from "@tabler/icons-react";
 import { getUnreadCount } from "@/src/app/actions/notifications";
 
 interface NotificationBellProps {
   username: string;
   className?: string;
+  pathname: string;
 }
 
 export default function NotificationBell({
   username,
   className = "",
+    pathname = "",
 }: NotificationBellProps) {
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -34,8 +36,11 @@ export default function NotificationBell({
   return (
     <Link
       href={`/${username}/notifications`}
-      className={`relative flex items-center justify-center p-2 text-neutral-500 hover:text-neutral-200 transition-colors ${className}`}
-      title="Notifications"
+      className={`relative flex items-center gap-6 max-w-fit ${
+          pathname && pathname.includes(`reel-deck`)
+              ? "text-lime-400"
+              : "text-neutral-500 hover:text-neutral-200"
+      } font-bold transition-all duration-300 ease-in-out`}
     >
       <IconBell size={24} />
       {unreadCount > 0 && (
@@ -43,6 +48,7 @@ export default function NotificationBell({
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}
+      <span className={`hidden lg:block`}>Notifcations</span>
     </Link>
   );
 }
