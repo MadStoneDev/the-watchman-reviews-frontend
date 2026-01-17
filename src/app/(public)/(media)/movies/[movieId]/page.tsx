@@ -6,8 +6,10 @@ import { createClient } from "@/src/utils/supabase/server";
 import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
 import GenreBadges from "@/src/components/genre-badges";
 import CommentSection from "@/src/components/comment-section";
+import CastCarousel from "@/src/components/cast-carousel";
 import { syncMovieGenres, getMovieGenres } from "@/src/utils/genre-utils";
 import { getComments } from "@/src/app/actions/comments";
+import { getMovieCredits } from "@/src/app/actions/credits";
 import {
   IconMovie,
   IconExternalLink,
@@ -63,6 +65,10 @@ export default async function MoviePage({ params }: MoviePageProps) {
   // Fetch comments
   const commentsResult = await getComments("movie", movieId);
   const comments = commentsResult.success ? commentsResult.comments || [] : [];
+
+  // Fetch cast credits
+  const creditsResult = await getMovieCredits(movie.tmdb_id);
+  const cast = creditsResult.success ? creditsResult.credits?.cast || [] : [];
 
   // Format runtime
   const formatRuntime = (minutes: number | null) => {
@@ -189,6 +195,9 @@ export default async function MoviePage({ params }: MoviePageProps) {
               </p>
             </div>
           )}
+
+          {/* Cast Carousel */}
+          {cast.length > 0 && <CastCarousel cast={cast} />}
 
           {/* Comments Section */}
           <div className="mb-12">

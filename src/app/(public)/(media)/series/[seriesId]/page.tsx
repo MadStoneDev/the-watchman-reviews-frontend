@@ -7,8 +7,10 @@ import SeriesSeasonTabs from "@/src/components/series-season-tabs";
 import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
 import GenreBadges from "@/src/components/genre-badges";
 import CommentSection from "@/src/components/comment-section";
+import CastCarousel from "@/src/components/cast-carousel";
 import { syncSeriesGenres, getSeriesGenres } from "@/src/utils/genre-utils";
 import { getComments } from "@/src/app/actions/comments";
+import { getTVCredits } from "@/src/app/actions/credits";
 import {
   IconDeviceTv,
   IconExternalLink,
@@ -70,6 +72,10 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
   // Fetch comments
   const commentsResult = await getComments("series", seriesId);
   const comments = commentsResult.success ? commentsResult.comments || [] : [];
+
+  // Fetch cast credits
+  const creditsResult = await getTVCredits(series.tmdb_id);
+  const cast = creditsResult.success ? creditsResult.credits?.cast || [] : [];
 
   // Format air date range
   const formatAirDateRange = () => {
@@ -220,6 +226,9 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
               </p>
             </div>
           )}
+
+          {/* Cast Carousel */}
+          {cast.length > 0 && <CastCarousel cast={cast} />}
 
           {/* Seasons Tabs */}
           <div className="mb-12">

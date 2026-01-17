@@ -2,6 +2,11 @@
 
 import { createClient } from "@/src/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import {
+  batchCheckVisibility,
+  checkVisibility,
+  getUserVisibilitySettings,
+} from "@/src/lib/visibility-utils";
 
 export type ActivityType =
   | "episode_watched"
@@ -151,7 +156,19 @@ export async function getActivityFeed(
       .select("following_id")
       .eq("follower_id", currentUserId);
 
-    const followingIds = following?.map((f) => f.following_id) || [];
+    let followingIds = following?.map((f) => f.following_id) || [];
+
+    // Filter followingIds by visibility settings
+    if (followingIds.length > 0) {
+      const visibilityMap = await batchCheckVisibility(
+        followingIds,
+        currentUserId,
+        "show_watch_progress_to"
+      );
+
+      // Only keep users who allow the current user to view their activity
+      followingIds = followingIds.filter((id) => visibilityMap.get(id) === true);
+    }
 
     // Include current user's own activity
     followingIds.push(currentUserId);
@@ -229,6 +246,24 @@ export async function getUserActivity(
 }> {
   try {
     const supabase = await createClient();
+
+    // Get current viewer
+    const { data: userData } = await supabase.auth.getClaims();
+    const viewerId = userData?.claims?.sub || null;
+
+    // Check visibility settings
+    const settings = await getUserVisibilitySettings(userId);
+    if (settings) {
+      const visibilityCheck = await checkVisibility(
+        userId,
+        viewerId,
+        settings.show_watch_progress_to
+      );
+
+      if (!visibilityCheck.canView) {
+        return { success: true, activities: [], hasMore: false };
+      }
+    }
 
     const offset = (page - 1) * limit;
 

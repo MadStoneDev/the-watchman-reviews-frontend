@@ -1,6 +1,11 @@
 "use server";
 
 import { createClient } from "@/src/utils/supabase/server";
+import {
+  checkVisibility,
+  getUserVisibilitySettings,
+} from "@/src/lib/visibility-utils";
+import { VisibilityLevel } from "@/src/lib/types";
 
 export type ProfileVisibility = "public" | "followers_only" | "private";
 
@@ -193,6 +198,24 @@ export async function getPublicCollections(
   try {
     const supabase = await createClient();
 
+    // Get current viewer
+    const { data: userData } = await supabase.auth.getClaims();
+    const viewerId = userData?.claims?.sub || null;
+
+    // Check visibility settings
+    const settings = await getUserVisibilitySettings(userId);
+    if (settings) {
+      const visibilityCheck = await checkVisibility(
+        userId,
+        viewerId,
+        settings.show_collections_to
+      );
+
+      if (!visibilityCheck.canView) {
+        return { success: true, collections: [], hasMore: false };
+      }
+    }
+
     const offset = (page - 1) * limit;
 
     // Get public collections
@@ -250,6 +273,24 @@ export async function getPublicActivity(
 }> {
   try {
     const supabase = await createClient();
+
+    // Get current viewer
+    const { data: userData } = await supabase.auth.getClaims();
+    const viewerId = userData?.claims?.sub || null;
+
+    // Check visibility settings
+    const settings = await getUserVisibilitySettings(userId);
+    if (settings) {
+      const visibilityCheck = await checkVisibility(
+        userId,
+        viewerId,
+        settings.show_watch_progress_to
+      );
+
+      if (!visibilityCheck.canView) {
+        return { success: true, activities: [], hasMore: false };
+      }
+    }
 
     const offset = (page - 1) * limit;
 

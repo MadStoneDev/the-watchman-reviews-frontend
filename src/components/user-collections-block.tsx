@@ -32,10 +32,16 @@ export default function UserCollectionsBlock({
     try {
       if (!currentUserProfile) return;
 
+      // Use the user's default_collection_privacy setting
+      const defaultPrivacy =
+        (currentUserProfile.settings as { default_collection_privacy?: string })
+          ?.default_collection_privacy || "private";
+      const isPublic = defaultPrivacy === "public";
+
       const newCollection = {
         title: "New Collection",
         owner: currentUserProfile.id,
-        is_public: false,
+        is_public: isPublic,
       };
 
       const { data, error } = await supabase
