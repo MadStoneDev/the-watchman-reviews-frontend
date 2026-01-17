@@ -267,13 +267,14 @@ export async function getOrCreateConversation(
   try {
     const supabase = await createClient();
 
-    // Get current user
-    const { data: userData } = await supabase.auth.getClaims();
-    const currentUserId = userData?.claims?.sub;
+    // Get current user - use getUser() to ensure session is established for RLS
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (!currentUserId) {
+    if (authError || !user) {
       return { success: false, error: "You must be logged in" };
     }
+
+    const currentUserId = user.id;
 
     if (currentUserId === otherUserId) {
       return { success: false, error: "Cannot message yourself" };

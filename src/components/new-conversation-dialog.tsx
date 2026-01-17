@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { IconX, IconSearch, IconMessagePlus, IconUser } from "@tabler/icons-react";
+import { IconX, IconSearch, IconMessagePlus, IconLoader2 } from "@tabler/icons-react";
 import { getMessageableUsers, getOrCreateConversation } from "@/src/app/actions/messaging";
 import { createClient } from "@/src/utils/supabase/client";
 
@@ -135,7 +135,7 @@ export default function NewConversationDialog({
         <div className="flex-1 overflow-y-auto p-2">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-400" />
+              <IconLoader2 size={32} className="animate-spin text-lime-400" />
             </div>
           ) : error ? (
             <div className="text-center py-8 text-red-400">{error}</div>

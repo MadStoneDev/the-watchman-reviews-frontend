@@ -1,51 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { IconLoader2, IconMessageOff } from "@tabler/icons-react";
+import { IconMessageOff } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/src/utils/supabase/client";
-import {
-  getConversations,
-  type Conversation,
-} from "@/src/app/actions/messaging";
+import { type Conversation } from "@/src/app/actions/messaging";
 
 interface ConversationListProps {
   currentUserId: string;
-  initialConversations?: Conversation[];
+  initialConversations: Conversation[];
 }
 
 export default function ConversationList({
   currentUserId,
-  initialConversations = [],
+  initialConversations,
 }: ConversationListProps) {
   const supabase = createClient();
-  const [conversations, setConversations] =
-    useState<Conversation[]>(initialConversations);
-  const [isLoading, setIsLoading] = useState(initialConversations.length === 0);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (initialConversations.length === 0) {
-      const loadConversations = async () => {
-        setIsLoading(true);
-        try {
-          const result = await getConversations(1, 50);
-          if (result.success && result.conversations) {
-            setConversations(result.conversations);
-          } else {
-            setError(result.error || "Failed to load conversations");
-          }
-        } catch (err) {
-          setError("Failed to load conversations");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      loadConversations();
-    }
-  }, [initialConversations.length]);
+  const [conversations] = useState<Conversation[]>(initialConversations);
 
   const getOtherParticipant = (conversation: Conversation) => {
     return conversation.participants.find((p) => p.user_id !== currentUserId);
@@ -58,22 +31,6 @@ export default function ConversationList({
     }
     return null;
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <IconLoader2 size={32} className="animate-spin text-lime-400" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12 text-red-400">
-        <p>{error}</p>
-      </div>
-    );
-  }
 
   if (conversations.length === 0) {
     return (
