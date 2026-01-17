@@ -343,12 +343,30 @@ export async function checkFollowerAchievements(
 
 /**
  * Check and award comment-related achievements
+ * If commentCount is not provided, it will be fetched from the database
  */
 export async function checkCommentAchievements(
   userId: string,
-  commentCount: number,
+  commentCount?: number,
   isFirstOnMedia?: boolean
 ): Promise<void> {
+  // If no count provided, fetch it from database
+  let count = commentCount;
+  if (count === undefined) {
+    const supabase = await createClient();
+    const commentTables = ["movie_comments", "series_comments", "season_comments", "episode_comments"];
+    let totalComments = 0;
+
+    for (const table of commentTables) {
+      const { count: tableCount } = await supabase
+        .from(table)
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      totalComments += tableCount || 0;
+    }
+    count = totalComments;
+  }
+
   const milestones = [
     { count: 1, id: "first_comment" },
     { count: 10, id: "comments_10" },
@@ -357,7 +375,7 @@ export async function checkCommentAchievements(
   ];
 
   for (const milestone of milestones) {
-    if (commentCount >= milestone.count) {
+    if (count >= milestone.count) {
       await awardAchievement(userId, milestone.id);
     }
   }

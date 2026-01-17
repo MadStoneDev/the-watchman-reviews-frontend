@@ -204,8 +204,7 @@ export async function addComment(
     };
 
     // Check comment achievements (don't await to avoid slowing down the response)
-    // TODO: Fix this call by adding number of comments written by the user
-    // checkCommentAchievements(user.id).catch(console.error);
+    checkCommentAchievements(user.id).catch(console.error);
 
     // Revalidate the page
     revalidatePath(`/${mediaType}s/${mediaId}`);
