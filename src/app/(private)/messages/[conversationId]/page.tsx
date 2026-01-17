@@ -39,7 +39,7 @@ export default async function ConversationPage({
   const messages = messagesResult.messages || [];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] lg:h-[calc(100vh-40px)]">
+    <div className="flex flex-col h-[calc(100vh-200px)] lg:h-[calc(100vh-120px)]">
       {/* Back button */}
       <div className="shrink-0 mb-4">
         <Link
