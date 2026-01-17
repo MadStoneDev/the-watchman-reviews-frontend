@@ -38,11 +38,12 @@ export interface Message {
 }
 
 /**
- * Check if the current user can message another user (must be mutuals)
+ * Check if the current user can message another user
+ * Respects the target user's allow_messages_from privacy setting
  */
 export async function canMessageUser(
   targetUserId: string
-): Promise<{ success: boolean; canMessage?: boolean; error?: string }> {
+): Promise<{ success: boolean; canMessage?: boolean; reason?: string; error?: string }> {
   try {
     const supabase = await createClient();
 
@@ -55,10 +56,19 @@ export async function canMessageUser(
     }
 
     if (currentUserId === targetUserId) {
-      return { success: true, canMessage: false };
+      return { success: true, canMessage: false, reason: "Cannot message yourself" };
     }
 
-    // Check if they follow each other (mutuals)
+    // Get target user's messaging privacy setting
+    const { data: targetProfile } = await supabase
+      .from("profiles")
+      .select("settings")
+      .eq("id", targetUserId)
+      .single();
+
+    const allowMessagesFrom = targetProfile?.settings?.allow_messages_from || "everyone";
+
+    // Check follow relationships
     const { data: currentFollowsTarget } = await supabase
       .from("user_follows")
       .select("id")
@@ -73,9 +83,35 @@ export async function canMessageUser(
       .eq("following_id", currentUserId)
       .single();
 
-    const areMutuals = !!currentFollowsTarget && !!targetFollowsCurrent;
+    const iFollowThem = !!currentFollowsTarget;
+    const theyFollowMe = !!targetFollowsCurrent;
+    const areMutuals = iFollowThem && theyFollowMe;
 
-    return { success: true, canMessage: areMutuals };
+    // Check based on privacy setting
+    switch (allowMessagesFrom) {
+      case "nobody":
+        return { success: true, canMessage: false, reason: "This user has disabled messages" };
+      case "mutuals":
+        if (!areMutuals) {
+          return { success: true, canMessage: false, reason: "Only mutual followers can message this user" };
+        }
+        break;
+      case "followers":
+        // They must follow me (I'm their follower, they follow me back)
+        if (!theyFollowMe) {
+          return { success: true, canMessage: false, reason: "Only people this user follows can message them" };
+        }
+        break;
+      case "everyone":
+      default:
+        // Anyone can message, but we still require at least one-way follow for safety
+        if (!iFollowThem && !theyFollowMe) {
+          return { success: true, canMessage: false, reason: "You must follow or be followed by this user" };
+        }
+        break;
+    }
+
+    return { success: true, canMessage: true };
   } catch (error) {
     console.error("[Messaging] Error in canMessageUser:", error);
     return { success: false, error: "Failed to check messaging permission" };
@@ -164,28 +200,25 @@ export async function getConversations(
 
     const userMap = new Map(users?.map((u) => [u.id, u]) || []);
 
-    // Count unread messages for each conversation
+    // Batch fetch unread counts - get all messages from others in one query
+    const convIds = conversations.map((c) => c.id);
+    const { data: allMessages } = await supabase
+      .from("messages")
+      .select("conversation_id, created_at")
+      .in("conversation_id", convIds)
+      .neq("sender_id", currentUserId);
+
+    // Calculate unread counts from the batch result
     const unreadCounts = new Map<string, number>();
     for (const conv of conversations) {
       const lastRead = lastReadMap.get(conv.id);
-      if (lastRead && conv.last_message_at) {
-        const { count } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", conv.id)
-          .neq("sender_id", currentUserId)
-          .gt("created_at", lastRead);
-        unreadCounts.set(conv.id, count || 0);
-      } else if (conv.last_message_at) {
-        // No last read, count all messages not from current user
-        const { count } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", conv.id)
-          .neq("sender_id", currentUserId);
-        unreadCounts.set(conv.id, count || 0);
+      const convMessages = allMessages?.filter((m) => m.conversation_id === conv.id) || [];
+
+      if (lastRead) {
+        const unreadMessages = convMessages.filter((m) => m.created_at > lastRead);
+        unreadCounts.set(conv.id, unreadMessages.length);
       } else {
-        unreadCounts.set(conv.id, 0);
+        unreadCounts.set(conv.id, convMessages.length);
       }
     }
 
@@ -685,5 +718,116 @@ export async function getConversation(
   } catch (error) {
     console.error("[Messaging] Error in getConversation:", error);
     return { success: false, error: "Failed to fetch conversation" };
+  }
+}
+
+/**
+ * Get users that the current user can message
+ * Returns users based on follow relationships and their privacy settings
+ */
+export async function getMessageableUsers(): Promise<{
+  success: boolean;
+  users?: Array<{
+    id: string;
+    username: string;
+    avatar_path: string | null;
+    hasExistingConversation: boolean;
+  }>;
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: userData } = await supabase.auth.getClaims();
+    const currentUserId = userData?.claims?.sub;
+
+    if (!currentUserId) {
+      return { success: false, error: "You must be logged in" };
+    }
+
+    // Get people I follow
+    const { data: following } = await supabase
+      .from("user_follows")
+      .select("following_id")
+      .eq("follower_id", currentUserId);
+
+    // Get people who follow me
+    const { data: followers } = await supabase
+      .from("user_follows")
+      .select("follower_id")
+      .eq("following_id", currentUserId);
+
+    const followingIds = new Set(following?.map((f) => f.following_id) || []);
+    const followerIds = new Set(followers?.map((f) => f.follower_id) || []);
+
+    // Combine all potential messageable users (anyone with a follow relationship)
+    const potentialUserIds = new Set([...followingIds, ...followerIds]);
+
+    if (potentialUserIds.size === 0) {
+      return { success: true, users: [] };
+    }
+
+    // Get user profiles with their settings
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username, avatar_path, settings")
+      .in("id", Array.from(potentialUserIds));
+
+    if (!profiles) {
+      return { success: true, users: [] };
+    }
+
+    // Get existing conversations
+    const { data: existingParticipants } = await supabase
+      .from("conversation_participants")
+      .select("conversation_id")
+      .eq("user_id", currentUserId);
+
+    const myConversationIds = existingParticipants?.map((p) => p.conversation_id) || [];
+
+    let existingConversationUserIds = new Set<string>();
+    if (myConversationIds.length > 0) {
+      const { data: otherParticipants } = await supabase
+        .from("conversation_participants")
+        .select("user_id")
+        .in("conversation_id", myConversationIds)
+        .neq("user_id", currentUserId);
+
+      existingConversationUserIds = new Set(otherParticipants?.map((p) => p.user_id) || []);
+    }
+
+    // Filter users based on their messaging settings
+    const messageableUsers = profiles
+      .filter((profile) => {
+        const allowMessagesFrom = profile.settings?.allow_messages_from || "everyone";
+        const iFollowThem = followingIds.has(profile.id);
+        const theyFollowMe = followerIds.has(profile.id);
+        const areMutuals = iFollowThem && theyFollowMe;
+
+        switch (allowMessagesFrom) {
+          case "nobody":
+            return false;
+          case "mutuals":
+            return areMutuals;
+          case "followers":
+            return theyFollowMe; // They follow me
+          case "everyone":
+          default:
+            return iFollowThem || theyFollowMe;
+        }
+      })
+      .map((profile) => ({
+        id: profile.id,
+        username: profile.username,
+        avatar_path: profile.avatar_path,
+        hasExistingConversation: existingConversationUserIds.has(profile.id),
+      }))
+      .sort((a, b) => a.username.localeCompare(b.username));
+
+    return { success: true, users: messageableUsers };
+  } catch (error) {
+    console.error("[Messaging] Error in getMessageableUsers:", error);
+    return { success: false, error: "Failed to get messageable users" };
   }
 }
