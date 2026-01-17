@@ -76,9 +76,13 @@ export default function PublicProfileHeader({
 
             {!isOwnProfile && currentUserId && (
               <FollowButton
-                userId={profile.id}
-                username={profile.username}
-                isFollowing={isFollowing}
+                targetUserId={profile.id}
+                targetUsername={profile.username}
+                initialStatus={{
+                  isFollowing: isFollowing,
+                  isFollowedBy: false,
+                  isMutual: false,
+                }}
               />
             )}
 

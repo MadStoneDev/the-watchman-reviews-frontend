@@ -92,9 +92,13 @@ export default function PrivateProfileNotice({
         currentUserId &&
         !isFollowing && (
           <FollowButton
-            userId={profile.id}
-            username={profile.username}
-            isFollowing={false}
+            targetUserId={profile.id}
+            targetUsername={profile.username}
+            initialStatus={{
+              isFollowing: false,
+              isFollowedBy: false,
+              isMutual: false,
+            }}
           />
         )}
 
