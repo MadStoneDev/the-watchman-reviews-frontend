@@ -312,14 +312,15 @@ export async function getOrCreateConversation(
       }
     }
 
-    // Create new conversation
-    const { data: newConv, error: convError } = await supabase
-      .from("conversations")
-      .insert({})
-      .select("id")
-      .single();
+    // Generate UUID client-side to avoid RLS SELECT check on RETURNING
+    const newConversationId = crypto.randomUUID();
 
-    if (convError || !newConv) {
+    // Create new conversation with the generated ID
+    const { error: convError } = await supabase
+      .from("conversations")
+      .insert({ id: newConversationId });
+
+    if (convError) {
       console.error("[Messaging] Error creating conversation:", convError);
       return { success: false, error: "Failed to create conversation" };
     }
@@ -328,18 +329,18 @@ export async function getOrCreateConversation(
     const { error: participantError } = await supabase
       .from("conversation_participants")
       .insert([
-        { conversation_id: newConv.id, user_id: currentUserId },
-        { conversation_id: newConv.id, user_id: otherUserId },
+        { conversation_id: newConversationId, user_id: currentUserId },
+        { conversation_id: newConversationId, user_id: otherUserId },
       ]);
 
     if (participantError) {
       console.error("[Messaging] Error adding participants:", participantError);
       // Clean up the conversation
-      await supabase.from("conversations").delete().eq("id", newConv.id);
+      await supabase.from("conversations").delete().eq("id", newConversationId);
       return { success: false, error: "Failed to add participants" };
     }
 
-    return { success: true, conversationId: newConv.id };
+    return { success: true, conversationId: newConversationId };
   } catch (error) {
     console.error("[Messaging] Error in getOrCreateConversation:", error);
     return { success: false, error: "Failed to get or create conversation" };
