@@ -16,6 +16,7 @@ import {
 
 import { createClient } from "@/src/utils/supabase/client";
 import NotificationBell from "./notification-bell";
+import MessagesBell from "./messages-bell";
 
 interface NavigationItem {
   icon: React.JSX.Element;
@@ -93,6 +94,10 @@ export default function MainNavigation({
 
           {profile && (
               <NotificationBell username={profile.username} pathname={pathname || ""} />
+          )}
+
+          {profile && (
+              <MessagesBell pathname={pathname || ""} />
           )}
 
           <article className={`flex lg:hidden items-center gap-2 lg:w-full`}>

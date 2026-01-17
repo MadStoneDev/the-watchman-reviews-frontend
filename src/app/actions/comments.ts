@@ -4,6 +4,7 @@ import { createClient } from "@/src/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isValidReactionType, type ReactionType } from "@/src/lib/reactions-config";
 import { checkCommentAchievements } from "./achievements";
+import { createActivityForUser } from "./activity-feed";
 
 export type CommentMediaType = "movie" | "series" | "season" | "episode";
 
@@ -205,6 +206,17 @@ export async function addComment(
 
     // Check comment achievements (don't await to avoid slowing down the response)
     checkCommentAchievements(user.id).catch(console.error);
+
+    // Create activity feed entry (don't await)
+    createActivityForUser(
+      user.id,
+      "comment_posted",
+      {
+        comment_preview: content.trim().substring(0, 100),
+        media_type: mediaType,
+        media_id: mediaId,
+      }
+    ).catch(console.error);
 
     // Revalidate the page
     revalidatePath(`/${mediaType}s/${mediaId}`);

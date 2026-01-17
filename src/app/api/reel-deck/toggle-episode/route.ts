@@ -2,6 +2,11 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { checkWatchingAchievements } from "@/src/app/actions/achievements";
+import {
+  createActivityForUser,
+  isFirstEpisodeForSeries,
+  isSeriesCompleted,
+} from "@/src/app/actions/activity-feed";
 
 /**
  * POST /api/reel-deck/toggle-episode
@@ -142,6 +147,62 @@ export async function POST(request: Request) {
       checkWatchingAchievements(userId).catch((err) =>
         console.error("[Toggle Episode] Achievement check error:", err)
       );
+
+      // Get series info for activity feed
+      const { data: series } = await supabase
+        .from("series")
+        .select("name, poster_path")
+        .eq("id", seriesId)
+        .single();
+
+      // Create activity feed entries (don't await to avoid slowing down the response)
+      (async () => {
+        try {
+          // Check if this is the first episode for the series (series_started)
+          const isFirst = await isFirstEpisodeForSeries(userId, seriesId);
+          if (isFirst) {
+            await createActivityForUser(
+              userId,
+              "series_started",
+              {
+                series_name: series?.name,
+                series_poster: series?.poster_path,
+              },
+              seriesId
+            );
+          }
+
+          // Create episode_watched activity
+          await createActivityForUser(
+            userId,
+            "episode_watched",
+            {
+              series_name: series?.name,
+              series_poster: series?.poster_path,
+              episode_number: episode.episode_number,
+              season_number: episode.season_number,
+            },
+            seriesId,
+            episodeId
+          );
+
+          // Check if series is now completed
+          const isCompleted = await isSeriesCompleted(userId, seriesId);
+          if (isCompleted) {
+            await createActivityForUser(
+              userId,
+              "series_completed",
+              {
+                series_name: series?.name,
+                series_poster: series?.poster_path,
+              },
+              seriesId
+            );
+          }
+        } catch (err) {
+          console.error("[Toggle Episode] Activity feed error:", err);
+        }
+      })();
 
       console.log(
           `[Toggle Episode] Marked S${episode.season_number}E${episode.episode_number} as watched`,

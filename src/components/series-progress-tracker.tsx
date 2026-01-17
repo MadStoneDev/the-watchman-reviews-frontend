@@ -1008,7 +1008,7 @@ export default function SeriesProgressTracker({
                         handleMarkAllToggle(season.id, true);
                       }}
                       disabled={isPending && isSeasonPending}
-                      className="px-3 py-1.5 text-sm font-medium bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      className="cursor-pointer px-3 py-1.5 text-sm font-medium bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       title="Mark all aired episodes as watched"
                     >
                       {isPending && isSeasonPending && (

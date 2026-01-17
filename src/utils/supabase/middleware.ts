@@ -51,6 +51,8 @@ export async function updateSession(request: NextRequest) {
     "/movies",
     "/series",
     "/api",
+    "/leaderboards",
+    "/u",  // Public profile prefix
   ];
 
   const isPublicRoute = publicRoutes.some(

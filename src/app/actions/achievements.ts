@@ -2,6 +2,7 @@
 
 import { createClient } from "@/src/utils/supabase/server";
 import { createNotification } from "./notifications";
+import { createActivityForUser } from "./activity-feed";
 
 // Cache of already-checked achievements per user session to avoid redundant DB calls
 const checkedAchievements = new Map<string, Set<string>>();
@@ -245,6 +246,17 @@ export async function awardAchievement(
       `You earned "${definition.name}" - ${definition.description}`,
       { achievement_id: achievementId, tier: definition.tier }
     );
+
+    // Create activity feed entry (don't await)
+    createActivityForUser(
+      userId,
+      "achievement_unlocked",
+      {
+        achievement_id: achievementId,
+        achievement_name: definition.name,
+        achievement_tier: definition.tier,
+      }
+    ).catch(console.error);
 
     return { success: true };
   } catch (error) {

@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_feed: {
+        Row: {
+          id: string
+          user_id: string
+          activity_type: string
+          data: Json
+          series_id: string | null
+          episode_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          activity_type: string
+          data?: Json
+          series_id?: string | null
+          episode_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          activity_type?: string
+          data?: Json
+          series_id?: string | null
+          episode_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       medias_collections: {
         Row: {
           id: string
@@ -116,6 +146,54 @@ export type Database = {
           user_id?: string
           reaction_type?: string
           created_at?: string | null
+        }
+        Relationships: []
+      }
+      conversation_participants: {
+        Row: {
+          id: string
+          conversation_id: string
+          user_id: string
+          last_read_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          user_id: string
+          last_read_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          user_id?: string
+          last_read_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          id: string
+          created_at: string | null
+          updated_at: string | null
+          last_message_at: string | null
+          last_message_preview: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string | null
+          updated_at?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string | null
+          updated_at?: string | null
+          last_message_at?: string | null
+          last_message_preview?: string | null
         }
         Relationships: []
       }
@@ -260,6 +338,156 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          id: string
+          created_at: string
+          username: string
+          settings: Json | null
+          last_username_change: string | null
+          role: number | null
+          avatar_path: string | null
+          profile_visibility: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          username?: string
+          settings?: Json | null
+          last_username_change?: string | null
+          role?: number | null
+          avatar_path?: string | null
+          profile_visibility?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          username?: string
+          settings?: Json | null
+          last_username_change?: string | null
+          role?: number | null
+          avatar_path?: string | null
+          profile_visibility?: string | null
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          id: string
+          user_id: string
+          achievement_id: string
+          unlocked_at: string | null
+          progress: number | null
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          achievement_id: string
+          unlocked_at?: string | null
+          progress?: number | null
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          achievement_id?: string
+          unlocked_at?: string | null
+          progress?: number | null
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
+      movie_comments: {
+        Row: {
+          id: string
+          movie_id: string
+          user_id: string
+          parent_comment_id: string | null
+          content: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          movie_id: string
+          user_id: string
+          parent_comment_id?: string | null
+          content: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          movie_id?: string
+          user_id?: string
+          parent_comment_id?: string | null
+          content?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      season_comments: {
+        Row: {
+          id: string
+          season_id: string
+          user_id: string
+          parent_comment_id: string | null
+          content: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          season_id: string
+          user_id: string
+          parent_comment_id?: string | null
+          content: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          season_id?: string
+          user_id?: string
+          parent_comment_id?: string | null
+          content?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      series_comments: {
+        Row: {
+          id: string
+          series_id: string
+          user_id: string
+          parent_comment_id: string | null
+          content: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          series_id: string
+          user_id: string
+          parent_comment_id?: string | null
+          content: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          series_id?: string
+          user_id?: string
+          parent_comment_id?: string | null
+          content?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       media_collection: {
         Row: {
           id: number
@@ -317,33 +545,27 @@ export type Database = {
         }
         Relationships: []
       }
-      movie_comments: {
+      messages: {
         Row: {
           id: string
-          movie_id: string
-          user_id: string
-          parent_comment_id: string | null
+          conversation_id: string
+          sender_id: string
           content: string
           created_at: string | null
-          updated_at: string | null
         }
         Insert: {
           id?: string
-          movie_id: string
-          user_id: string
-          parent_comment_id?: string | null
+          conversation_id: string
+          sender_id: string
           content: string
           created_at?: string | null
-          updated_at?: string | null
         }
         Update: {
           id?: string
-          movie_id?: string
-          user_id?: string
-          parent_comment_id?: string | null
+          conversation_id?: string
+          sender_id?: string
           content?: string
           created_at?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -452,39 +674,6 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
-        Row: {
-          id: string
-          created_at: string
-          username: string
-          settings: Json | null
-          last_username_change: string | null
-          role: number | null
-          avatar_path: string | null
-          profile_visibility: string | null
-        }
-        Insert: {
-          id?: string
-          created_at?: string
-          username?: string
-          settings?: Json | null
-          last_username_change?: string | null
-          role?: number | null
-          avatar_path?: string | null
-          profile_visibility?: string | null
-        }
-        Update: {
-          id?: string
-          created_at?: string
-          username?: string
-          settings?: Json | null
-          last_username_change?: string | null
-          role?: number | null
-          avatar_path?: string | null
-          profile_visibility?: string | null
-        }
-        Relationships: []
-      }
       reel_deck: {
         Row: {
           id: string
@@ -512,36 +701,6 @@ export type Database = {
           added_at?: string | null
           status?: string | null
           last_watched_at?: string | null
-        }
-        Relationships: []
-      }
-      season_comments: {
-        Row: {
-          id: string
-          season_id: string
-          user_id: string
-          parent_comment_id: string | null
-          content: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          season_id: string
-          user_id: string
-          parent_comment_id?: string | null
-          content: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          season_id?: string
-          user_id?: string
-          parent_comment_id?: string | null
-          content?: string
-          created_at?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -638,36 +797,6 @@ export type Database = {
         }
         Relationships: []
       }
-      series_comments: {
-        Row: {
-          id: string
-          series_id: string
-          user_id: string
-          parent_comment_id: string | null
-          content: string
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          series_id: string
-          user_id: string
-          parent_comment_id?: string | null
-          content: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          series_id?: string
-          user_id?: string
-          parent_comment_id?: string | null
-          content?: string
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       series_genres: {
         Row: {
           id: string
@@ -710,33 +839,6 @@ export type Database = {
           collection_id?: string | null
           user_id?: string | null
           access_level?: number | null
-        }
-        Relationships: []
-      }
-      user_achievements: {
-        Row: {
-          id: string
-          user_id: string
-          achievement_id: string
-          unlocked_at: string | null
-          progress: number | null
-          metadata: Json | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          achievement_id: string
-          unlocked_at?: string | null
-          progress?: number | null
-          metadata?: Json | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          achievement_id?: string
-          unlocked_at?: string | null
-          progress?: number | null
-          metadata?: Json | null
         }
         Relationships: []
       }
@@ -799,12 +901,82 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_achievements: {
+        Row: {
+          user_id: string | null
+          username: string | null
+          avatar_path: string | null
+          total_points: number | null
+          achievements_count: number | null
+        }
+        Insert: {
+          [_ in never]: never
+        }
+        Update: {
+          [_ in never]: never
+        }
+        Relationships: []
+      }
+      leaderboard_comments: {
+        Row: {
+          user_id: string | null
+          username: string | null
+          avatar_path: string | null
+          total_comments: number | null
+          weekly_comments: number | null
+          monthly_comments: number | null
+        }
+        Insert: {
+          [_ in never]: never
+        }
+        Update: {
+          [_ in never]: never
+        }
+        Relationships: []
+      }
+      leaderboard_episodes: {
+        Row: {
+          user_id: string | null
+          username: string | null
+          avatar_path: string | null
+          total_episodes: number | null
+          weekly_episodes: number | null
+          monthly_episodes: number | null
+        }
+        Insert: {
+          [_ in never]: never
+        }
+        Update: {
+          [_ in never]: never
+        }
+        Relationships: []
+      }
+      leaderboard_shows: {
+        Row: {
+          user_id: string | null
+          username: string | null
+          avatar_path: string | null
+          total_shows: number | null
+        }
+        Insert: {
+          [_ in never]: never
+        }
+        Update: {
+          [_ in never]: never
+        }
+        Relationships: []
+      }
       user_series_stats: {
         Row: {
           user_id: string | null
           series_id: string | null
-          episode_id: string | null
-          air_date: string | null
+          total_episodes: number | null
+          aired_episodes_count: number | null
+          watched_episodes: number | null
+          watched_aired_episodes: number | null
+          latest_aired_episode_date: string | null
+          next_upcoming_episode_date: string | null
+          has_upcoming_episodes: number | null
         }
         Insert: {
           [_ in never]: never
