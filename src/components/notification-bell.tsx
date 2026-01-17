@@ -37,7 +37,7 @@ export default function NotificationBell({
     <Link
       href={`/${username}/notifications`}
       className={`relative flex items-center gap-6 max-w-fit ${
-          pathname && pathname.includes(`reel-deck`)
+          pathname && pathname.includes(`notifications`)
               ? "text-lime-400"
               : "text-neutral-500 hover:text-neutral-200"
       } font-bold transition-all duration-300 ease-in-out`}
