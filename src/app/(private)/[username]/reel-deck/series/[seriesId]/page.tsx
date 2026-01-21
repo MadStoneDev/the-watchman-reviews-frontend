@@ -101,6 +101,16 @@ export default async function SeriesProgressPage({
     watchedEpisodes?.map((w) => w.episode_id) || [],
   );
 
+  // Get current watch cycle info
+  const { data: watchCycle } = await supabase
+    .from("watch_cycles")
+    .select("id, cycle_number, status, started_at, episodes_watched, total_episodes")
+    .eq("user_id", currentUserId)
+    .eq("series_id", seriesId)
+    .order("cycle_number", { ascending: false })
+    .limit(1)
+    .single();
+
   // For initial display, show season structure without episodes
   // Episodes will be loaded progressively by the client component
   const seasonsForTracker = seasons
@@ -234,6 +244,7 @@ export default async function SeriesProgressPage({
             userId={currentUserId}
             username={username}
             initialWatchedIds={Array.from(watchedEpisodeIds)}
+            initialWatchCycle={watchCycle}
           />
         ) : (
           <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-12 text-center">

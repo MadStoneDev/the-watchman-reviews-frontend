@@ -19,6 +19,7 @@ import {
   IconCalendar,
   IconLoader2,
   IconMessage2,
+  IconRefresh,
 } from "@tabler/icons-react";
 
 import { toast } from "sonner";
@@ -44,12 +45,22 @@ interface Season {
   isLoading?: boolean;
 }
 
+interface WatchCycle {
+  id: string;
+  cycle_number: number;
+  status: string;
+  started_at: string;
+  episodes_watched: number;
+  total_episodes: number;
+}
+
 interface SeriesProgressTrackerProps {
   seasons: Season[];
   seriesId: string;
   userId: string;
   username?: string;
   initialWatchedIds: string[];
+  initialWatchCycle?: WatchCycle | null;
 }
 
 // Memoize date formatting functions outside component for better performance
@@ -268,6 +279,7 @@ export default function SeriesProgressTracker({
   userId,
   username,
   initialWatchedIds,
+  initialWatchCycle,
 }: SeriesProgressTrackerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -276,6 +288,9 @@ export default function SeriesProgressTracker({
   const [seasons, setSeasons] = useState(initialSeasons);
   const [watchedIds, setWatchedIds] = useState(
     () => new Set(initialWatchedIds),
+  );
+  const [watchCycle, setWatchCycle] = useState<WatchCycle | null>(
+    initialWatchCycle || null,
   );
 
   // Loading state
@@ -291,6 +306,7 @@ export default function SeriesProgressTracker({
   const [resettingSeasons, setResettingSeasons] = useState<Set<string>>(
     new Set(),
   );
+  const [startingRewatch, setStartingRewatch] = useState(false);
   const [resettingSeries, setResettingSeries] = useState(false);
   const [hasOpenedDefaultSeason, setHasOpenedDefaultSeason] = useState(false);
 
@@ -946,17 +962,105 @@ export default function SeriesProgressTracker({
     }
   }, [seriesId, userId, router]);
 
+  const handleStartRewatch = useCallback(async () => {
+    const cycleNumber = watchCycle?.cycle_number || 1;
+    if (
+      !confirm(
+        `Start rewatch #${cycleNumber + 1}? This will clear your current progress and begin a new viewing cycle.`,
+      )
+    ) {
+      return;
+    }
+
+    setStartingRewatch(true);
+
+    const toastId = toast.loading("Starting rewatch...");
+
+    try {
+      const response = await fetch("/api/reel-deck/start-rewatch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seriesId,
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to start rewatch");
+      }
+
+      const data = await response.json();
+
+      // Update local state
+      setWatchedIds(new Set());
+      setSeasons((prevSeasons) =>
+        prevSeasons.map((season) => {
+          const updatedEpisodes = season.episodes.map((ep) => ({
+            ...ep,
+            isWatched: false,
+          }));
+
+          return {
+            ...season,
+            episodes: updatedEpisodes,
+            watchedCount: 0,
+            percentage: 0,
+          };
+        }),
+      );
+
+      // Update watch cycle state
+      if (data.cycle) {
+        setWatchCycle(data.cycle);
+      }
+
+      toast.success(`Started rewatch #${data.cycle?.cycle_number || cycleNumber + 1}`, {
+        id: toastId,
+        description: "Your progress has been reset. Enjoy rewatching!",
+      });
+
+      router.refresh();
+    } catch (error) {
+      console.error("Error starting rewatch:", error);
+      toast.error("Failed to start rewatch", { id: toastId });
+    } finally {
+      setStartingRewatch(false);
+    }
+  }, [seriesId, userId, router, watchCycle]);
+
   const hasAnyProgress = useMemo(
     () => optimisticSeasons.some((s) => s.watchedCount > 0),
     [optimisticSeasons],
   );
+
+  // Helper to format cycle text
+  const getCycleText = () => {
+    if (!watchCycle || watchCycle.cycle_number <= 1) return null;
+    const ordinal = getOrdinal(watchCycle.cycle_number);
+    return `${ordinal} Watch`;
+  };
+
+  const getOrdinal = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
 
   return (
     <div className="space-y-4">
       {/* Overall Progress Card */}
       <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-semibold">Overall Progress</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-semibold">Overall Progress</h2>
+            {getCycleText() && (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                {getCycleText()}
+              </span>
+            )}
+          </div>
           <span className="text-2xl font-bold text-lime-400">
             {overallProgress.percentage}%
           </span>
@@ -974,19 +1078,36 @@ export default function SeriesProgressTracker({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-between items-center gap-2">
+      <div className="flex flex-wrap justify-between items-center gap-2">
+        <div className="flex items-center gap-2">
+          {hasAnyProgress && (
+            <button
+              onClick={handleResetSeries}
+              disabled={resettingSeries || startingRewatch}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-red-900/20 text-red-400 hover:bg-red-900/30 border border-red-800/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resettingSeries ? (
+                <IconLoader2 size={16} className="animate-spin" />
+              ) : (
+                <IconTrash size={16} />
+              )}
+              {resettingSeries ? "Resetting..." : "Reset All Progress"}
+            </button>
+          )}
+        </div>
+
         {hasAnyProgress && (
           <button
-            onClick={handleResetSeries}
-            disabled={resettingSeries}
-            className="flex items-center gap-2 px-4 py-2 text-sm bg-red-900/20 text-red-400 hover:bg-red-900/30 border border-red-800/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleStartRewatch}
+            disabled={startingRewatch || resettingSeries}
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border border-indigo-500/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {resettingSeries ? (
+            {startingRewatch ? (
               <IconLoader2 size={16} className="animate-spin" />
             ) : (
-              <IconTrash size={16} />
+              <IconRefresh size={16} />
             )}
-            {resettingSeries ? "Resetting..." : "Reset All Progress"}
+            {startingRewatch ? "Starting..." : "Start a Rewatch"}
           </button>
         )}
       </div>
