@@ -18,8 +18,19 @@ import {
   IconMoon,
   IconCalendar,
   IconTrophy,
+  IconRefresh,
+  IconFlag,
+  IconFlame,
+  IconTrendingUp,
+  IconAward,
+  IconCopy,
+  IconRotateClockwise,
+  IconClock,
 } from "@tabler/icons-react";
-import type { AchievementDefinition, AchievementTier } from "@/src/app/actions/achievements";
+import type {
+  AchievementDefinition,
+  AchievementTier,
+} from "@/src/app/actions/achievements";
 
 interface AchievementBadgeProps {
   achievement: AchievementDefinition;
@@ -29,7 +40,10 @@ interface AchievementBadgeProps {
   showDescription?: boolean;
 }
 
-const tierColors: Record<AchievementTier, { bg: string; border: string; text: string }> = {
+const tierColors: Record<
+  AchievementTier,
+  { bg: string; border: string; text: string }
+> = {
   bronze: {
     bg: "bg-amber-900/30",
     border: "border-amber-700",
@@ -69,6 +83,14 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   star: IconStar,
   moon: IconMoon,
   calendar: IconCalendar,
+  refresh: IconRefresh,
+  flag: IconFlag,
+  flame: IconFlame,
+  "trending-up": IconTrendingUp,
+  award: IconAward,
+  layers: IconCopy,
+  "rotate-clockwise": IconRotateClockwise,
+  clock: IconClock,
 };
 
 export default function AchievementBadge({
@@ -79,7 +101,8 @@ export default function AchievementBadge({
   showDescription = true,
 }: AchievementBadgeProps) {
   const colors = tierColors[achievement.tier];
-  const IconComponent = achievement.icon ? iconMap[achievement.icon] : IconTrophy;
+  const IconComponent =
+    (achievement.icon && iconMap[achievement.icon]) || IconTrophy;
 
   const sizeClasses = {
     sm: {
@@ -190,16 +213,18 @@ export function AchievementSummary({
       </div>
       {recentAchievements.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {recentAchievements.slice(0, 3).map(({ achievement, unlocked_at }) => (
-            <AchievementBadge
-              key={achievement.id}
-              achievement={achievement}
-              unlocked
-              unlockedAt={unlocked_at}
-              size="sm"
-              showDescription={false}
-            />
-          ))}
+          {recentAchievements
+            .slice(0, 3)
+            .map(({ achievement, unlocked_at }) => (
+              <AchievementBadge
+                key={achievement.id}
+                achievement={achievement}
+                unlocked
+                unlockedAt={unlocked_at}
+                size="sm"
+                showDescription={false}
+              />
+            ))}
         </div>
       )}
     </div>

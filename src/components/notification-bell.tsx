@@ -36,19 +36,21 @@ export default function NotificationBell({
   return (
     <Link
       href={`/${username}/notifications`}
-      className={`relative flex items-center gap-6 max-w-fit ${
+      className={`flex items-center gap-6 max-w-fit ${
           pathname && pathname.includes(`notifications`)
               ? "text-lime-400"
               : "text-neutral-500 hover:text-neutral-200"
       } font-bold transition-all duration-300 ease-in-out`}
     >
-      <IconBell size={24} />
-      {unreadCount > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-rose-500 text-white text-xs font-bold rounded-full px-1">
-          {unreadCount > 99 ? "99+" : unreadCount}
-        </span>
-      )}
-      <span className={`hidden lg:block`}>Notifcations</span>
+      <span className="relative">
+        <IconBell size={24} />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center bg-rose-500 text-white text-xs font-bold rounded-full px-1">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
+      </span>
+      <span className={`hidden lg:block`}>Notifications</span>
     </Link>
   );
 }

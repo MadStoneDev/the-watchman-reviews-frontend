@@ -598,6 +598,219 @@ async function getEngagementCounts(userId: string): Promise<{
 }
 
 /**
+ * Get rewatch counts for a user from the database
+ */
+async function getRewatchCounts(userId: string): Promise<{
+  totalRewatches: number;
+  maxSeriesRewatches: number;
+}> {
+  const supabase = await createClient();
+
+  // Count total rewatches (cycles > 1)
+  const { count: totalRewatches } = await supabase
+    .from("watch_cycles")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gt("cycle_number", 1);
+
+  // Find the max cycle_number for any series (to check dedicated fan achievements)
+  const { data: maxCycleData } = await supabase
+    .from("watch_cycles")
+    .select("cycle_number")
+    .eq("user_id", userId)
+    .order("cycle_number", { ascending: false })
+    .limit(1)
+    .single();
+
+  // maxSeriesRewatches is cycle_number - 1 (since cycle 1 is first watch)
+  const maxSeriesRewatches = maxCycleData ? maxCycleData.cycle_number - 1 : 0;
+
+  return {
+    totalRewatches: totalRewatches || 0,
+    maxSeriesRewatches,
+  };
+}
+
+/**
+ * Get completion counts for a user (completed series)
+ */
+async function getCompletionCounts(userId: string): Promise<{
+  completedSeries: number;
+  hasLongSeries: boolean;
+  hasEpicSeries: boolean;
+  hasSpeedDemon: boolean;
+  hasSlowBurn: boolean;
+}> {
+  const supabase = await createClient();
+
+  // Count completed series
+  const { count: completedSeries } = await supabase
+    .from("watch_cycles")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("status", "completed");
+
+  // Check for long series (100+ episodes) completion
+  const { data: longSeriesData } = await supabase
+    .from("watch_cycles")
+    .select("total_episodes")
+    .eq("user_id", userId)
+    .eq("status", "completed")
+    .gte("total_episodes", 100)
+    .limit(1);
+
+  // Check for epic series (200+ episodes) completion
+  const { data: epicSeriesData } = await supabase
+    .from("watch_cycles")
+    .select("total_episodes")
+    .eq("user_id", userId)
+    .eq("status", "completed")
+    .gte("total_episodes", 200)
+    .limit(1);
+
+  // Check for speed demon (completed within 7 days)
+  const { data: speedDemonData } = await supabase
+    .from("watch_cycles")
+    .select("started_at, completed_at")
+    .eq("user_id", userId)
+    .eq("status", "completed")
+    .not("completed_at", "is", null)
+    .limit(100);
+
+  const hasSpeedDemon = speedDemonData?.some((cycle) => {
+    if (!cycle.started_at || !cycle.completed_at) return false;
+    const start = new Date(cycle.started_at);
+    const end = new Date(cycle.completed_at);
+    const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays <= 7;
+  }) || false;
+
+  // Check for slow burn (6+ months to complete)
+  const hasSlowBurn = speedDemonData?.some((cycle) => {
+    if (!cycle.started_at || !cycle.completed_at) return false;
+    const start = new Date(cycle.started_at);
+    const end = new Date(cycle.completed_at);
+    const diffMonths = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30);
+    return diffMonths >= 6;
+  }) || false;
+
+  return {
+    completedSeries: completedSeries || 0,
+    hasLongSeries: (longSeriesData?.length || 0) > 0,
+    hasEpicSeries: (epicSeriesData?.length || 0) > 0,
+    hasSpeedDemon,
+    hasSlowBurn,
+  };
+}
+
+/**
+ * Get binge and streak stats for a user
+ */
+async function getBingeAndStreakStats(userId: string): Promise<{
+  maxDailyEpisodes: number;
+  longestStreak: number;
+  currentStreak: number;
+  hasSeasonInDay: boolean;
+}> {
+  const supabase = await createClient();
+
+  // Get max daily episodes using RPC function
+  const { data: maxDaily } = await supabase.rpc("get_user_max_daily_episodes", {
+    p_user_id: userId,
+  });
+
+  // Get longest streak using RPC function
+  const { data: longestStreak } = await supabase.rpc("get_user_longest_streak", {
+    p_user_id: userId,
+  });
+
+  // Get current streak using RPC function
+  const { data: currentStreak } = await supabase.rpc("get_user_current_streak", {
+    p_user_id: userId,
+  });
+
+  // Check if user has completed a season in a single day
+  // This requires checking if all episodes of any season were watched on the same day
+  const { data: dailyWatches } = await supabase
+    .from("episode_watches")
+    .select("episode_id, watched_at, series_id")
+    .eq("user_id", userId);
+
+  let hasSeasonInDay = false;
+  if (dailyWatches && dailyWatches.length > 0) {
+    // Group by date and series
+    const byDateAndSeries = new Map<string, Set<string>>();
+    for (const watch of dailyWatches) {
+      const date = new Date(watch.watched_at).toISOString().split("T")[0];
+      const key = `${date}:${watch.series_id}`;
+      if (!byDateAndSeries.has(key)) {
+        byDateAndSeries.set(key, new Set());
+      }
+      byDateAndSeries.get(key)!.add(watch.episode_id);
+    }
+
+    // Check if any date+series combo has 8+ episodes (rough proxy for a season)
+    for (const [, episodes] of byDateAndSeries) {
+      if (episodes.size >= 8) {
+        hasSeasonInDay = true;
+        break;
+      }
+    }
+  }
+
+  return {
+    maxDailyEpisodes: maxDaily || 0,
+    longestStreak: longestStreak || 0,
+    currentStreak: currentStreak || 0,
+    hasSeasonInDay,
+  };
+}
+
+/**
+ * Get extended social stats for a user
+ */
+async function getExtendedSocialStats(userId: string): Promise<{
+  followingCount: number;
+  mutualCount: number;
+  reactionsGiven: number;
+  showsTracking: number;
+}> {
+  const supabase = await createClient();
+
+  // Count following
+  const { count: followingCount } = await supabase
+    .from("user_follows")
+    .select("*", { count: "exact", head: true })
+    .eq("follower_id", userId);
+
+  // Get mutual count using RPC function
+  const { data: mutualCount } = await supabase.rpc("get_user_mutual_count", {
+    p_user_id: userId,
+  });
+
+  // Count reactions given
+  const { count: reactionsGiven } = await supabase
+    .from("comment_reactions")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  // Count shows currently tracking (in reel_deck with status 'watching')
+  const { count: showsTracking } = await supabase
+    .from("reel_deck")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("media_type", "tv")
+    .eq("status", "watching");
+
+  return {
+    followingCount: followingCount || 0,
+    mutualCount: mutualCount || 0,
+    reactionsGiven: reactionsGiven || 0,
+    showsTracking: showsTracking || 0,
+  };
+}
+
+/**
  * Backfill all achievements for a user based on their current stats
  * Call this when a user visits their achievements page or profile
  */
@@ -611,10 +824,22 @@ export async function backfillUserAchievements(userId: string): Promise<{
     const newAchievements: string[] = [];
 
     // Get all current stats in parallel
-    const [watchingCounts, socialCounts, engagementCounts] = await Promise.all([
+    const [
+      watchingCounts,
+      socialCounts,
+      engagementCounts,
+      rewatchCounts,
+      completionCounts,
+      bingeAndStreakStats,
+      extendedSocialStats,
+    ] = await Promise.all([
       getWatchingCounts(userId),
       getSocialCounts(userId),
       getEngagementCounts(userId),
+      getRewatchCounts(userId),
+      getCompletionCounts(userId),
+      getBingeAndStreakStats(userId),
+      getExtendedSocialStats(userId),
     ]);
 
     // Get user's existing achievements
@@ -671,6 +896,47 @@ export async function backfillUserAchievements(userId: string): Promise<{
     await checkAndAward("collections_5", engagementCounts.collectionCount >= 5);
     await checkAndAward("public_collection", engagementCounts.hasPublicCollection);
 
+    // Rewatch achievements
+    await checkAndAward("first_rewatch", rewatchCounts.totalRewatches >= 1);
+    await checkAndAward("rewatches_5", rewatchCounts.totalRewatches >= 5);
+    await checkAndAward("rewatches_10", rewatchCounts.totalRewatches >= 10);
+    await checkAndAward("rewatches_25", rewatchCounts.totalRewatches >= 25);
+    await checkAndAward("rewatches_50", rewatchCounts.totalRewatches >= 50);
+
+    await checkAndAward("series_rewatch_3", rewatchCounts.maxSeriesRewatches >= 3);
+    await checkAndAward("series_rewatch_5", rewatchCounts.maxSeriesRewatches >= 5);
+    await checkAndAward("series_rewatch_10", rewatchCounts.maxSeriesRewatches >= 10);
+
+    // Completion achievements
+    await checkAndAward("first_completion", completionCounts.completedSeries >= 1);
+    await checkAndAward("completed_10", completionCounts.completedSeries >= 10);
+    await checkAndAward("completed_25", completionCounts.completedSeries >= 25);
+    await checkAndAward("completed_50", completionCounts.completedSeries >= 50);
+    await checkAndAward("completed_100", completionCounts.completedSeries >= 100);
+
+    await checkAndAward("long_series", completionCounts.hasLongSeries);
+    await checkAndAward("epic_series", completionCounts.hasEpicSeries);
+    await checkAndAward("speed_demon", completionCounts.hasSpeedDemon);
+    await checkAndAward("slow_burn", completionCounts.hasSlowBurn);
+
+    // Binge achievements
+    await checkAndAward("daily_binge_10", bingeAndStreakStats.maxDailyEpisodes >= 10);
+    await checkAndAward("daily_binge_20", bingeAndStreakStats.maxDailyEpisodes >= 20);
+    await checkAndAward("season_in_day", bingeAndStreakStats.hasSeasonInDay);
+
+    // Streak achievements
+    await checkAndAward("streak_7", bingeAndStreakStats.longestStreak >= 7);
+    await checkAndAward("streak_30", bingeAndStreakStats.longestStreak >= 30);
+    await checkAndAward("streak_100", bingeAndStreakStats.longestStreak >= 100);
+
+    // Extended social achievements
+    await checkAndAward("following_25", extendedSocialStats.followingCount >= 25);
+    await checkAndAward("mutuals_5", extendedSocialStats.mutualCount >= 5);
+    await checkAndAward("mutuals_10", extendedSocialStats.mutualCount >= 10);
+    await checkAndAward("reactions_given_50", extendedSocialStats.reactionsGiven >= 50);
+    await checkAndAward("reactions_given_100", extendedSocialStats.reactionsGiven >= 100);
+    await checkAndAward("diverse_tracker", extendedSocialStats.showsTracking >= 10);
+
     return { success: true, newAchievements };
   } catch (error) {
     console.error("Error in backfillUserAchievements:", error);
@@ -718,6 +984,73 @@ export async function checkFollowingAchievements(userId: string): Promise<void> 
   if (socialCounts.hasMutual) {
     if (!(await hasAchievement(supabase, userId, "first_mutual"))) {
       await awardAchievement(userId, "first_mutual");
+    }
+  }
+}
+
+/**
+ * Check and award rewatch-related achievements
+ * Called when a user starts a new rewatch cycle
+ */
+export async function checkRewatchAchievements(
+  userId: string,
+  seriesId: string,
+  newCycleNumber: number
+): Promise<void> {
+  const supabase = await createClient();
+
+  // Get total rewatch count across all series (cycles > 1 means it's a rewatch)
+  const { count: totalRewatches } = await supabase
+    .from("watch_cycles")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gt("cycle_number", 1);
+
+  const rewatchCount = totalRewatches || 0;
+
+  // Total rewatch milestones
+  const rewatchMilestones = [
+    { count: 1, id: "first_rewatch" },
+    { count: 5, id: "rewatches_5" },
+    { count: 10, id: "rewatches_10" },
+    { count: 25, id: "rewatches_25" },
+    { count: 50, id: "rewatches_50" },
+  ];
+
+  for (const milestone of rewatchMilestones) {
+    if (rewatchCount >= milestone.count) {
+      if (!(await hasAchievement(supabase, userId, milestone.id))) {
+        await awardAchievement(userId, milestone.id);
+      }
+    }
+  }
+
+  // Check dedicated fan achievements (same series rewatched multiple times)
+  // newCycleNumber is the cycle they just started, so cycle 2 = 1st rewatch, cycle 3 = 2nd rewatch, etc.
+  const seriesRewatchCount = newCycleNumber - 1; // Number of times they've rewatched this series
+
+  const dedicatedFanMilestones = [
+    { count: 3, id: "series_rewatch_3" },
+    { count: 5, id: "series_rewatch_5" },
+    { count: 10, id: "series_rewatch_10" },
+  ];
+
+  for (const milestone of dedicatedFanMilestones) {
+    if (seriesRewatchCount >= milestone.count) {
+      if (!(await hasAchievement(supabase, userId, milestone.id))) {
+        // Include series info in metadata
+        const { data: series } = await supabase
+          .from("series")
+          .select("title")
+          .eq("id", seriesId)
+          .single();
+
+        await awardAchievement(userId, milestone.id, {
+          series_id: seriesId,
+          series_title: series?.title || "Unknown",
+          rewatch_count: seriesRewatchCount,
+        });
+      }
     }
   }
 }

@@ -1,5 +1,6 @@
 import { createClient } from "@/src/utils/supabase/server";
 import { NextResponse } from "next/server";
+import { checkRewatchAchievements } from "@/src/app/actions/achievements";
 
 export async function POST(request: Request) {
   try {
@@ -55,6 +56,11 @@ export async function POST(request: Request) {
         cycleId: newCycleId,
       });
     }
+
+    // Check for rewatch achievements (non-blocking)
+    checkRewatchAchievements(userId, seriesId, cycleData.cycle_number).catch(
+      (err) => console.error("Error checking rewatch achievements:", err),
+    );
 
     return NextResponse.json({
       success: true,
