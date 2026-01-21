@@ -677,6 +677,33 @@ export type Database = {
         }
         Relationships: []
       }
+      recommendation_requests: {
+        Row: {
+          id: string
+          user_id: string
+          requested_at: string | null
+          status: string | null
+          error_message: string | null
+          processing_time_ms: number | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          requested_at?: string | null
+          status?: string | null
+          error_message?: string | null
+          processing_time_ms?: number | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          requested_at?: string | null
+          status?: string | null
+          error_message?: string | null
+          processing_time_ms?: number | null
+        }
+        Relationships: []
+      }
       reel_deck: {
         Row: {
           id: string
@@ -884,6 +911,117 @@ export type Database = {
           follower_id?: string
           following_id?: string
           created_at?: string | null
+        }
+        Relationships: []
+      }
+      user_recommendations: {
+        Row: {
+          id: string
+          user_id: string
+          request_id: string | null
+          tmdb_id: number
+          media_type: string
+          title: string
+          poster_path: string | null
+          release_year: number | null
+          rating: number | null
+          genres: string | null
+          reason: string | null
+          confidence_score: number | null
+          created_at: string | null
+          dismissed: boolean | null
+          dismissed_at: string | null
+          watched: boolean | null
+          watched_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          request_id?: string | null
+          tmdb_id: number
+          media_type: string
+          title: string
+          poster_path?: string | null
+          release_year?: number | null
+          rating?: number | null
+          genres?: string | null
+          reason?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          dismissed?: boolean | null
+          dismissed_at?: string | null
+          watched?: boolean | null
+          watched_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          request_id?: string | null
+          tmdb_id?: number
+          media_type?: string
+          title?: string
+          poster_path?: string | null
+          release_year?: number | null
+          rating?: number | null
+          genres?: string | null
+          reason?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          dismissed?: boolean | null
+          dismissed_at?: string | null
+          watched?: boolean | null
+          watched_at?: string | null
+        }
+        Relationships: []
+      }
+      user_viewing_preferences: {
+        Row: {
+          user_id: string
+          favorite_genres: Json | null
+          preferred_decades: Json | null
+          avg_rating_given: number | null
+          preferred_runtime_min: number | null
+          preferred_runtime_max: number | null
+          binge_tendency: number | null
+          completion_rate: number | null
+          diversity_score: number | null
+          top_rated_titles: Json | null
+          recently_completed: Json | null
+          last_analyzed_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          user_id: string
+          favorite_genres?: Json | null
+          preferred_decades?: Json | null
+          avg_rating_given?: number | null
+          preferred_runtime_min?: number | null
+          preferred_runtime_max?: number | null
+          binge_tendency?: number | null
+          completion_rate?: number | null
+          diversity_score?: number | null
+          top_rated_titles?: Json | null
+          recently_completed?: Json | null
+          last_analyzed_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          user_id?: string
+          favorite_genres?: Json | null
+          preferred_decades?: Json | null
+          avg_rating_given?: number | null
+          preferred_runtime_min?: number | null
+          preferred_runtime_max?: number | null
+          binge_tendency?: number | null
+          completion_rate?: number | null
+          diversity_score?: number | null
+          top_rated_titles?: Json | null
+          recently_completed?: Json | null
+          last_analyzed_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
