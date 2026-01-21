@@ -18,6 +18,7 @@ import {
   IconClock,
   IconCalendar,
   IconLoader2,
+  IconMessage2,
 } from "@tabler/icons-react";
 
 import { toast } from "sonner";
@@ -91,7 +92,7 @@ const getRelativeAirDate = (airDate: string | null): string | null => {
   airSunday.setHours(0, 0, 0, 0);
 
   const weeksDiff = Math.round(
-      (airSunday.getTime() - currentSunday.getTime()) / (1000 * 60 * 60 * 24 * 7)
+    (airSunday.getTime() - currentSunday.getTime()) / (1000 * 60 * 60 * 24 * 7),
   );
 
   // Same week (after 2 days threshold)
@@ -121,13 +122,18 @@ const getRelativeAirDate = (airDate: string | null): string | null => {
 const EpisodeItem = React.memo(
   ({
     episode,
+    seriesId,
+    seasonId,
     onToggle,
     isPending,
   }: {
     episode: Episode;
+    seriesId: string;
+    seasonId: string;
     onToggle: (id: string, watched: boolean, hasAired: boolean) => void;
     isPending: boolean;
   }) => {
+    const router = useRouter();
     const relativeAirDate = useMemo(
       () => getRelativeAirDate(episode.air_date),
       [episode.air_date],
@@ -138,89 +144,118 @@ const EpisodeItem = React.memo(
     );
     const isDisabled = !episode.hasAired && !episode.isWatched;
 
-    return (
-      <button
-        onClick={() =>
-          onToggle(episode.id, episode.isWatched, episode.hasAired)
-        }
-        disabled={isDisabled || isPending}
-        title={
-          isDisabled
-            ? `Episode hasn't aired yet (${formattedAirDate})`
-            : episode.isWatched
-              ? "Mark as unwatched"
-              : "Mark as watched"
-        }
-        className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
-          isDisabled || isPending
-            ? "bg-neutral-800/30 cursor-not-allowed opacity-60"
-            : episode.isWatched
-              ? "bg-lime-400/10 border border-lime-400/20"
-              : "bg-neutral-800/50 border border-neutral-700 hover:border-neutral-600"
-        }`}
-      >
-        {/* Episode Info */}
-        <div className="flex-1 text-left">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={`text-sm font-medium ${
-                isDisabled ? "text-neutral-500" : "text-neutral-400"
-              }`}
-            >
-              Episode {episode.episode_number}
-            </span>
-            <span className="text-neutral-600">•</span>
-            <span
-              className={`text-sm ${
-                episode.isWatched
-                  ? "text-lime-400"
-                  : isDisabled
-                    ? "text-neutral-500"
-                    : "text-neutral-300"
-              }`}
-            >
-              {episode.title}
-            </span>
-            {relativeAirDate && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center gap-1">
-                <IconCalendar size={12} />
-                {relativeAirDate}
-              </span>
-            )}
-          </div>
-          {episode.air_date && (
-            <p
-              className={`text-xs mt-1 ${
-                isDisabled ? "text-neutral-600" : "text-neutral-500"
-              }`}
-            >
-              <span className="font-bold">
-                {new Date(episode.air_date) > new Date() ? "Airs" : "Aired"}:
-              </span>{" "}
-              {formattedAirDate}
-            </p>
-          )}
-        </div>
+    const handleDiscussionClick = () => {
+      router.push(
+        `/series/${seriesId}/seasons/${seasonId}/episodes/${episode.id}`,
+      );
+    };
 
-        {/* Checkbox with Loading State */}
-        <div
-          className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-            episode.isWatched
-              ? "bg-lime-400 border-lime-400"
-              : isDisabled
-                ? "border-neutral-600"
-                : "border-neutral-600"
+    return (
+      <article
+        className={`group w-full flex items-center bg-neutral-800/50 rounded-lg transition-all`}
+      >
+        <button
+          type="button"
+          onClick={handleDiscussionClick}
+          className={`cursor-pointer grid place-content-center w-14 md:w-0 group-hover:w-14 hover:text-lime-400 overflow-hidden transition-all`}
+        >
+          <IconMessage2 />
+        </button>
+        <button
+          onClick={() =>
+            onToggle(episode.id, episode.isWatched, episode.hasAired)
+          }
+          disabled={isDisabled || isPending}
+          title={
+            isDisabled
+              ? `Episode hasn't aired yet (${formattedAirDate})`
+              : episode.isWatched
+                ? "Mark as unwatched"
+                : "Mark as watched"
+          }
+          className={`group/watch cursor-pointer relative w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+            isDisabled || isPending
+              ? "bg-neutral-800/30 cursor-not-allowed opacity-60"
+              : episode.isWatched
+                ? "bg-lime-400/10 border border-lime-400/20"
+                : "bg-neutral-800/50 border border-neutral-700 hover:border-neutral-600"
           }`}
         >
-          {isPending ? (
-            <IconLoader2 size={14} className="animate-spin text-neutral-900" />
-          ) : episode.isWatched ? (
-            <IconCheck size={14} className="text-neutral-900" />
-          ) : !episode.isWatched && isDisabled ? (
-            <IconClock size={14} className="text-neutral-600" />
-          ) : null}
-        </div>
-      </button>
+          {/* Hover Overlay */}
+          {!isDisabled && !isPending && (
+            <div className="absolute inset-0 rounded-lg bg-neutral-900/70 opacity-0 group-hover/watch:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
+              <span className="text-sm font-medium text-white">
+                {episode.isWatched ? "Unwatch episode" : "Mark as watched"}
+              </span>
+            </div>
+          )}
+
+          {/* Episode Info */}
+          <div className="flex-1 text-left">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className={`text-sm font-medium ${
+                  isDisabled ? "text-neutral-500" : "text-neutral-400"
+                }`}
+              >
+                Episode {episode.episode_number}
+              </span>
+              <span className="text-neutral-600">•</span>
+              <span
+                className={`text-sm ${
+                  episode.isWatched
+                    ? "text-lime-400"
+                    : isDisabled
+                      ? "text-neutral-500"
+                      : "text-neutral-300"
+                }`}
+              >
+                {episode.title}
+              </span>
+              {relativeAirDate && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center gap-1">
+                  <IconCalendar size={12} />
+                  {relativeAirDate}
+                </span>
+              )}
+            </div>
+            {episode.air_date && (
+              <p
+                className={`text-xs mt-1 ${
+                  isDisabled ? "text-neutral-600" : "text-neutral-500"
+                }`}
+              >
+                <span className="font-bold">
+                  {new Date(episode.air_date) > new Date() ? "Airs" : "Aired"}:
+                </span>{" "}
+                {formattedAirDate}
+              </p>
+            )}
+          </div>
+
+          {/* Checkbox with Loading State */}
+          <div
+            className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+              episode.isWatched
+                ? "bg-lime-400 border-lime-400"
+                : isDisabled
+                  ? "border-neutral-600"
+                  : "border-neutral-600"
+            }`}
+          >
+            {isPending ? (
+              <IconLoader2
+                size={14}
+                className="animate-spin text-neutral-900"
+              />
+            ) : episode.isWatched ? (
+              <IconCheck size={14} className="text-neutral-900" />
+            ) : !episode.isWatched && isDisabled ? (
+              <IconClock size={14} className="text-neutral-600" />
+            ) : null}
+          </div>
+        </button>
+      </article>
     );
   },
 );
@@ -393,16 +428,18 @@ export default function SeriesProgressTracker({
 
       try {
         const response = await fetch(
-            `/api/series/${seriesId}/season/${seasonNumber}/episodes`,
+          `/api/series/${seriesId}/season/${seasonNumber}/episodes`,
         );
 
         // Handle 404 - season doesn't exist
         if (response.status === 404) {
-          console.warn(`Season ${seasonNumber} not found, removing from display`);
+          console.warn(
+            `Season ${seasonNumber} not found, removing from display`,
+          );
 
           // Remove this season from the list
           setSeasons((prevSeasons) =>
-              prevSeasons.filter((s) => s.id !== seasonId)
+            prevSeasons.filter((s) => s.id !== seasonId),
           );
 
           setLoadedSeasons((prev) => new Set(prev).add(seasonId));
@@ -970,12 +1007,26 @@ export default function SeriesProgressTracker({
             className="bg-neutral-900 rounded-lg border border-neutral-800 overflow-hidden"
           >
             {/* Season Header */}
-            <div className="p-4">
+            <div
+              className="p-4 cursor-pointer"
+              onClick={() => toggleSeason(season.season_number)}
+            >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold">
-                    Season {season.season_number}
-                  </h3>
+                  <div className={`flex items-center gap-3`}>
+                    <h3 className="text-lg font-semibold">
+                      Season {season.season_number}
+                    </h3>
+                    <span>|</span>
+                    <a
+                      href={`/series/${seriesId}/seasons/${season.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`flex items-center gap-1 text-sm text-neutral-400 hover:text-lime-400 transition-colors`}
+                    >
+                      <IconMessage2 size={16} />
+                      Join the Discussion
+                    </a>
+                  </div>
                   <p className="text-sm text-neutral-400 mt-1">
                     {season.watchedCount} of {season.totalCount} episodes
                     watched
@@ -1060,7 +1111,9 @@ export default function SeriesProgressTracker({
             {/* Episodes List */}
             <div
               className={`border-t border-neutral-800 px-4 space-y-2 transition-all duration-300 ease-in-out overflow-hidden ${
-                isOpen ? `py-4 max-h-fit md:max-h-[${season.episodes.length * 80 + 100}px]` : "max-h-0 py-0"
+                isOpen
+                  ? `py-4 max-h-fit md:max-h-[${season.episodes.length * 80 + 100}px]`
+                  : "max-h-0 py-0"
               }`}
             >
               {isLoading && (
@@ -1076,6 +1129,8 @@ export default function SeriesProgressTracker({
                     <EpisodeItem
                       key={episode.id}
                       episode={episode}
+                      seriesId={seriesId}
+                      seasonId={season.id}
                       onToggle={handleEpisodeToggle}
                       isPending={isPending && pendingEpisodeId === episode.id}
                     />

@@ -6,7 +6,12 @@ import { createClient } from "@/src/utils/supabase/server";
 import { ensureSeasonMetadata } from "@/src/utils/tmdb-utils";
 import SeriesProgressTracker from "@/src/components/series-progress-tracker";
 import BrowseNavigation from "@/src/components/browse-navigation";
-import { IconArrowLeft, IconDeviceTv, IconCalendar } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconDeviceTv,
+  IconCalendar,
+  IconMessage2,
+} from "@tabler/icons-react";
 import RemoveFromReelDeckButton from "@/src/components/remove-from-reel-deck-button";
 import ForceRefreshReelDeck from "@/src/components/force-refresh-reel-deck";
 
@@ -123,7 +128,8 @@ export default async function SeriesProgressPage({
           {
             label: "Collections",
             href: `/${username}/collections`,
-            textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
+            textColor: `hover:text-indigo-500`,
+            bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={urlProfile.id}
@@ -191,9 +197,10 @@ export default async function SeriesProgressPage({
               {/* Link to full series details */}
               <Link
                 href={`/series/${seriesId}`}
-                className="inline-block mt-4 text-sm text-lime-400 hover:text-lime-300 transition-colors"
+                className="inline-flex items-centers gap-1 mt-4 text-sm text-lime-400/70 hover:text-lime-400 transition-colors"
               >
-                View full series details →
+                <IconMessage2 size={20} />
+                View full series details
               </Link>
 
               <div className={`mt-6 flex justify-end gap-2`}>
