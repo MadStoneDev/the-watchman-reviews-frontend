@@ -23,7 +23,6 @@ import { toast } from "sonner";
 import { createClient } from "@/src/utils/supabase/client";
 import { MediaCollection } from "@/src/lib/types";
 import MediaFeedbackButtons from "@/src/components/media-feedback-buttons";
-import { type FeedbackType } from "@/src/app/actions/feedback";
 import {
   getUserRecommendations,
   generateRecommendations,
