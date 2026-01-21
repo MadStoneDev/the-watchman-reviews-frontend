@@ -129,6 +129,13 @@ const getRelativeAirDate = (airDate: string | null): string | null => {
   return null;
 };
 
+// Helper to get ordinal suffix (st, nd, rd, th)
+const getOrdinalSuffix = (n: number): string => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return s[(v - 20) % 10] || s[v] || s[0];
+};
+
 // Memoized episode item component
 const EpisodeItem = React.memo(
   ({
@@ -346,13 +353,16 @@ export default function SeriesProgressTracker({
     },
   );
 
-  // Calculate overall progress
+  // Calculate overall progress (excluding Season 0 / Extras)
   const overallProgress = useMemo(() => {
-    const totalEpisodes = optimisticSeasons.reduce(
+    const regularSeasons = optimisticSeasons.filter(
+      (season) => season.season_number !== 0,
+    );
+    const totalEpisodes = regularSeasons.reduce(
       (sum, season) => sum + season.totalCount,
       0,
     );
-    const watchedEpisodes = optimisticSeasons.reduce(
+    const watchedEpisodes = regularSeasons.reduce(
       (sum, season) => sum + season.watchedCount,
       0,
     );
@@ -964,11 +974,20 @@ export default function SeriesProgressTracker({
 
   const handleStartRewatch = useCallback(async () => {
     const cycleNumber = watchCycle?.cycle_number || 1;
-    if (
-      !confirm(
-        `Start rewatch #${cycleNumber + 1}? This will clear your current progress and begin a new viewing cycle.`,
-      )
-    ) {
+    const confirmMessage = `Start Rewatch #${cycleNumber + 1}?
+
+A rewatch means you're starting the series over from the beginning — like rewatching your favorite show for the ${cycleNumber + 1}${getOrdinalSuffix(cycleNumber + 1)} time.
+
+This will:
+• Clear your current watch progress
+• Mark your previous watch as complete
+• Start a fresh viewing cycle
+
+Your rewatch count will be saved and contributes to achievements.
+
+Continue?`;
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -1042,11 +1061,7 @@ export default function SeriesProgressTracker({
     return `${ordinal} Watch`;
   };
 
-  const getOrdinal = (n: number) => {
-    const s = ["th", "st", "nd", "rd"];
-    const v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  };
+  const getOrdinal = (n: number) => n + getOrdinalSuffix(n);
 
   return (
     <div className="space-y-4">
@@ -1136,7 +1151,9 @@ export default function SeriesProgressTracker({
                 <div className="flex-1">
                   <div className={`flex items-center gap-3`}>
                     <h3 className="text-lg font-semibold">
-                      Season {season.season_number}
+                      {season.season_number === 0
+                        ? "Extras"
+                        : `Season ${season.season_number}`}
                     </h3>
                     <span>|</span>
                     <a
