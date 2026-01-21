@@ -767,6 +767,42 @@ async function getBingeAndStreakStats(userId: string): Promise<{
 }
 
 /**
+ * Get feedback counts for a user (new schema: is_seen + reaction)
+ */
+async function getFeedbackCounts(userId: string): Promise<{
+  totalFeedback: number;
+  lovedCount: number;
+  likedCount: number;
+  seenCount: number;
+  dislikedCount: number;
+}> {
+  const supabase = await createClient();
+
+  const { data: feedbackStats } = await supabase
+    .from("user_media_feedback")
+    .select("is_seen, reaction")
+    .eq("user_id", userId);
+
+  if (!feedbackStats) {
+    return {
+      totalFeedback: 0,
+      lovedCount: 0,
+      likedCount: 0,
+      seenCount: 0,
+      dislikedCount: 0,
+    };
+  }
+
+  return {
+    totalFeedback: feedbackStats.length,
+    lovedCount: feedbackStats.filter((f) => f.reaction === "loved").length,
+    likedCount: feedbackStats.filter((f) => f.reaction === "liked").length,
+    seenCount: feedbackStats.filter((f) => f.is_seen).length,
+    dislikedCount: feedbackStats.filter((f) => f.reaction === "disliked").length,
+  };
+}
+
+/**
  * Get extended social stats for a user
  */
 async function getExtendedSocialStats(userId: string): Promise<{
@@ -832,6 +868,7 @@ export async function backfillUserAchievements(userId: string): Promise<{
       completionCounts,
       bingeAndStreakStats,
       extendedSocialStats,
+      feedbackCounts,
     ] = await Promise.all([
       getWatchingCounts(userId),
       getSocialCounts(userId),
@@ -840,6 +877,7 @@ export async function backfillUserAchievements(userId: string): Promise<{
       getCompletionCounts(userId),
       getBingeAndStreakStats(userId),
       getExtendedSocialStats(userId),
+      getFeedbackCounts(userId),
     ]);
 
     // Get user's existing achievements
@@ -937,6 +975,25 @@ export async function backfillUserAchievements(userId: string): Promise<{
     await checkAndAward("reactions_given_100", extendedSocialStats.reactionsGiven >= 100);
     await checkAndAward("diverse_tracker", extendedSocialStats.showsTracking >= 10);
 
+    // Feedback achievements
+    await checkAndAward("first_feedback", feedbackCounts.totalFeedback >= 1);
+    await checkAndAward("feedback_10", feedbackCounts.totalFeedback >= 10);
+    await checkAndAward("feedback_25", feedbackCounts.totalFeedback >= 25);
+    await checkAndAward("feedback_50", feedbackCounts.totalFeedback >= 50);
+    await checkAndAward("feedback_100", feedbackCounts.totalFeedback >= 100);
+    await checkAndAward("feedback_250", feedbackCounts.totalFeedback >= 250);
+
+    await checkAndAward("first_love", feedbackCounts.lovedCount >= 1);
+    await checkAndAward("loved_10", feedbackCounts.lovedCount >= 10);
+    await checkAndAward("loved_25", feedbackCounts.lovedCount >= 25);
+
+    await checkAndAward("seen_50", feedbackCounts.seenCount >= 50);
+    await checkAndAward("seen_100", feedbackCounts.seenCount >= 100);
+    await checkAndAward("seen_250", feedbackCounts.seenCount >= 250);
+
+    const positiveCount = feedbackCounts.likedCount + feedbackCounts.lovedCount;
+    await checkAndAward("balanced_critic", positiveCount >= 5 && feedbackCounts.dislikedCount >= 5);
+
     return { success: true, newAchievements };
   } catch (error) {
     console.error("Error in backfillUserAchievements:", error);
@@ -984,6 +1041,87 @@ export async function checkFollowingAchievements(userId: string): Promise<void> 
   if (socialCounts.hasMutual) {
     if (!(await hasAchievement(supabase, userId, "first_mutual"))) {
       await awardAchievement(userId, "first_mutual");
+    }
+  }
+}
+
+/**
+ * Check and award feedback-related achievements
+ * Called when a user gives feedback on a movie or TV show
+ */
+export async function checkFeedbackAchievements(
+  userId: string,
+  feedbackType: "seen" | "liked" | "loved" | "disliked"
+): Promise<void> {
+  const supabase = await createClient();
+
+  // Get feedback counts (new schema: is_seen + reaction)
+  const { data: feedbackStats } = await supabase
+    .from("user_media_feedback")
+    .select("is_seen, reaction")
+    .eq("user_id", userId);
+
+  if (!feedbackStats) return;
+
+  const totalFeedback = feedbackStats.length;
+  const lovedCount = feedbackStats.filter((f) => f.reaction === "loved").length;
+  const seenCount = feedbackStats.filter((f) => f.is_seen).length;
+  const likedCount = feedbackStats.filter((f) => f.reaction === "liked").length;
+  const dislikedCount = feedbackStats.filter((f) => f.reaction === "disliked").length;
+
+  // Total feedback milestones
+  const feedbackMilestones = [
+    { count: 1, id: "first_feedback" },
+    { count: 10, id: "feedback_10" },
+    { count: 25, id: "feedback_25" },
+    { count: 50, id: "feedback_50" },
+    { count: 100, id: "feedback_100" },
+    { count: 250, id: "feedback_250" },
+  ];
+
+  for (const milestone of feedbackMilestones) {
+    if (totalFeedback >= milestone.count) {
+      if (!(await hasAchievement(supabase, userId, milestone.id))) {
+        await awardAchievement(userId, milestone.id);
+      }
+    }
+  }
+
+  // Love-specific milestones
+  const loveMilestones = [
+    { count: 1, id: "first_love" },
+    { count: 10, id: "loved_10" },
+    { count: 25, id: "loved_25" },
+  ];
+
+  for (const milestone of loveMilestones) {
+    if (lovedCount >= milestone.count) {
+      if (!(await hasAchievement(supabase, userId, milestone.id))) {
+        await awardAchievement(userId, milestone.id);
+      }
+    }
+  }
+
+  // Seen milestones
+  const seenMilestones = [
+    { count: 50, id: "seen_50" },
+    { count: 100, id: "seen_100" },
+    { count: 250, id: "seen_250" },
+  ];
+
+  for (const milestone of seenMilestones) {
+    if (seenCount >= milestone.count) {
+      if (!(await hasAchievement(supabase, userId, milestone.id))) {
+        await awardAchievement(userId, milestone.id);
+      }
+    }
+  }
+
+  // Balanced critic achievement (at least 5 positive and 5 negative)
+  const positiveCount = likedCount + lovedCount;
+  if (positiveCount >= 5 && dislikedCount >= 5) {
+    if (!(await hasAchievement(supabase, userId, "balanced_critic"))) {
+      await awardAchievement(userId, "balanced_critic");
     }
   }
 }

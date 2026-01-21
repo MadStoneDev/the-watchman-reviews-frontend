@@ -3,14 +3,6 @@ import { IconThumbUp, IconThumbDown } from "@tabler/icons-react";
 import { PopcornIcon } from "lucide-react";
 
 export const REACTION_TYPES = {
-  positive: {
-    id: "positive",
-    icon: IconThumbUp,
-    label: "Agree",
-    hoverColor: "hover:text-sky-600",
-    activeColor: "text-sky-600",
-    activeBg: "bg-sky-600/20",
-  },
   negative: {
     id: "negative",
     icon: IconThumbDown,
@@ -18,6 +10,14 @@ export const REACTION_TYPES = {
     hoverColor: "hover:text-red-600",
     activeColor: "text-red-600",
     activeBg: "bg-red-600/20",
+  },
+  positive: {
+    id: "positive",
+    icon: IconThumbUp,
+    label: "Agree",
+    hoverColor: "hover:text-sky-600",
+    activeColor: "text-sky-600",
+    activeBg: "bg-sky-600/20",
   },
   popcorn: {
     id: "popcorn",

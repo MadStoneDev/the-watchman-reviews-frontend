@@ -16,6 +16,7 @@ import {
   IconExternalLink,
   IconCalendar,
 } from "@tabler/icons-react";
+import MediaDetailFeedback from "@/src/components/media-detail-feedback";
 
 interface SeriesPageProps {
   params: Promise<{ seriesId: string }>;
@@ -209,6 +210,13 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
                   />
                 )}
               </div>
+
+              {/* Feedback Section */}
+              <MediaDetailFeedback
+                tmdbId={series.tmdb_id}
+                mediaType="tv"
+                userId={currentUserId}
+              />
             </div>
           </div>
         </div>

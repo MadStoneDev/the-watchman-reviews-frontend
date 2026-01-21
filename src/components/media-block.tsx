@@ -18,6 +18,7 @@ import {
 import { MediaImage } from "@/src/components/ui/media-image";
 import { MediaCollection, MediaSearchResult } from "@/src/lib/types";
 import { createClient } from "@/src/utils/supabase/client";
+import MediaFeedbackButtons from "@/src/components/media-feedback-buttons";
 
 interface MediaBlockProps {
   data: MediaSearchResult;
@@ -523,6 +524,18 @@ export default function MediaBlock({
             </>
           )}
         </div>
+
+        {/* Feedback Buttons - Only for logged-in users */}
+        {isUser && (
+          <div className="mt-2 pt-2 border-t border-neutral-800/50">
+            <MediaFeedbackButtons
+              tmdbId={data.tmdbId}
+              mediaType={data.mediaType}
+              size="sm"
+              variant="icon-only"
+            />
+          </div>
+        )}
       </div>
 
       {/* Collections Modal */}

@@ -17,13 +17,17 @@ import {
   IconCheck,
   IconBubbleText,
   IconSquarePlus,
+  IconFlame,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { createClient } from "@/src/utils/supabase/client";
 import { MediaCollection } from "@/src/lib/types";
+import MediaFeedbackButtons from "@/src/components/media-feedback-buttons";
+import { type FeedbackType } from "@/src/app/actions/feedback";
 import {
   getUserRecommendations,
   generateRecommendations,
+  forceGenerateRecommendations,
   canRequestRecommendations,
   dismissRecommendation,
   type Recommendation,
@@ -32,6 +36,7 @@ import {
 interface RecommendationsSectionProps {
   username: string;
   userId?: string;
+  userRole?: number;
   ownedCollections?: MediaCollection[];
   sharedCollections?: MediaCollection[];
 }
@@ -46,16 +51,20 @@ const RATINGS = [
 export default function RecommendationsSection({
   username,
   userId,
+  userRole = 0,
   ownedCollections = [],
   sharedCollections = [],
 }: RecommendationsSectionProps) {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [forceGenerating, setForceGenerating] = useState(false);
   const [canRequest, setCanRequest] = useState(true);
   const [daysUntilNext, setDaysUntilNext] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const isAdmin = userRole >= 10;
 
   // Filters
   const [showFilters, setShowFilters] = useState(false);
@@ -117,6 +126,33 @@ export default function RecommendationsSection({
       setError("An unexpected error occurred");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleForceGenerate = async () => {
+    setForceGenerating(true);
+    setError(null);
+    toast.loading("Force refreshing recommendations...", {
+      id: "force-refresh",
+    });
+    try {
+      const result = await forceGenerateRecommendations();
+      if (result.success) {
+        setRecommendations(result.recommendations || []);
+        setCanRequest(false);
+        setDaysUntilNext(7);
+        toast.success("Recommendations refreshed!", { id: "force-refresh" });
+      } else {
+        setError(result.error || "Failed to generate recommendations");
+        toast.error(result.error || "Failed to generate", {
+          id: "force-refresh",
+        });
+      }
+    } catch (err) {
+      setError("An unexpected error occurred");
+      toast.error("An unexpected error occurred", { id: "force-refresh" });
+    } finally {
+      setForceGenerating(false);
     }
   };
 
@@ -186,9 +222,9 @@ export default function RecommendationsSection({
           {/* Generate Button */}
           <button
             onClick={handleGenerate}
-            disabled={generating || !canRequest}
+            disabled={generating || forceGenerating || !canRequest}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              canRequest && !generating
+              canRequest && !generating && !forceGenerating
                 ? "bg-amber-500 text-neutral-900 hover:bg-amber-400"
                 : "bg-neutral-800 text-neutral-500 cursor-not-allowed"
             }`}
@@ -207,6 +243,26 @@ export default function RecommendationsSection({
               </>
             )}
           </button>
+
+          {/* Admin Force Refresh Button */}
+          {isAdmin && (
+            <button
+              onClick={handleForceGenerate}
+              disabled={generating || forceGenerating}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                !generating && !forceGenerating
+                  ? "bg-red-600 text-white hover:bg-red-500"
+                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed"
+              }`}
+              title="Admin: Force refresh (clears existing and regenerates)"
+            >
+              {forceGenerating ? (
+                <IconLoader2 size={18} className="animate-spin" />
+              ) : (
+                <IconFlame size={18} />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
@@ -724,7 +780,7 @@ function RecommendationCard({
           </div>
 
           {/* Genres - flex-grow to push buttons to bottom */}
-          <div className="flex-grow">
+          <div className="grow">
             {recommendation.genres && recommendation.genres.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
                 {recommendation.genres.slice(0, 2).map((genre) => (
@@ -739,8 +795,18 @@ function RecommendationCard({
             )}
           </div>
 
+          {/* Feedback Buttons */}
+          <div className="mt-3 pt-2 border-t border-neutral-800/50">
+            <MediaFeedbackButtons
+              tmdbId={recommendation.tmdb_id}
+              mediaType={recommendation.media_type}
+              size="sm"
+              variant="icon-only"
+            />
+          </div>
+
           {/* Action Buttons - Always visible at bottom */}
-          <div className="flex gap-2 mt-3 pt-3 border-t border-neutral-800">
+          <div className="flex gap-2 mt-2 pt-2 border-t border-neutral-800">
             {/* Add to Reel Deck (TV only) */}
             {recommendation.media_type === "tv" && !inReelDeck && (
               <button

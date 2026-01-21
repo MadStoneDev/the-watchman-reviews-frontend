@@ -298,6 +298,52 @@ async function searchTMDB(
 }
 
 /**
+ * Force generate recommendations (admin only, bypasses rate limit)
+ */
+export async function forceGenerateRecommendations(): Promise<{
+  success: boolean;
+  recommendations?: Recommendation[];
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    // Check if user is admin (role >= 10)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || profile.role < 10) {
+      return { success: false, error: "Admin access required" };
+    }
+
+    // Clear existing recommendations for fresh results
+    await supabase
+      .from("user_recommendations")
+      .delete()
+      .eq("user_id", user.id);
+
+    // Generate without rate limit check
+    return await generateRecommendationsInternal(user.id, true);
+  } catch (error) {
+    console.error("Error in forceGenerateRecommendations:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to generate recommendations",
+    };
+  }
+}
+
+/**
  * Generate new recommendations using Claude AI
  */
 export async function generateRecommendations(): Promise<{
@@ -324,166 +370,7 @@ export async function generateRecommendations(): Promise<{
       };
     }
 
-    // Create a request record
-    const { data: requestRecord, error: requestError } = await supabase
-      .from("recommendation_requests")
-      .insert({
-        user_id: user.id,
-        status: "processing",
-      })
-      .select("id")
-      .single();
-
-    if (requestError) {
-      console.error("Error creating request record:", requestError);
-      return { success: false, error: "Failed to initiate recommendation request" };
-    }
-
-    const startTime = Date.now();
-
-    try {
-      // Get user's viewing profile
-      const profileResult = await getUserViewingProfile();
-      if (!profileResult.success || !profileResult.profile) {
-        throw new Error("Failed to get viewing profile");
-      }
-
-      const profile = profileResult.profile;
-
-      // Get existing recommendations to avoid duplicates
-      const { data: existingRecs } = await supabase
-        .from("user_recommendations")
-        .select("tmdb_id, media_type")
-        .eq("user_id", user.id);
-
-      const existingSet = new Set(
-        existingRecs?.map((r) => `${r.media_type}:${r.tmdb_id}`) || []
-      );
-
-      // Get user's already watched titles from reel_deck
-      const { data: reelDeckItems } = await supabase
-        .from("reel_deck")
-        .select("media_id, media_type")
-        .eq("user_id", user.id);
-
-      // Separate series and movie IDs
-      const seriesIds = reelDeckItems
-        ?.filter((item) => item.media_type === "tv")
-        .map((item) => item.media_id) || [];
-      const movieIds = reelDeckItems
-        ?.filter((item) => item.media_type === "movie")
-        .map((item) => item.media_id) || [];
-
-      // Fetch titles in parallel
-      const [seriesResult, moviesResult] = await Promise.all([
-        seriesIds.length > 0
-          ? supabase.from("series").select("title").in("id", seriesIds)
-          : Promise.resolve({ data: [] }),
-        movieIds.length > 0
-          ? supabase.from("movies").select("title").in("id", movieIds)
-          : Promise.resolve({ data: [] }),
-      ]);
-
-      const watchedTitles = [
-        ...(seriesResult.data?.map((s: any) => s.title).filter(Boolean) || []),
-        ...(moviesResult.data?.map((m: any) => m.title).filter(Boolean) || []),
-      ];
-
-      // Build prompt for Claude
-      const prompt = buildRecommendationPrompt(profile, watchedTitles);
-
-      // Call Claude API
-      const anthropic = new Anthropic({
-        apiKey: process.env.ANTHROPIC_API_KEY,
-      });
-
-      const response = await anthropic.messages.create({
-        model: "claude-3-haiku-20240307",
-        max_tokens: 4000,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      });
-
-      // Parse Claude's response
-      const textContent = response.content.find((c) => c.type === "text");
-      if (!textContent || textContent.type !== "text") {
-        throw new Error("Invalid response from AI");
-      }
-
-      const aiRecommendations = parseAIRecommendations(textContent.text);
-
-      // Look up each recommendation on TMDB and save
-      const savedRecommendations: Recommendation[] = [];
-
-      for (const rec of aiRecommendations) {
-        // Skip if already recommended
-        if (existingSet.has(`${rec.mediaType}:${rec.tmdbId}`)) {
-          continue;
-        }
-
-        // Search TMDB for the title
-        const tmdbResult = await searchTMDB(rec.title, rec.mediaType, rec.year);
-        if (!tmdbResult) {
-          continue;
-        }
-
-        // Skip if already recommended (by TMDB ID after search)
-        if (existingSet.has(`${rec.mediaType}:${tmdbResult.tmdb_id}`)) {
-          continue;
-        }
-
-        // Save to database
-        const { data: saved, error: saveError } = await supabase
-          .from("user_recommendations")
-          .insert({
-            user_id: user.id,
-            request_id: requestRecord.id,
-            tmdb_id: tmdbResult.tmdb_id,
-            media_type: rec.mediaType,
-            title: tmdbResult.title,
-            poster_path: tmdbResult.poster_path,
-            release_year: tmdbResult.release_year,
-            rating: tmdbResult.rating,
-            genres: tmdbResult.genres,
-            reason: rec.reason,
-            confidence_score: rec.confidence,
-          })
-          .select()
-          .single();
-
-        if (!saveError && saved) {
-          savedRecommendations.push(saved);
-          existingSet.add(`${rec.mediaType}:${tmdbResult.tmdb_id}`);
-        }
-      }
-
-      // Update request record
-      const processingTime = Date.now() - startTime;
-      await supabase
-        .from("recommendation_requests")
-        .update({
-          status: "completed",
-          processing_time_ms: processingTime,
-        })
-        .eq("id", requestRecord.id);
-
-      return { success: true, recommendations: savedRecommendations };
-    } catch (error) {
-      // Update request record with error
-      await supabase
-        .from("recommendation_requests")
-        .update({
-          status: "failed",
-          error_message: error instanceof Error ? error.message : "Unknown error",
-        })
-        .eq("id", requestRecord.id);
-
-      throw error;
-    }
+    return await generateRecommendationsInternal(user.id, false);
   } catch (error) {
     console.error("Error in generateRecommendations:", error);
     return {
@@ -494,9 +381,290 @@ export async function generateRecommendations(): Promise<{
 }
 
 /**
+ * Internal function to generate recommendations
+ */
+async function generateRecommendationsInternal(
+  userId: string,
+  skipExistingCheck: boolean
+): Promise<{
+  success: boolean;
+  recommendations?: Recommendation[];
+  error?: string;
+}> {
+  const supabase = await createClient();
+
+  // Create a request record
+  const { data: requestRecord, error: requestError } = await supabase
+    .from("recommendation_requests")
+    .insert({
+      user_id: userId,
+      status: "processing",
+    })
+    .select("id")
+    .single();
+
+  if (requestError) {
+    console.error("Error creating request record:", requestError);
+    return { success: false, error: "Failed to initiate recommendation request" };
+  }
+
+  const startTime = Date.now();
+
+  try {
+    // Get user's viewing profile
+    const profileResult = await getUserViewingProfile();
+    if (!profileResult.success || !profileResult.profile) {
+      throw new Error("Failed to get viewing profile");
+    }
+
+    const profile = profileResult.profile;
+
+    // Get existing recommendations to avoid duplicates
+    let existingSet = new Set<string>();
+    if (!skipExistingCheck) {
+      const { data: existingRecs } = await supabase
+        .from("user_recommendations")
+        .select("tmdb_id, media_type")
+        .eq("user_id", userId);
+
+      existingSet = new Set(
+        existingRecs?.map((r) => `${r.media_type}:${r.tmdb_id}`) || []
+      );
+    }
+
+    // Get user's already watched titles from reel_deck
+    const { data: reelDeckItems } = await supabase
+      .from("reel_deck")
+      .select("media_id, media_type")
+      .eq("user_id", userId);
+
+    // Separate series and movie IDs
+    const seriesIds = reelDeckItems
+      ?.filter((item) => item.media_type === "tv")
+      .map((item) => item.media_id) || [];
+    const movieIds = reelDeckItems
+      ?.filter((item) => item.media_type === "movie")
+      .map((item) => item.media_id) || [];
+
+    // Fetch titles in parallel
+    const [seriesResult, moviesResult] = await Promise.all([
+      seriesIds.length > 0
+        ? supabase.from("series").select("title").in("id", seriesIds)
+        : Promise.resolve({ data: [] }),
+      movieIds.length > 0
+        ? supabase.from("movies").select("title").in("id", movieIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const watchedTitles = [
+      ...(seriesResult.data?.map((s: any) => s.title).filter(Boolean) || []),
+      ...(moviesResult.data?.map((m: any) => m.title).filter(Boolean) || []),
+    ];
+
+    // Fetch user feedback data for personalization (new schema: is_seen + reaction)
+    // This is optional - if the table/columns don't exist, we just skip personalization
+    let feedbackData: Array<{ tmdb_id: number; media_type: string; is_seen: boolean; reaction: string | null }> | null = null;
+    try {
+      const { data, error } = await supabase
+        .from("user_media_feedback")
+        .select("tmdb_id, media_type, is_seen, reaction")
+        .eq("user_id", userId);
+
+      if (!error) {
+        feedbackData = data;
+      } else {
+        console.log("Feedback query skipped (table may not be migrated yet):", error.message);
+      }
+    } catch (e) {
+      console.log("Feedback query not available:", e);
+    }
+
+    // Separate feedback by type
+    const likedTitles: string[] = [];
+    const lovedTitles: string[] = [];
+    const dislikedTitles: string[] = [];
+    const seenTmdbIds = new Set<string>();
+
+    if (feedbackData && feedbackData.length > 0) {
+      // Get TMDB IDs for each reaction type
+      const feedbackByReaction = {
+        liked: feedbackData.filter((f) => f.reaction === "liked").map((f) => ({ tmdb_id: f.tmdb_id, type: f.media_type })),
+        loved: feedbackData.filter((f) => f.reaction === "loved").map((f) => ({ tmdb_id: f.tmdb_id, type: f.media_type })),
+        disliked: feedbackData.filter((f) => f.reaction === "disliked").map((f) => ({ tmdb_id: f.tmdb_id, type: f.media_type })),
+      };
+
+      // Add all seen items to exclusion set (is_seen = true)
+      feedbackData.forEach((f) => {
+        if (f.is_seen) {
+          seenTmdbIds.add(`${f.media_type}:${f.tmdb_id}`);
+        }
+      });
+
+      // Fetch titles for liked/loved/disliked to include in prompt
+      const allFeedbackMovieIds = [...feedbackByReaction.liked, ...feedbackByReaction.loved, ...feedbackByReaction.disliked]
+        .filter((f) => f.type === "movie")
+        .map((f) => f.tmdb_id);
+      const allFeedbackSeriesIds = [...feedbackByReaction.liked, ...feedbackByReaction.loved, ...feedbackByReaction.disliked]
+        .filter((f) => f.type === "tv")
+        .map((f) => f.tmdb_id);
+
+      // Fetch titles from our database by tmdb_id
+      const [feedbackMovies, feedbackSeries] = await Promise.all([
+        allFeedbackMovieIds.length > 0
+          ? supabase.from("movies").select("tmdb_id, title").in("tmdb_id", allFeedbackMovieIds)
+          : Promise.resolve({ data: [] }),
+        allFeedbackSeriesIds.length > 0
+          ? supabase.from("series").select("tmdb_id, title").in("tmdb_id", allFeedbackSeriesIds)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      // Create a map of tmdb_id to title
+      const movieTitleMap = new Map((feedbackMovies.data || []).map((m: any) => [m.tmdb_id, m.title]));
+      const seriesTitleMap = new Map((feedbackSeries.data || []).map((s: any) => [s.tmdb_id, s.title]));
+
+      // Populate title arrays
+      feedbackByReaction.liked.forEach((f) => {
+        const title = f.type === "movie" ? movieTitleMap.get(f.tmdb_id) : seriesTitleMap.get(f.tmdb_id);
+        if (title) likedTitles.push(title);
+      });
+      feedbackByReaction.loved.forEach((f) => {
+        const title = f.type === "movie" ? movieTitleMap.get(f.tmdb_id) : seriesTitleMap.get(f.tmdb_id);
+        if (title) lovedTitles.push(title);
+      });
+      feedbackByReaction.disliked.forEach((f) => {
+        const title = f.type === "movie" ? movieTitleMap.get(f.tmdb_id) : seriesTitleMap.get(f.tmdb_id);
+        if (title) dislikedTitles.push(title);
+      });
+    }
+
+    // Build prompt for Claude with feedback data
+    const prompt = buildRecommendationPrompt(profile, watchedTitles, {
+      liked: likedTitles,
+      loved: lovedTitles,
+      disliked: dislikedTitles,
+    });
+
+    // Call Claude API
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+
+    const response = await anthropic.messages.create({
+      model: "claude-3-haiku-20240307",
+      max_tokens: 4096,
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
+
+    // Parse Claude's response
+    const textContent = response.content.find((c) => c.type === "text");
+    if (!textContent || textContent.type !== "text") {
+      throw new Error("Invalid response from AI");
+    }
+
+    console.log("AI Response received, length:", textContent.text.length);
+
+    const aiRecommendations = parseAIRecommendations(textContent.text);
+    console.log("Parsed recommendations count:", aiRecommendations.length);
+
+    if (aiRecommendations.length === 0) {
+      console.error("No recommendations parsed from AI response:", textContent.text.substring(0, 500));
+    }
+
+    // Look up each recommendation on TMDB and save
+    const savedRecommendations: Recommendation[] = [];
+
+    for (const rec of aiRecommendations) {
+      // Skip if already recommended (unless skipping existing check)
+      if (!skipExistingCheck && existingSet.has(`${rec.mediaType}:${rec.tmdbId}`)) {
+        continue;
+      }
+
+      // Search TMDB for the title
+      const tmdbResult = await searchTMDB(rec.title, rec.mediaType, rec.year);
+      if (!tmdbResult) {
+        console.log(`TMDB search failed for: ${rec.title} (${rec.mediaType})`);
+        continue;
+      }
+
+      // Skip if already recommended (by TMDB ID after search)
+      if (!skipExistingCheck && existingSet.has(`${rec.mediaType}:${tmdbResult.tmdb_id}`)) {
+        continue;
+      }
+
+      // Skip if user has already seen/rated this title
+      if (seenTmdbIds.has(`${rec.mediaType}:${tmdbResult.tmdb_id}`)) {
+        continue;
+      }
+
+      // Save to database
+      const { data: saved, error: saveError } = await supabase
+        .from("user_recommendations")
+        .insert({
+          user_id: userId,
+          request_id: requestRecord.id,
+          tmdb_id: tmdbResult.tmdb_id,
+          media_type: rec.mediaType,
+          title: tmdbResult.title,
+          poster_path: tmdbResult.poster_path,
+          release_year: tmdbResult.release_year,
+          rating: tmdbResult.rating,
+          genres: tmdbResult.genres,
+          reason: rec.reason,
+          confidence_score: rec.confidence,
+        })
+        .select()
+        .single();
+
+      if (!saveError && saved) {
+        savedRecommendations.push(saved);
+        existingSet.add(`${rec.mediaType}:${tmdbResult.tmdb_id}`);
+      }
+    }
+
+    console.log(`Saved ${savedRecommendations.length} recommendations out of ${aiRecommendations.length} from AI`);
+
+    // Update request record
+    const processingTime = Date.now() - startTime;
+    await supabase
+      .from("recommendation_requests")
+      .update({
+        status: "completed",
+        processing_time_ms: processingTime,
+      })
+      .eq("id", requestRecord.id);
+
+    return { success: true, recommendations: savedRecommendations };
+  } catch (error) {
+    // Update request record with error
+    await supabase
+      .from("recommendation_requests")
+      .update({
+        status: "failed",
+        error_message: error instanceof Error ? error.message : "Unknown error",
+      })
+      .eq("id", requestRecord.id);
+
+    throw error;
+  }
+}
+
+/**
  * Build the prompt for Claude based on user's viewing profile
  */
-function buildRecommendationPrompt(profile: ViewingProfile, watchedTitles: string[]): string {
+function buildRecommendationPrompt(
+  profile: ViewingProfile,
+  watchedTitles: string[],
+  feedback?: {
+    liked: string[];
+    loved: string[];
+    disliked: string[];
+  }
+): string {
   const topGenres = profile.favorite_genres
     .slice(0, 5)
     .map((g) => `${g.genre} (${g.count} titles, avg rating ${g.avg_rating})`)
@@ -512,6 +680,20 @@ function buildRecommendationPrompt(profile: ViewingProfile, watchedTitles: strin
     .map((t) => `"${t.title}" (${t.type}, rated ${t.rating}/10)`)
     .join(", ");
 
+  // Build feedback section for prompt
+  let feedbackSection = "";
+  if (feedback) {
+    if (feedback.loved.length > 0) {
+      feedbackSection += `\nTITLES USER LOVED (prioritize similar content):\n${feedback.loved.slice(0, 15).join(", ")}`;
+    }
+    if (feedback.liked.length > 0) {
+      feedbackSection += `\n\nTITLES USER LIKED (good signal for preferences):\n${feedback.liked.slice(0, 15).join(", ")}`;
+    }
+    if (feedback.disliked.length > 0) {
+      feedbackSection += `\n\nTITLES USER DISLIKED (avoid similar content):\n${feedback.disliked.slice(0, 10).join(", ")}`;
+    }
+  }
+
   const recentlyCompleted = profile.recently_completed
     .slice(0, 5)
     .map((t) => t.title)
@@ -519,7 +701,7 @@ function buildRecommendationPrompt(profile: ViewingProfile, watchedTitles: strin
 
   const watchedSample = watchedTitles.slice(0, 50).join(", ");
 
-  return `You are a TV and movie recommendation expert. Based on the following viewing profile, suggest 25-30 movies and TV shows the user would enjoy.
+  return `You are a TV and movie recommendation expert. Based on the following viewing profile, you MUST suggest EXACTLY 30 movies and TV shows the user would enjoy. Do not suggest fewer than 30.
 
 USER VIEWING PROFILE:
 - Total shows watched: ${profile.total_series}
@@ -530,16 +712,20 @@ USER VIEWING PROFILE:
 - Preferred decades: ${decades || "Mixed"}
 - Highly rated titles: ${topRated || "Not enough data"}
 - Recently completed: ${recentlyCompleted || "None"}
+${feedbackSection}
 
 ALREADY WATCHED (do not recommend these):
 ${watchedSample || "None provided"}
 
 INSTRUCTIONS:
-1. Recommend a mix of movies and TV shows (about 60% TV, 40% movies)
-2. Focus on their favorite genres but include 2-3 discoveries outside their comfort zone
-3. Include both classic and recent releases based on their decade preferences
-4. Prioritize critically acclaimed titles that match their taste profile
-5. DO NOT recommend anything from the "already watched" list
+1. You MUST provide EXACTLY 30 recommendations - no fewer
+2. Recommend a mix of movies and TV shows (about 18 TV shows, 12 movies)
+3. Focus on their favorite genres but include 2-3 discoveries outside their comfort zone
+4. Include both classic and recent releases based on their decade preferences
+5. Prioritize critically acclaimed titles that match their taste profile
+6. DO NOT recommend anything from the "already watched" list
+7. Pay special attention to titles they LOVED - recommend similar content with high confidence
+8. If they disliked certain titles, avoid recommending similar content
 
 Respond in this exact JSON format (no markdown, just raw JSON):
 {

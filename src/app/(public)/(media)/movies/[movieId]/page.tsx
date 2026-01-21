@@ -16,6 +16,7 @@ import {
   IconCalendar,
   IconClock,
 } from "@tabler/icons-react";
+import MediaDetailFeedback from "@/src/components/media-detail-feedback";
 
 interface MoviePageProps {
   params: Promise<{ movieId: string }>;
@@ -178,6 +179,13 @@ export default async function MoviePage({ params }: MoviePageProps) {
                 {/*  />*/}
                 {/*)}*/}
               </div>
+
+              {/* Feedback Section */}
+              <MediaDetailFeedback
+                tmdbId={movie.tmdb_id}
+                mediaType="movie"
+                userId={currentUserId}
+              />
             </div>
           </div>
         </div>

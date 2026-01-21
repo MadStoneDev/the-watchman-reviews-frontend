@@ -20,6 +20,7 @@ export default async function Home() {
 
   // Get user data for logged-in users
   let username = null;
+  let userRole = 0;
   let ownedCollections: MediaCollection[] = [];
   let sharedCollections: MediaCollection[] = [];
 
@@ -27,7 +28,7 @@ export default async function Home() {
     const [profileResult, ownedResult, sharedResult] = await Promise.all([
       supabase
         .from("profiles")
-        .select("username")
+        .select("username, role")
         .eq("id", userId)
         .single(),
       supabase
@@ -49,6 +50,7 @@ export default async function Home() {
     ]);
 
     username = profileResult.data?.username;
+    userRole = profileResult.data?.role || 0;
 
     if (ownedResult.data) {
       ownedCollections = ownedResult.data.map((collection) => ({
@@ -93,6 +95,7 @@ export default async function Home() {
         <RecommendationsSection
           username={username}
           userId={userId}
+          userRole={userRole}
           ownedCollections={ownedCollections}
           sharedCollections={sharedCollections}
         />

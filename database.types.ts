@@ -914,6 +914,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_media_feedback: {
+        Row: {
+          id: string
+          user_id: string
+          tmdb_id: number
+          media_type: string
+          created_at: string | null
+          updated_at: string | null
+          is_seen: boolean | null
+          reaction: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          tmdb_id: number
+          media_type: string
+          created_at?: string | null
+          updated_at?: string | null
+          is_seen?: boolean | null
+          reaction?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          tmdb_id?: number
+          media_type?: string
+          created_at?: string | null
+          updated_at?: string | null
+          is_seen?: boolean | null
+          reaction?: string | null
+        }
+        Relationships: []
+      }
       user_recommendations: {
         Row: {
           id: string
