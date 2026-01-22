@@ -196,12 +196,10 @@ async function ensureSeriesExists(
           release_year: tmdbSeries.first_air_date
             ? new Date(tmdbSeries.first_air_date).getFullYear().toString()
             : "",
-          popularity: tmdbSeries.popularity
-            ? parseInt(tmdbSeries.popularity)
-            : null,
-          tmdb_popularity: tmdbSeries.popularity
-            ? String(tmdbSeries.popularity)
-            : null,
+          first_air_date: tmdbSeries.first_air_date || null,
+          last_air_date: tmdbSeries.last_air_date || null,
+          status: tmdbSeries.status || null,
+          vote_average: tmdbSeries.vote_average || null,
           last_fetched: new Date().toISOString(),
         },
         {
@@ -323,12 +321,10 @@ async function refreshSeriesData(supabase: any, dbId: string, tmdbId: number) {
         release_year: tmdbSeries.first_air_date
           ? new Date(tmdbSeries.first_air_date).getFullYear().toString()
           : "",
-        popularity: tmdbSeries.popularity
-          ? parseInt(tmdbSeries.popularity)
-          : null,
-        tmdb_popularity: tmdbSeries.popularity
-          ? String(tmdbSeries.popularity)
-          : null,
+        first_air_date: tmdbSeries.first_air_date || null,
+        last_air_date: tmdbSeries.last_air_date || null,
+        status: tmdbSeries.status || null,
+        vote_average: tmdbSeries.vote_average || null,
         last_fetched: new Date().toISOString(),
       })
       .eq("id", dbId);

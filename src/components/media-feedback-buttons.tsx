@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
 import {
   IconEye,
   IconThumbUp,
@@ -71,6 +71,15 @@ export default function MediaFeedbackButtons({
   const [isPending, startTransition] = useTransition();
   const [loadingSeen, setLoadingSeen] = useState(false);
   const [loadingReaction, setLoadingReaction] = useState<ReactionType | null>(null);
+
+  // Sync state when initial props change (e.g., when feedback is loaded after mount)
+  useEffect(() => {
+    setIsSeen(initialIsSeen);
+  }, [initialIsSeen]);
+
+  useEffect(() => {
+    setCurrentReaction(initialReaction);
+  }, [initialReaction]);
 
   const iconSizes = {
     sm: 14,

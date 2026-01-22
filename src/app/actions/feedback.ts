@@ -74,28 +74,36 @@ export async function setSeenStatus(
       }
     }
 
-    // Ensure media exists in our database and get the database ID
-    const mediaResult = await ensureMediaExists(tmdbId, mediaType);
-    if (!mediaResult.success || !mediaResult.dbId) {
-      console.error("Failed to ensure media exists:", mediaResult.error);
-      return { success: false, error: "Failed to save media to database" };
+    // Try to ensure media exists in our database (non-blocking - feedback works without it)
+    let mediaId: string | null = null;
+    try {
+      const mediaResult = await ensureMediaExists(tmdbId, mediaType);
+      if (mediaResult.success && mediaResult.dbId) {
+        mediaId = mediaResult.dbId;
+      }
+    } catch (err) {
+      console.warn("Could not ensure media exists, saving feedback without media_id:", err);
+    }
+
+    // Build the upsert data - only include media_id if we have it and the column exists
+    const upsertData: Record<string, unknown> = {
+      user_id: user.id,
+      tmdb_id: tmdbId,
+      media_type: mediaType,
+      is_seen: isSeen,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Only add media_id if we have it (column may not exist if migration not run)
+    if (mediaId) {
+      upsertData.media_id = mediaId;
     }
 
     const { data, error } = await supabase
       .from("user_media_feedback")
-      .upsert(
-        {
-          user_id: user.id,
-          tmdb_id: tmdbId,
-          media_id: mediaResult.dbId,
-          media_type: mediaType,
-          is_seen: isSeen,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id,tmdb_id,media_type",
-        }
-      )
+      .upsert(upsertData, {
+        onConflict: "user_id,tmdb_id,media_type",
+      })
       .select()
       .single();
 
@@ -184,30 +192,37 @@ export async function setReaction(
       return { success: true, feedback: data };
     }
 
-    // Ensure media exists in our database and get the database ID
-    const mediaResult = await ensureMediaExists(tmdbId, mediaType);
-    if (!mediaResult.success || !mediaResult.dbId) {
-      console.error("Failed to ensure media exists:", mediaResult.error);
-      return { success: false, error: "Failed to save media to database" };
+    // Try to ensure media exists in our database (non-blocking - feedback works without it)
+    let mediaId: string | null = null;
+    try {
+      const mediaResult = await ensureMediaExists(tmdbId, mediaType);
+      if (mediaResult.success && mediaResult.dbId) {
+        mediaId = mediaResult.dbId;
+      }
+    } catch (err) {
+      console.warn("Could not ensure media exists, saving feedback without media_id:", err);
+    }
+
+    // Build the upsert data - only include media_id if we have it
+    const upsertData: Record<string, unknown> = {
+      user_id: user.id,
+      tmdb_id: tmdbId,
+      media_type: mediaType,
+      is_seen: true, // If you're reacting, you've seen it
+      reaction: reaction,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (mediaId) {
+      upsertData.media_id = mediaId;
     }
 
     // Setting a reaction - also marks as seen (you can't react without seeing it)
     const { data, error } = await supabase
       .from("user_media_feedback")
-      .upsert(
-        {
-          user_id: user.id,
-          tmdb_id: tmdbId,
-          media_id: mediaResult.dbId,
-          media_type: mediaType,
-          is_seen: true, // If you're reacting, you've seen it
-          reaction: reaction,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id,tmdb_id,media_type",
-        }
-      )
+      .upsert(upsertData, {
+        onConflict: "user_id,tmdb_id,media_type",
+      })
       .select()
       .single();
 
@@ -292,15 +307,10 @@ export async function getMultipleMediaFeedback(
     const movieIds = items.filter((i) => i.mediaType === "movie").map((i) => i.tmdbId);
     const tvIds = items.filter((i) => i.mediaType === "tv").map((i) => i.tmdbId);
 
-    const conditions: string[] = [];
-    if (movieIds.length > 0) {
-      conditions.push(`(media_type.eq.movie,tmdb_id.in.(${movieIds.join(",")}))`);
-    }
-    if (tvIds.length > 0) {
-      conditions.push(`(media_type.eq.tv,tmdb_id.in.(${tvIds.join(",")}))`);
-    }
+    // Combine all tmdb_ids and fetch, then filter by media_type in results
+    const allTmdbIds = [...movieIds, ...tvIds];
 
-    if (conditions.length === 0) {
+    if (allTmdbIds.length === 0) {
       return { success: true, feedbackMap: {} };
     }
 
@@ -308,7 +318,7 @@ export async function getMultipleMediaFeedback(
       .from("user_media_feedback")
       .select("tmdb_id, media_type, is_seen, reaction")
       .eq("user_id", user.id)
-      .or(conditions.join(","));
+      .in("tmdb_id", allTmdbIds);
 
     if (error) {
       console.error("Error getting multiple feedback:", error);
