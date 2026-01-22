@@ -251,12 +251,13 @@ export async function getMediaFeedback(
 
 /**
  * Get multiple feedback entries by TMDB IDs
+ * Returns a plain object (not Map) for proper serialization across server-client boundary
  */
 export async function getMultipleMediaFeedback(
   items: Array<{ tmdbId: number; mediaType: "movie" | "tv" }>
 ): Promise<{
   success: boolean;
-  feedbackMap?: Map<string, { is_seen: boolean; reaction: ReactionType | null }>;
+  feedbackMap?: Record<string, { is_seen: boolean; reaction: ReactionType | null }>;
   error?: string;
 }> {
   try {
@@ -282,7 +283,7 @@ export async function getMultipleMediaFeedback(
     }
 
     if (conditions.length === 0) {
-      return { success: true, feedbackMap: new Map() };
+      return { success: true, feedbackMap: {} };
     }
 
     const { data, error } = await supabase
@@ -296,12 +297,12 @@ export async function getMultipleMediaFeedback(
       return { success: false, error: error.message };
     }
 
-    const feedbackMap = new Map<string, { is_seen: boolean; reaction: ReactionType | null }>();
+    const feedbackMap: Record<string, { is_seen: boolean; reaction: ReactionType | null }> = {};
     data?.forEach((item) => {
-      feedbackMap.set(`${item.media_type}:${item.tmdb_id}`, {
+      feedbackMap[`${item.media_type}:${item.tmdb_id}`] = {
         is_seen: item.is_seen,
         reaction: item.reaction as ReactionType | null,
-      });
+      };
     });
 
     return { success: true, feedbackMap };

@@ -67,8 +67,8 @@ export default function RecommendationsSection({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [feedbackMap, setFeedbackMap] = useState<
-    Map<string, { is_seen: boolean; reaction: ReactionType | null }>
-  >(new Map());
+    Record<string, { is_seen: boolean; reaction: ReactionType | null }>
+  >({});
 
   const isAdmin = userRole >= 10;
 
@@ -437,7 +437,7 @@ export default function RecommendationsSection({
               sharedCollections={sharedCollections}
               onDismiss={() => handleDismiss(rec.id)}
               isPending={isPending}
-              initialFeedback={feedbackMap.get(`${rec.media_type}:${rec.tmdb_id}`)}
+              initialFeedback={feedbackMap[`${rec.media_type}:${rec.tmdb_id}`]}
             />
           ))}
         </div>
