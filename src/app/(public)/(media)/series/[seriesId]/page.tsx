@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/src/utils/supabase/server";
 import SeriesSeasonTabs from "@/src/components/series-season-tabs";
 import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
@@ -20,6 +21,44 @@ import MediaDetailFeedback from "@/src/components/media-detail-feedback";
 
 interface SeriesPageProps {
   params: Promise<{ seriesId: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: SeriesPageProps): Promise<Metadata> {
+  const { seriesId } = await params;
+  const supabase = await createClient();
+
+  const { data: series } = await supabase
+    .from("series")
+    .select("title, overview, poster_path, first_air_date")
+    .eq("id", seriesId)
+    .single();
+
+  if (!series) {
+    return {
+      title: "Series Not Found | JustReel",
+    };
+  }
+
+  const year = series.first_air_date
+    ? new Date(series.first_air_date).getFullYear()
+    : null;
+  const title = year
+    ? `${series.title} (${year}) | JustReel`
+    : `${series.title} | JustReel`;
+
+  return {
+    title,
+    description: series.overview || `Watch and discuss ${series.title} on JustReel.`,
+    openGraph: {
+      title,
+      description: series.overview || `Watch and discuss ${series.title} on JustReel.`,
+      images: series.poster_path
+        ? [`https://image.tmdb.org/t/p/w500${series.poster_path}`]
+        : undefined,
+    },
+  };
 }
 
 export default async function SeriesPage({ params }: SeriesPageProps) {

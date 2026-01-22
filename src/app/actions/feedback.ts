@@ -2,12 +2,14 @@
 
 import { createClient } from "@/src/utils/supabase/server";
 import { checkFeedbackAchievements } from "./achievements";
+import { ensureMediaExists } from "./media";
 
 export type ReactionType = "liked" | "loved" | "disliked";
 
 export interface MediaFeedback {
   id: string;
   tmdb_id: number;
+  media_id: string | null;
   media_type: "movie" | "tv";
   is_seen: boolean;
   reaction: ReactionType | null;
@@ -72,12 +74,20 @@ export async function setSeenStatus(
       }
     }
 
+    // Ensure media exists in our database and get the database ID
+    const mediaResult = await ensureMediaExists(tmdbId, mediaType);
+    if (!mediaResult.success || !mediaResult.dbId) {
+      console.error("Failed to ensure media exists:", mediaResult.error);
+      return { success: false, error: "Failed to save media to database" };
+    }
+
     const { data, error } = await supabase
       .from("user_media_feedback")
       .upsert(
         {
           user_id: user.id,
           tmdb_id: tmdbId,
+          media_id: mediaResult.dbId,
           media_type: mediaType,
           is_seen: isSeen,
           updated_at: new Date().toISOString(),
@@ -174,6 +184,13 @@ export async function setReaction(
       return { success: true, feedback: data };
     }
 
+    // Ensure media exists in our database and get the database ID
+    const mediaResult = await ensureMediaExists(tmdbId, mediaType);
+    if (!mediaResult.success || !mediaResult.dbId) {
+      console.error("Failed to ensure media exists:", mediaResult.error);
+      return { success: false, error: "Failed to save media to database" };
+    }
+
     // Setting a reaction - also marks as seen (you can't react without seeing it)
     const { data, error } = await supabase
       .from("user_media_feedback")
@@ -181,6 +198,7 @@ export async function setReaction(
         {
           user_id: user.id,
           tmdb_id: tmdbId,
+          media_id: mediaResult.dbId,
           media_type: mediaType,
           is_seen: true, // If you're reacting, you've seen it
           reaction: reaction,

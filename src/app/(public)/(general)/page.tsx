@@ -7,9 +7,9 @@ import RecommendationsSection from "@/src/components/recommendations-section";
 import { MediaCollection } from "@/src/lib/types";
 
 export const metadata: Metadata = {
-  title: "JustReel | Guarding Your Screen, Guiding Your Choices",
+  title: "JustReel - The best way to track, collaborate and discuss Movies and TV Shows",
   description:
-    "Guiding families and groups to make informed viewing choices. Get detailed content analysis of movies and TV shows, including themes, language, and values.",
+    "The best way to track, collaborate and discuss Movies and TV Shows. Keep track of what you're watching, discover new content, and share with friends.",
 };
 
 export default async function Home() {

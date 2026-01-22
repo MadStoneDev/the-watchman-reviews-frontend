@@ -112,12 +112,12 @@ export default async function ReelDeckPage({
           .in("id", movieIds)
       : Promise.resolve({ data: [] }),
 
-    // Fetch series - only needed fields
+    // Fetch series - only needed fields (including status for display logic)
     seriesIds.length > 0
       ? supabase
           .from("series")
           .select(
-            "id, title, poster_path, release_year, tmdb_id, first_air_date",
+            "id, title, poster_path, release_year, tmdb_id, first_air_date, status",
           )
           .in("id", seriesIds)
       : Promise.resolve({ data: [] }),
@@ -164,6 +164,7 @@ export default async function ReelDeckPage({
           latestAiredEpisodeDate: stats?.latest_aired_episode_date || null,
           nextUpcomingEpisodeDate: stats?.next_upcoming_episode_date || null,
           hasUpcomingEpisodes: stats?.has_upcoming_episodes || false,
+          seriesStatus: series.status || null, // TMDB status: Returning Series, Ended, etc.
         };
       }
     })

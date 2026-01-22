@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/src/utils/supabase/server";
 import CommentSection from "@/src/components/comment-section";
 import { getComments } from "@/src/app/actions/comments";
@@ -18,6 +19,53 @@ interface EpisodePageProps {
     seasonId: string;
     episodeId: string;
   }>;
+}
+
+export async function generateMetadata({
+  params,
+}: EpisodePageProps): Promise<Metadata> {
+  const { seriesId, seasonId, episodeId } = await params;
+  const supabase = await createClient();
+
+  const [{ data: episode }, { data: season }, { data: series }] = await Promise.all([
+    supabase
+      .from("episodes")
+      .select("title, episode_number, overview, poster_path")
+      .eq("id", episodeId)
+      .single(),
+    supabase
+      .from("seasons")
+      .select("season_number")
+      .eq("id", seasonId)
+      .single(),
+    supabase
+      .from("series")
+      .select("title")
+      .eq("id", seriesId)
+      .single(),
+  ]);
+
+  if (!episode || !series) {
+    return {
+      title: "Episode Not Found | JustReel",
+    };
+  }
+
+  const seasonNum = season?.season_number || 1;
+  const episodeLabel = `S${seasonNum}E${episode.episode_number}`;
+  const title = `${series.title} ${episodeLabel}: ${episode.title} | JustReel`;
+
+  return {
+    title,
+    description: episode.overview || `Watch and discuss ${episode.title} from ${series.title} on JustReel.`,
+    openGraph: {
+      title,
+      description: episode.overview || `Watch and discuss ${episode.title} from ${series.title} on JustReel.`,
+      images: episode.poster_path
+        ? [`https://image.tmdb.org/t/p/w500${episode.poster_path}`]
+        : undefined,
+    },
+  };
 }
 
 export default async function EpisodePage({ params }: EpisodePageProps) {

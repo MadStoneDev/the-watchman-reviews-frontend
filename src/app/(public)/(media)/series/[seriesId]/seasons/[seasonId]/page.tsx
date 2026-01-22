@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/src/utils/supabase/server";
 import SeasonEpisodeTabs from "@/src/components/season-episode-tabs";
 import CommentSection from "@/src/components/comment-section";
@@ -10,6 +11,47 @@ import { IconDeviceTv, IconArrowLeft, IconCalendar } from "@tabler/icons-react";
 
 interface SeasonPageProps {
   params: Promise<{ seriesId: string; seasonId: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: SeasonPageProps): Promise<Metadata> {
+  const { seriesId, seasonId } = await params;
+  const supabase = await createClient();
+
+  const [{ data: season }, { data: series }] = await Promise.all([
+    supabase
+      .from("seasons")
+      .select("title, season_number, overview, poster_path")
+      .eq("id", seasonId)
+      .single(),
+    supabase
+      .from("series")
+      .select("title")
+      .eq("id", seriesId)
+      .single(),
+  ]);
+
+  if (!season || !series) {
+    return {
+      title: "Season Not Found | JustReel",
+    };
+  }
+
+  const seasonName = season.title || `Season ${season.season_number}`;
+  const title = `${series.title}: ${seasonName} | JustReel`;
+
+  return {
+    title,
+    description: season.overview || `Watch and discuss ${seasonName} of ${series.title} on JustReel.`,
+    openGraph: {
+      title,
+      description: season.overview || `Watch and discuss ${seasonName} of ${series.title} on JustReel.`,
+      images: season.poster_path
+        ? [`https://image.tmdb.org/t/p/w500${season.poster_path}`]
+        : undefined,
+    },
+  };
 }
 
 export default async function SeasonPage({ params }: SeasonPageProps) {

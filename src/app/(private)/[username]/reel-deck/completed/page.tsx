@@ -150,6 +150,11 @@ export default async function CompletedPage({
               reelDeckItem: item,
               watchedEpisodes,
               totalEpisodes,
+              watchedAiredEpisodes: watchedEpisodes,
+              airedEpisodesCount: totalEpisodes, // For completed, all episodes are watched
+              hasUpcomingEpisodes: !!nextUpcomingEpisode,
+              nextUpcomingEpisodeDate: nextUpcomingEpisode?.air_date || null,
+              seriesStatus: series.status || null,
             });
           }
         }

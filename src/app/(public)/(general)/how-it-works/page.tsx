@@ -2,9 +2,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Statistics | JustReel",
+  title: "How It Works | JustReel",
   description:
-    "Guiding families and groups to make informed viewing choices. Get detailed content analysis of movies and TV shows, including themes, language, and values.",
+    "Learn how JustReel helps you track, collaborate and discuss Movies and TV Shows with friends and family.",
 };
 
 export default function StatisticsPage() {

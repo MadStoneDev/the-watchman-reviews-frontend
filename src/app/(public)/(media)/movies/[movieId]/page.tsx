@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/src/utils/supabase/server";
 import AddToReelDeckButton from "@/src/components/add-to-reel-deck-button";
 import GenreBadges from "@/src/components/genre-badges";
@@ -20,6 +21,41 @@ import MediaDetailFeedback from "@/src/components/media-detail-feedback";
 
 interface MoviePageProps {
   params: Promise<{ movieId: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: MoviePageProps): Promise<Metadata> {
+  const { movieId } = await params;
+  const supabase = await createClient();
+
+  const { data: movie } = await supabase
+    .from("movies")
+    .select("title, overview, poster_path, release_year")
+    .eq("id", movieId)
+    .single();
+
+  if (!movie) {
+    return {
+      title: "Movie Not Found | JustReel",
+    };
+  }
+
+  const title = movie.release_year
+    ? `${movie.title} (${movie.release_year}) | JustReel`
+    : `${movie.title} | JustReel`;
+
+  return {
+    title,
+    description: movie.overview || `Watch and discuss ${movie.title} on JustReel.`,
+    openGraph: {
+      title,
+      description: movie.overview || `Watch and discuss ${movie.title} on JustReel.`,
+      images: movie.poster_path
+        ? [`https://image.tmdb.org/t/p/w500${movie.poster_path}`]
+        : undefined,
+    },
+  };
 }
 
 export default async function MoviePage({ params }: MoviePageProps) {

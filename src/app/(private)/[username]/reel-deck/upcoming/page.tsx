@@ -131,7 +131,11 @@ export default async function UpcomingPage({
             reelDeckItem: item,
             watchedEpisodes,
             totalEpisodes,
+            watchedAiredEpisodes: watchedEpisodes,
+            airedEpisodesCount: airedCount,
+            hasUpcomingEpisodes: true,
             nextUpcomingEpisodeDate: nextUpcomingEpisode.air_date,
+            seriesStatus: series.status || null,
           });
         }
       }

@@ -12,6 +12,8 @@ import {
   IconClock,
   IconCalendar,
   IconProgress,
+  IconChecks,
+  IconHourglass,
 } from "@tabler/icons-react";
 
 interface ReelDeckItem {
@@ -33,6 +35,11 @@ interface MediaWithReelDeck {
   reelDeckItem: ReelDeckItem;
   watchedEpisodes?: number;
   totalEpisodes?: number;
+  watchedAiredEpisodes?: number;
+  airedEpisodesCount?: number;
+  hasUpcomingEpisodes?: boolean;
+  nextUpcomingEpisodeDate?: string | null;
+  seriesStatus?: string | null; // TMDB status: Returning Series, Ended, Canceled, etc.
 }
 
 interface ReelDeckGridProps {
@@ -41,13 +48,29 @@ interface ReelDeckGridProps {
   userId: string;
 }
 
+// Display status types for computed statuses
+type DisplayStatus = "watching" | "up_to_date" | "completed" | "waiting" | "paused";
+
 // OPTIMIZATION 1: Move constants outside component to prevent recreation
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<DisplayStatus, {
+  label: string;
+  icon: typeof IconPlayerPlay;
+  color: string;
+  bgColor: string;
+  textColor: string;
+}> = {
   watching: {
     label: "Watching",
     icon: IconPlayerPlay,
     color: "text-blue-400",
     bgColor: "bg-blue-500",
+    textColor: "text-white",
+  },
+  up_to_date: {
+    label: "Up to Date",
+    icon: IconChecks,
+    color: "text-teal-400",
+    bgColor: "bg-teal-500",
     textColor: "text-white",
   },
   completed: {
@@ -57,6 +80,13 @@ const STATUS_CONFIG = {
     bgColor: "bg-lime-500",
     textColor: "text-neutral-900",
   },
+  waiting: {
+    label: "Waiting",
+    icon: IconHourglass,
+    color: "text-purple-400",
+    bgColor: "bg-purple-500",
+    textColor: "text-white",
+  },
   paused: {
     label: "On Hold",
     icon: IconPlayerPause,
@@ -64,19 +94,86 @@ const STATUS_CONFIG = {
     bgColor: "bg-orange-500",
     textColor: "text-white",
   },
-  plan_to_watch: {
-    label: "Plan to Watch",
-    icon: IconClock,
-    color: "text-neutral-400",
-    bgColor: "bg-neutral-600",
-    textColor: "text-white",
-  },
-} as const;
+};
 
 const MEDIA_TYPES = {
   MOVIE: "movie",
   TV: "tv",
 } as const;
+
+/**
+ * Computes the display status based on episode progress and series airing status
+ *
+ * Logic:
+ * - Paused: User manually set status to "paused" (takes priority)
+ * - Watching: Has unwatched aired episodes
+ * - Up to Date: Caught up on all aired episodes + series is still airing (Returning Series/In Production)
+ * - Completed: Watched all episodes + series has ended (Ended/Canceled) OR user marked as completed
+ * - Waiting: Caught up + has upcoming episodes with known air dates
+ */
+function computeDisplayStatus(item: MediaWithReelDeck): DisplayStatus {
+  const isMovie = item.reelDeckItem.media_type === MEDIA_TYPES.MOVIE;
+  const userStatus = item.reelDeckItem.status;
+
+  // User manually paused - takes priority
+  if (userStatus === "paused") {
+    return "paused";
+  }
+
+  // Movies: simple logic
+  if (isMovie) {
+    return userStatus === "completed" ? "completed" : "watching";
+  }
+
+  // TV Shows: compute based on episode progress and series status
+  const watchedAired = item.watchedAiredEpisodes || 0;
+  const airedCount = item.airedEpisodesCount || 0;
+  const totalEpisodes = item.totalEpisodes || 0;
+  const watchedEpisodes = item.watchedEpisodes || 0;
+  const hasUpcoming = item.hasUpcomingEpisodes || false;
+  const seriesStatus = item.seriesStatus;
+
+  // Check if caught up on aired episodes
+  const isCaughtUpOnAired = airedCount > 0 && watchedAired >= airedCount;
+
+  // Check if series has ended
+  const seriesEnded = seriesStatus === "Ended" || seriesStatus === "Canceled";
+
+  // Check if series is still airing
+  const seriesAiring = seriesStatus === "Returning Series" || seriesStatus === "In Production";
+
+  // User manually marked as completed OR (watched all + series ended + no upcoming)
+  if (
+    userStatus === "completed" ||
+    (watchedEpisodes >= totalEpisodes && totalEpisodes > 0 && seriesEnded && !hasUpcoming)
+  ) {
+    return "completed";
+  }
+
+  // Caught up on aired episodes
+  if (isCaughtUpOnAired) {
+    // Has upcoming episodes with dates - waiting for next episode
+    if (hasUpcoming && item.nextUpcomingEpisodeDate) {
+      return "waiting";
+    }
+
+    // Series still airing but no upcoming dates yet - up to date
+    if (seriesAiring) {
+      return "up_to_date";
+    }
+
+    // Series ended and caught up - completed
+    if (seriesEnded) {
+      return "completed";
+    }
+
+    // Default for caught up: up to date
+    return "up_to_date";
+  }
+
+  // Has unwatched aired episodes - watching
+  return "watching";
+}
 
 // OPTIMIZATION 2: Extract utility functions outside component
 function formatDate(dateString: string | null): string | null {
@@ -108,9 +205,9 @@ function calculateProgress(watched: number, total: number): number {
 // OPTIMIZATION 3: Memoize individual grid items to prevent unnecessary re-renders
 const ReelDeckCard = React.memo(
   ({ item, username }: { item: MediaWithReelDeck; username: string }) => {
-    const statusConfig =
-      STATUS_CONFIG[item.reelDeckItem.status as keyof typeof STATUS_CONFIG] ||
-      STATUS_CONFIG.watching;
+    // Compute the display status based on episode progress and series status
+    const displayStatus = useMemo(() => computeDisplayStatus(item), [item]);
+    const statusConfig = STATUS_CONFIG[displayStatus];
     const StatusIcon = statusConfig.icon;
     const isMovie = item.reelDeckItem.media_type === MEDIA_TYPES.MOVIE;
     const isSeries = item.reelDeckItem.media_type === MEDIA_TYPES.TV;
@@ -239,6 +336,10 @@ const ReelDeckCard = React.memo(
       prevProps.item.reelDeckItem.last_watched_at ===
         nextProps.item.reelDeckItem.last_watched_at &&
       prevProps.item.watchedEpisodes === nextProps.item.watchedEpisodes &&
+      prevProps.item.watchedAiredEpisodes === nextProps.item.watchedAiredEpisodes &&
+      prevProps.item.airedEpisodesCount === nextProps.item.airedEpisodesCount &&
+      prevProps.item.hasUpcomingEpisodes === nextProps.item.hasUpcomingEpisodes &&
+      prevProps.item.seriesStatus === nextProps.item.seriesStatus &&
       prevProps.username === nextProps.username
     );
   },
