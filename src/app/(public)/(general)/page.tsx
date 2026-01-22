@@ -3,8 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { createClient } from "@/src/utils/supabase/server";
-import RecommendationsSection from "@/src/components/recommendations-section";
-import { MediaCollection } from "@/src/lib/types";
 
 export const metadata: Metadata = {
   title: "JustReel - The best way to track, collaborate and discuss Movies and TV Shows",
@@ -16,65 +14,6 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: user } = await supabase.auth.getClaims();
   const isLoggedIn = !!user?.claims?.sub;
-  const userId = user?.claims?.sub;
-
-  // Get user data for logged-in users
-  let username = null;
-  let userRole = 0;
-  let ownedCollections: MediaCollection[] = [];
-  let sharedCollections: MediaCollection[] = [];
-
-  if (isLoggedIn && userId) {
-    const [profileResult, ownedResult, sharedResult] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("username, role")
-        .eq("id", userId)
-        .single(),
-      supabase
-        .from("collections")
-        .select("*")
-        .eq("owner", userId),
-      supabase
-        .from("shared_collection")
-        .select(`
-          collection_id,
-          collections:collection_id (
-            id,
-            title,
-            owner,
-            is_public
-          )
-        `)
-        .eq("user_id", userId),
-    ]);
-
-    username = profileResult.data?.username;
-    userRole = profileResult.data?.role || 0;
-
-    if (ownedResult.data) {
-      ownedCollections = ownedResult.data.map((collection) => ({
-        id: collection.id,
-        title: collection.title || "Untitled Collection",
-        owner: collection.owner,
-        is_public: collection.is_public,
-        shared: false,
-      }));
-    }
-
-    if (sharedResult.data) {
-      sharedCollections = sharedResult.data
-        .map((item: any) => item.collections)
-        .filter(Boolean)
-        .map((collection: any) => ({
-          id: collection.id,
-          title: collection.title || "Untitled Shared Collection",
-          owner: collection.owner,
-          is_public: collection.is_public,
-          shared: true,
-        }));
-    }
-  }
 
   return (
     <>
@@ -90,30 +29,22 @@ export default async function Home() {
         </p>
       </section>
 
-      {/* Recommendations Section - Only for logged-in users */}
-      {isLoggedIn && username ? (
-        <RecommendationsSection
-          username={username}
-          userId={userId}
-          userRole={userRole}
-          ownedCollections={ownedCollections}
-          sharedCollections={sharedCollections}
-        />
-      ) : (
+      {/* CTA for non-logged-in users */}
+      {!isLoggedIn && (
         <section className="mb-12">
           <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-8 text-center">
             <h2 className="text-xl font-bold mb-3">
-              Get Personalized Recommendations
+              Start Tracking Your Shows
             </h2>
             <p className="text-neutral-400 mb-6 max-w-md mx-auto">
-              Sign in to get AI-powered movie and TV show recommendations based
-              on your unique watching patterns.
+              Sign in to track what you're watching, get AI-powered recommendations,
+              and connect with fellow movie and TV enthusiasts.
             </p>
             <Link
               href="/auth/portal"
-              className="inline-block px-6 py-3 bg-amber-500 hover:bg-amber-400 text-neutral-900 font-semibold rounded-lg transition-colors"
+              className="inline-block px-6 py-3 bg-lime-400 hover:bg-lime-300 text-neutral-900 font-semibold rounded-lg transition-colors"
             >
-              Sign In to Get Started
+              Get Started
             </Link>
           </div>
         </section>

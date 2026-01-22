@@ -10,6 +10,8 @@ import EditableUsername from "@/src/components/editable-username";
 import FollowButton from "@/src/components/follow-button";
 import FollowCountsDisplay from "@/src/components/follow-counts";
 import AchievementsLink from "@/src/components/achievements-link";
+import RecommendationsSection from "@/src/components/recommendations-section";
+import { MediaCollection } from "@/src/lib/types";
 
 export default async function PrivatePage({
   params,
@@ -77,6 +79,54 @@ export default async function PrivatePage({
     total: 0,
   };
 
+  // Get collections for recommendations (only for own profile)
+  let ownedCollections: MediaCollection[] = [];
+  let sharedCollections: MediaCollection[] = [];
+
+  if (isOwnProfile) {
+    const [ownedResult, sharedResult] = await Promise.all([
+      supabase
+        .from("collections")
+        .select("*")
+        .eq("owner", user.claims.sub),
+      supabase
+        .from("shared_collection")
+        .select(`
+          collection_id,
+          collections:collection_id (
+            id,
+            title,
+            owner,
+            is_public
+          )
+        `)
+        .eq("user_id", user.claims.sub),
+    ]);
+
+    if (ownedResult.data) {
+      ownedCollections = ownedResult.data.map((collection) => ({
+        id: collection.id,
+        title: collection.title || "Untitled Collection",
+        owner: collection.owner,
+        is_public: collection.is_public,
+        shared: false,
+      }));
+    }
+
+    if (sharedResult.data) {
+      sharedCollections = sharedResult.data
+        .map((item: any) => item.collections)
+        .filter(Boolean)
+        .map((collection: any) => ({
+          id: collection.id,
+          title: collection.title || "Untitled Shared Collection",
+          owner: collection.owner,
+          is_public: collection.is_public,
+          shared: true,
+        }));
+    }
+  }
+
   return (
     <>
       <BrowseNavigation
@@ -132,6 +182,17 @@ export default async function PrivatePage({
           </div>
         </div>
       </section>
+
+      {/* Recommendations Section - Only for own profile */}
+      {isOwnProfile && (
+        <RecommendationsSection
+          username={profileData.username}
+          userId={user.claims.sub}
+          userRole={profileData.role || 0}
+          ownedCollections={ownedCollections}
+          sharedCollections={sharedCollections}
+        />
+      )}
     </>
   );
 }
