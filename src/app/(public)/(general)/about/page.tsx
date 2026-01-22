@@ -230,6 +230,45 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Data Attribution */}
+      <section className="mb-12">
+        <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6 md:p-8">
+          <h2 className="text-xl font-bold mb-4">Powered by TMDB</h2>
+          <div className="flex items-start gap-4">
+            <div className="shrink-0">
+              <a
+                href="https://www.themoviedb.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <img
+                  src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
+                  alt="TMDB Logo"
+                  className="h-6 opacity-80 hover:opacity-100 transition-opacity"
+                />
+              </a>
+            </div>
+            <p className="text-neutral-400 text-sm leading-relaxed">
+              JustReel uses the{" "}
+              <a
+                href="https://www.themoviedb.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                TMDB API
+              </a>{" "}
+              for movie and TV show information, including titles, descriptions,
+              posters, and cast details. We&apos;re grateful to TMDB and its
+              community for maintaining such a comprehensive database. This
+              product uses the TMDB API but is not endorsed or certified by
+              TMDB.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Data & Privacy */}
       <section className="mb-12">
         <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6 md:p-8">
@@ -289,7 +328,9 @@ export default function AboutPage() {
 
       {/* Footer Links */}
       <section className="mb-8">
-        <div className="flex flex-wrap gap-4 text-sm text-neutral-500">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-neutral-500">
+          <span>Made in Australia</span>
+          <span className="text-neutral-700">•</span>
           <span>Questions?</span>
           <a
             href="mailto:hello@justreel.app"

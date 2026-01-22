@@ -243,10 +243,20 @@ export default function TermsOfUsePage() {
             </h2>
             <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6 space-y-4">
               <p className="text-neutral-400 text-sm leading-relaxed">
-                JustReel displays movie and TV show information sourced from
-                third-party providers, including The Movie Database (TMDB). This
-                content is provided &quot;as is&quot; and we make no guarantees about its
-                accuracy or completeness.
+                JustReel displays movie and TV show information sourced from{" "}
+                <a
+                  href="https://www.themoviedb.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-lime-400 hover:text-lime-300 transition-colors"
+                >
+                  The Movie Database (TMDB)
+                </a>
+                . This includes titles, descriptions, posters, cast information,
+                and other metadata. This content is provided &quot;as is&quot; and we
+                make no guarantees about its accuracy or completeness. This
+                product uses the TMDB API but is not endorsed or certified by
+                TMDB.
               </p>
               <p className="text-neutral-400 text-sm leading-relaxed">
                 JustReel is not affiliated with any movie studio, streaming

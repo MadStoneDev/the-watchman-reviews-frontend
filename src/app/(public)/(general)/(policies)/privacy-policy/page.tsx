@@ -49,8 +49,7 @@ export default function PrivacyPolicyPage() {
                 <p className="text-neutral-400 text-sm leading-relaxed">
                   When you create an account, we collect your email address,
                   username, and any profile information you choose to provide
-                  (such as profile picture and bio). We use secure
-                  authentication provided by Supabase.
+                  (such as profile picture and bio).
                 </p>
               </div>
               <div>
@@ -154,11 +153,21 @@ export default function PrivacyPolicyPage() {
                   <span className="text-amber-400 mt-1">•</span>
                   <span>
                     <strong className="text-neutral-200">
-                      Service Providers:
+                      Content Data:
                     </strong>{" "}
-                    We use Supabase for authentication and database services,
-                    Vercel for hosting, and The Movie Database (TMDB) for movie
-                    and TV show information.
+                    Movie and TV show information displayed on JustReel is
+                    sourced from{" "}
+                    <a
+                      href="https://www.themoviedb.org"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-400 hover:text-amber-300 transition-colors"
+                    >
+                      The Movie Database (TMDB)
+                    </a>
+                    . This includes titles, descriptions, posters, cast
+                    information, and release dates. This product uses the TMDB
+                    API but is not endorsed or certified by TMDB.
                   </span>
                 </li>
                 <li className="flex items-start gap-3">
@@ -235,10 +244,10 @@ export default function PrivacyPolicyPage() {
                 We implement appropriate technical and organizational measures
                 to protect your personal information against unauthorized
                 access, alteration, disclosure, or destruction. Our platform
-                uses HTTPS encryption, secure authentication through Supabase,
-                and follows industry best practices for data protection.
-                However, no method of transmission over the Internet is 100%
-                secure, and we cannot guarantee absolute security.
+                uses HTTPS encryption, secure authentication, and follows
+                industry best practices for data protection. However, no method
+                of transmission over the Internet is 100% secure, and we cannot
+                guarantee absolute security.
               </p>
             </div>
           </div>
@@ -328,10 +337,10 @@ export default function PrivacyPolicyPage() {
               </span>
               Contact Us
             </h2>
-            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6">
+            <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-6 space-y-3">
               <p className="text-neutral-400 text-sm leading-relaxed">
-                If you have any questions about this Privacy Policy or our data
-                practices, please contact us at{" "}
+                JustReel is based in Australia. If you have any questions about
+                this Privacy Policy or our data practices, please contact us at{" "}
                 <a
                   href="mailto:privacy@justreel.app"
                   className="text-amber-400 hover:text-amber-300 transition-colors"
