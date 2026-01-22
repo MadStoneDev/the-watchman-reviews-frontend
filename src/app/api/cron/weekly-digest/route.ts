@@ -4,10 +4,9 @@ import {
   sendWeeklyDigestEmail,
 } from "@/src/app/actions/email-notifications";
 
-// Batch size for sending emails to avoid overwhelming the email service
-const BATCH_SIZE = 10;
-// Delay between batches in milliseconds
-const BATCH_DELAY_MS = 1000;
+// Resend free tier: max 2 requests per second
+// Send emails one at a time with delay to stay under limit
+const DELAY_BETWEEN_EMAILS_MS = 600; // 600ms = ~1.6 emails/sec, safely under 2/sec
 
 /**
  * Helper to delay execution
@@ -44,35 +43,26 @@ export async function GET(request: NextRequest) {
     let sent = 0;
     let failed = 0;
 
-    // Process users in batches
-    for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
-      const batch = userIds.slice(i, i + BATCH_SIZE);
+    // Process users sequentially with delay to respect Resend rate limits
+    for (let i = 0; i < userIds.length; i++) {
+      const userId = userIds[i];
 
-      // Send emails for this batch in parallel
-      const results = await Promise.all(
-        batch.map(async (userId) => {
-          try {
-            const result = await sendWeeklyDigestEmail(userId);
-            return result.success;
-          } catch (error) {
-            console.error(`[WeeklyDigest] Error sending to user ${userId}:`, error);
-            return false;
-          }
-        })
-      );
-
-      // Count successes and failures
-      results.forEach((success) => {
-        if (success) {
+      try {
+        const result = await sendWeeklyDigestEmail(userId);
+        if (result.success) {
           sent++;
         } else {
           failed++;
+          console.error(`[WeeklyDigest] Failed for user ${userId}:`, result.error);
         }
-      });
+      } catch (error) {
+        console.error(`[WeeklyDigest] Error sending to user ${userId}:`, error);
+        failed++;
+      }
 
-      // Delay between batches to avoid rate limiting
-      if (i + BATCH_SIZE < userIds.length) {
-        await delay(BATCH_DELAY_MS);
+      // Delay between emails to stay under rate limit (except after last email)
+      if (i < userIds.length - 1) {
+        await delay(DELAY_BETWEEN_EMAILS_MS);
       }
     }
 
