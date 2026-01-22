@@ -40,6 +40,11 @@ export default function SettingsContent({
   // Parse settings from JSONB
   const initialSettings = {
     email_notifications: true,
+    email_new_followers: true,
+    email_new_mutuals: true,
+    email_messages: true,
+    email_achievements: true,
+    email_weekly_digest: true,
     show_watching_deck: true,
     default_collection_privacy: "private",
     show_collections_to: "everyone" as VisibilityLevel,
@@ -495,35 +500,175 @@ export default function SettingsContent({
       <section className="bg-neutral-900 rounded-lg p-6 border border-neutral-800">
         <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
           <IconBell size={24} />
-          Notifications
+          Email Notifications
         </h2>
 
-        <div>
+        <p className="text-sm text-neutral-500 mb-6">
+          Choose which email notifications you'd like to receive.
+        </p>
+
+        {/* New Followers */}
+        <div className="mb-4 pb-4 border-b border-neutral-800">
           <label className="flex items-center justify-between cursor-pointer">
             <div>
               <p className="text-sm font-medium text-neutral-200">
-                Email Notifications
+                New Followers
               </p>
               <p className="text-sm text-neutral-500 mt-1">
-                Receive emails for collection invites, watch updates, comments
-                on followed shows, and new episode releases
+                Get notified when someone follows you
               </p>
             </div>
             <button
               onClick={() =>
                 updateSettings({
                   ...settings,
-                  email_notifications: !settings.email_notifications,
+                  email_new_followers: !settings.email_new_followers,
                 })
               }
               disabled={isSaving}
               className={`relative inline-flex h-6 min-w-11 items-center rounded-full transition-colors ${
-                settings.email_notifications ? "bg-lime-400" : "bg-neutral-700"
+                settings.email_new_followers ? "bg-lime-400" : "bg-neutral-700"
               } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  settings.email_notifications
+                  settings.email_new_followers
+                    ? "translate-x-6"
+                    : "translate-x-1"
+                }`}
+              />
+            </button>
+          </label>
+        </div>
+
+        {/* New Mutuals */}
+        <div className="mb-4 pb-4 border-b border-neutral-800">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm font-medium text-neutral-200">
+                New Mutuals
+              </p>
+              <p className="text-sm text-neutral-500 mt-1">
+                Get notified when someone you follow follows you back
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                updateSettings({
+                  ...settings,
+                  email_new_mutuals: !settings.email_new_mutuals,
+                })
+              }
+              disabled={isSaving}
+              className={`relative inline-flex h-6 min-w-11 items-center rounded-full transition-colors ${
+                settings.email_new_mutuals ? "bg-lime-400" : "bg-neutral-700"
+              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.email_new_mutuals
+                    ? "translate-x-6"
+                    : "translate-x-1"
+                }`}
+              />
+            </button>
+          </label>
+        </div>
+
+        {/* Messages */}
+        <div className="mb-4 pb-4 border-b border-neutral-800">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm font-medium text-neutral-200">
+                Messages
+              </p>
+              <p className="text-sm text-neutral-500 mt-1">
+                Get notified when you receive a new message (max 1 per hour)
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                updateSettings({
+                  ...settings,
+                  email_messages: !settings.email_messages,
+                })
+              }
+              disabled={isSaving}
+              className={`relative inline-flex h-6 min-w-11 items-center rounded-full transition-colors ${
+                settings.email_messages ? "bg-lime-400" : "bg-neutral-700"
+              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.email_messages
+                    ? "translate-x-6"
+                    : "translate-x-1"
+                }`}
+              />
+            </button>
+          </label>
+        </div>
+
+        {/* Achievements */}
+        <div className="mb-4 pb-4 border-b border-neutral-800">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm font-medium text-neutral-200">
+                Achievements
+              </p>
+              <p className="text-sm text-neutral-500 mt-1">
+                Get notified when you unlock a new achievement
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                updateSettings({
+                  ...settings,
+                  email_achievements: !settings.email_achievements,
+                })
+              }
+              disabled={isSaving}
+              className={`relative inline-flex h-6 min-w-11 items-center rounded-full transition-colors ${
+                settings.email_achievements ? "bg-lime-400" : "bg-neutral-700"
+              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.email_achievements
+                    ? "translate-x-6"
+                    : "translate-x-1"
+                }`}
+              />
+            </button>
+          </label>
+        </div>
+
+        {/* Weekly Digest */}
+        <div>
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-sm font-medium text-neutral-200">
+                Weekly Digest
+              </p>
+              <p className="text-sm text-neutral-500 mt-1">
+                Receive a weekly summary of trending content and your stats every Friday afternoon
+              </p>
+            </div>
+            <button
+              onClick={() =>
+                updateSettings({
+                  ...settings,
+                  email_weekly_digest: !settings.email_weekly_digest,
+                })
+              }
+              disabled={isSaving}
+              className={`relative inline-flex h-6 min-w-11 items-center rounded-full transition-colors ${
+                settings.email_weekly_digest ? "bg-lime-400" : "bg-neutral-700"
+              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.email_weekly_digest
                     ? "translate-x-6"
                     : "translate-x-1"
                 }`}

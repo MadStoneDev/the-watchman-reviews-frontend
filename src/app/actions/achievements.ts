@@ -3,6 +3,7 @@
 import { createClient } from "@/src/utils/supabase/server";
 import { createNotification } from "./notifications";
 import { createActivityForUser } from "./activity-feed";
+import { sendAchievementEmailNotification } from "./email-notifications";
 
 // Cache of already-checked achievements per user session to avoid redundant DB calls
 const checkedAchievements = new Map<string, Set<string>>();
@@ -257,6 +258,9 @@ export async function awardAchievement(
         achievement_tier: definition.tier,
       }
     ).catch(console.error);
+
+    // Send email notification (don't await)
+    sendAchievementEmailNotification(userId, achievementId).catch(console.error);
 
     return { success: true };
   } catch (error) {

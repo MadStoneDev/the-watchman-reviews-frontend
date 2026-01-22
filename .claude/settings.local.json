@@ -12,7 +12,9 @@
       "Bash(npm run build:*)",
       "Bash(npm run lint)",
       "Bash(npm install:*)",
-      "Bash(/c/Program Files/nodejs/npx.cmd tsc --noEmit)"
+      "Bash(/c/Program Files/nodejs/npx.cmd tsc --noEmit)",
+      "Bash(npx next lint:*)",
+      "Bash(openssl rand:*)"
     ]
   }
 }

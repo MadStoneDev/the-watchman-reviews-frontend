@@ -2,6 +2,7 @@
 
 import { createClient } from "@/src/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendMessageEmailNotification } from "./email-notifications";
 
 export interface ConversationParticipant {
   id: string;
@@ -523,6 +524,23 @@ export async function sendMessage(
 
     revalidatePath("/messages");
     revalidatePath(`/messages/${conversationId}`);
+
+    // Send email notification to the other participant(s)
+    const { data: participants } = await supabase
+      .from("conversation_participants")
+      .select("user_id")
+      .eq("conversation_id", conversationId)
+      .neq("user_id", user.id);
+
+    if (participants) {
+      for (const participant of participants) {
+        sendMessageEmailNotification(
+          participant.user_id,
+          user.id,
+          trimmedContent
+        ).catch(console.error);
+      }
+    }
 
     return { success: true, message: messageWithSender };
   } catch (error) {

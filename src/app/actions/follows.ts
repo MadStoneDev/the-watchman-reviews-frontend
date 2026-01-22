@@ -4,6 +4,10 @@ import { createClient } from "@/src/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { FollowStatus, FollowCounts, UserListProfile } from "@/src/lib/types";
 import { checkFollowAchievements, checkFollowingAchievements } from "./achievements";
+import {
+  sendFollowerEmailNotification,
+  sendMutualEmailNotification,
+} from "./email-notifications";
 
 /**
  * Follow a user
@@ -66,6 +70,23 @@ export async function followUser(
     checkFollowingAchievements(user.id).catch(console.error);
     // The user being followed gets "first_follower" etc.
     checkFollowAchievements(targetUserId).catch(console.error);
+
+    // Send email notification to the person being followed
+    sendFollowerEmailNotification(targetUserId, user.id).catch(console.error);
+
+    // Check if this creates a mutual follow (target already follows the current user)
+    const { data: reverseFollow } = await supabase
+      .from("user_follows")
+      .select("id")
+      .eq("follower_id", targetUserId)
+      .eq("following_id", user.id)
+      .single();
+
+    if (reverseFollow) {
+      // Now mutuals! Send email to both users
+      sendMutualEmailNotification(user.id, targetUserId).catch(console.error);
+      sendMutualEmailNotification(targetUserId, user.id).catch(console.error);
+    }
 
     return { success: true };
   } catch (error) {
