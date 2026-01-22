@@ -20,6 +20,7 @@ import {
   IconMessage,
   IconHeart,
   IconCoffee,
+  IconLoader2,
 } from "@tabler/icons-react";
 import type { VisibilityLevel } from "@/src/lib/types";
 import DeleteAccountModal from "./delete-account-modal";
@@ -63,6 +64,7 @@ export default function SettingsContent({
   const [isUploading, setIsUploading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const updateSettings = async (newSettings: any) => {
     setIsSaving(true);
@@ -152,29 +154,155 @@ export default function SettingsContent({
   };
 
   const handleExportData = async () => {
+    setIsExporting(true);
     try {
-      // Fetch all user data
+      // Fetch collections with their media items
       const { data: collections } = await supabase
         .from("collections")
-        .select("*")
+        .select("id, title, is_public, created_at")
         .eq("owner", userId);
 
-      const { data: sharedCollections } = await supabase
-        .from("shared_collection")
-        .select("*")
+      // Fetch media items for each collection
+      const collectionsWithMedia = await Promise.all(
+        (collections || []).map(async (collection) => {
+          const { data: mediaItems } = await supabase
+            .from("medias_collections")
+            .select("media_id, media_type")
+            .eq("collection_id", collection.id);
+
+          // Get titles for each media item
+          const itemsWithTitles = await Promise.all(
+            (mediaItems || []).map(async (item) => {
+              if (item.media_type === "movie") {
+                const { data: movie } = await supabase
+                  .from("movies")
+                  .select("title, release_year")
+                  .eq("id", item.media_id)
+                  .single();
+                return {
+                  type: "movie",
+                  title: movie?.title || "Unknown",
+                  year: movie?.release_year || null,
+                };
+              } else {
+                const { data: series } = await supabase
+                  .from("series")
+                  .select("title, release_year")
+                  .eq("id", item.media_id)
+                  .single();
+                return {
+                  type: "series",
+                  title: series?.title || "Unknown",
+                  year: series?.release_year || null,
+                };
+              }
+            })
+          );
+
+          return {
+            name: collection.title,
+            isPublic: collection.is_public,
+            createdAt: collection.created_at,
+            items: itemsWithTitles,
+          };
+        })
+      );
+
+      // Fetch Reel Deck (currently watching/tracking)
+      const { data: reelDeckItems } = await supabase
+        .from("reel_deck")
+        .select("media_id, media_type, status, added_at")
         .eq("user_id", userId);
 
-      const { data: watches } = await supabase
-        .from("media_watches")
-        .select("*")
-        .eq("user_id", userId);
+      const reelDeckWithTitles = await Promise.all(
+        (reelDeckItems || []).map(async (item) => {
+          if (item.media_type === "movie") {
+            const { data: movie } = await supabase
+              .from("movies")
+              .select("title, release_year")
+              .eq("id", item.media_id)
+              .single();
+            return {
+              type: "movie",
+              title: movie?.title || "Unknown",
+              year: movie?.release_year || null,
+              status: item.status,
+              addedAt: item.added_at,
+            };
+          } else {
+            const { data: series } = await supabase
+              .from("series")
+              .select("title, release_year")
+              .eq("id", item.media_id)
+              .single();
+            return {
+              type: "series",
+              title: series?.title || "Unknown",
+              year: series?.release_year || null,
+              status: item.status,
+              addedAt: item.added_at,
+            };
+          }
+        })
+      );
+
+      // Fetch episode watch progress grouped by series
+      const { data: episodeWatches } = await supabase
+        .from("episode_watches")
+        .select("episode_id, series_id, watched_at")
+        .eq("user_id", userId)
+        .order("watched_at", { ascending: false });
+
+      // Group by series and get details
+      const seriesMap = new Map<string, any>();
+      for (const watch of episodeWatches || []) {
+        if (!seriesMap.has(watch.series_id)) {
+          const { data: series } = await supabase
+            .from("series")
+            .select("title")
+            .eq("id", watch.series_id)
+            .single();
+          seriesMap.set(watch.series_id, {
+            title: series?.title || "Unknown Series",
+            episodes: [],
+          });
+        }
+
+        const { data: episode } = await supabase
+          .from("episodes")
+          .select("title, episode_number, season_number")
+          .eq("id", watch.episode_id)
+          .single();
+
+        seriesMap.get(watch.series_id).episodes.push({
+          season: episode?.season_number || 0,
+          episode: episode?.episode_number || 0,
+          title: episode?.title || "Unknown Episode",
+          watchedAt: watch.watched_at,
+        });
+      }
+
+      // Convert map to array and sort episodes
+      const tvProgress = Array.from(seriesMap.entries()).map(
+        ([_, data]) => ({
+          series: data.title,
+          episodesWatched: data.episodes.length,
+          episodes: data.episodes.sort((a: any, b: any) => {
+            if (a.season !== b.season) return a.season - b.season;
+            return a.episode - b.episode;
+          }),
+        })
+      );
 
       const exportData = {
-        profile: profileData,
-        collections,
-        sharedCollections,
-        watches,
         exportedAt: new Date().toISOString(),
+        profile: {
+          username: profileData.username,
+          memberSince: profileData.created_at,
+        },
+        collections: collectionsWithMedia,
+        reelDeck: reelDeckWithTitles,
+        tvShowProgress: tvProgress,
       };
 
       // Create and download JSON file
@@ -183,12 +311,14 @@ export default function SettingsContent({
       const url = URL.createObjectURL(dataBlob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `watchcollections-data-${Date.now()}.json`;
+      link.download = `watchman-export-${profileData.username}-${new Date().toISOString().split("T")[0]}.json`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error exporting data:", error);
       alert("Failed to export data");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -711,10 +841,15 @@ export default function SettingsContent({
         <div className="mb-6 pb-6 border-b border-neutral-800">
           <button
             onClick={handleExportData}
-            className="w-full sm:w-auto px-4 py-2 bg-neutral-800 text-neutral-200 rounded-lg hover:bg-neutral-700 transition-colors flex items-center justify-center gap-2 border border-neutral-700"
+            disabled={isExporting}
+            className="w-full sm:w-auto px-4 py-2 bg-neutral-800 text-neutral-200 rounded-lg hover:bg-neutral-700 transition-colors flex items-center justify-center gap-2 border border-neutral-700 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <IconDownload size={18} />
-            Export My Data
+            {isExporting ? (
+              <IconLoader2 size={18} className="animate-spin" />
+            ) : (
+              <IconDownload size={18} />
+            )}
+            {isExporting ? "Exporting..." : "Export My Data"}
           </button>
           <p className="text-sm text-neutral-500 mt-2">
             Download all your data including collections, watches, and profile

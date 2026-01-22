@@ -1,10 +1,10 @@
 ﻿"use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/client";
 import { Tables } from "@/database.types";
-import { IconCalendar, IconMovie } from "@tabler/icons-react";
+import { IconCalendar, IconMovie, IconLoader2 } from "@tabler/icons-react";
 
 type Season = Tables<"seasons">;
 
@@ -22,9 +22,11 @@ export default function SeriesSeasonTabs({
   seriesTmdbId,
   initialSeasons,
 }: SeriesSeasonTabsProps) {
+  const router = useRouter();
   const supabase = createClient();
   const [seasons, setSeasons] = useState<Season[]>(initialSeasons);
   const [loading, setLoading] = useState(false);
+  const [navigating, setNavigating] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState<Season | null>(
     initialSeasons[0] || null,
   );
@@ -215,12 +217,17 @@ export default function SeriesSeasonTabs({
               )}
 
               {/* View Episodes Button */}
-              <Link
-                href={`/series/${seriesId}/seasons/${selectedSeason.id}`}
-                className="inline-flex px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg transition-colors font-medium"
+              <button
+                onClick={() => {
+                  setNavigating(true);
+                  router.push(`/series/${seriesId}/seasons/${selectedSeason.id}`);
+                }}
+                disabled={navigating}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg transition-colors font-medium disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                View Episodes
-              </Link>
+                {navigating && <IconLoader2 size={18} className="animate-spin" />}
+                {navigating ? "Loading..." : "View Episodes"}
+              </button>
             </div>
           </div>
         </div>
