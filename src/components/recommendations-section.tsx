@@ -31,6 +31,10 @@ import {
   dismissRecommendation,
   type Recommendation,
 } from "@/src/app/actions/recommendations";
+import {
+  getMultipleMediaFeedback,
+  type ReactionType,
+} from "@/src/app/actions/feedback";
 
 interface RecommendationsSectionProps {
   username: string;
@@ -62,6 +66,9 @@ export default function RecommendationsSection({
   const [daysUntilNext, setDaysUntilNext] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [feedbackMap, setFeedbackMap] = useState<
+    Map<string, { is_seen: boolean; reaction: ReactionType | null }>
+  >(new Map());
 
   const isAdmin = userRole >= 10;
 
@@ -93,6 +100,19 @@ export default function RecommendationsSection({
 
         if (recsResult.success) {
           setRecommendations(recsResult.recommendations || []);
+
+          // Fetch feedback for all recommendations
+          if (recsResult.recommendations && recsResult.recommendations.length > 0) {
+            const feedbackResult = await getMultipleMediaFeedback(
+              recsResult.recommendations.map((rec) => ({
+                tmdbId: rec.tmdb_id,
+                mediaType: rec.media_type,
+              }))
+            );
+            if (feedbackResult.success && feedbackResult.feedbackMap) {
+              setFeedbackMap(feedbackResult.feedbackMap);
+            }
+          }
         }
 
         if (canRequestResult.success) {
@@ -118,6 +138,19 @@ export default function RecommendationsSection({
         setRecommendations(result.recommendations || []);
         setCanRequest(false);
         setDaysUntilNext(7);
+
+        // Fetch feedback for new recommendations
+        if (result.recommendations && result.recommendations.length > 0) {
+          const feedbackResult = await getMultipleMediaFeedback(
+            result.recommendations.map((rec) => ({
+              tmdbId: rec.tmdb_id,
+              mediaType: rec.media_type,
+            }))
+          );
+          if (feedbackResult.success && feedbackResult.feedbackMap) {
+            setFeedbackMap(feedbackResult.feedbackMap);
+          }
+        }
       } else {
         setError(result.error || "Failed to generate recommendations");
       }
@@ -141,6 +174,19 @@ export default function RecommendationsSection({
         setCanRequest(false);
         setDaysUntilNext(7);
         toast.success("Recommendations refreshed!", { id: "force-refresh" });
+
+        // Fetch feedback for new recommendations
+        if (result.recommendations && result.recommendations.length > 0) {
+          const feedbackResult = await getMultipleMediaFeedback(
+            result.recommendations.map((rec) => ({
+              tmdbId: rec.tmdb_id,
+              mediaType: rec.media_type,
+            }))
+          );
+          if (feedbackResult.success && feedbackResult.feedbackMap) {
+            setFeedbackMap(feedbackResult.feedbackMap);
+          }
+        }
       } else {
         setError(result.error || "Failed to generate recommendations");
         toast.error(result.error || "Failed to generate", {
@@ -391,6 +437,7 @@ export default function RecommendationsSection({
               sharedCollections={sharedCollections}
               onDismiss={() => handleDismiss(rec.id)}
               isPending={isPending}
+              initialFeedback={feedbackMap.get(`${rec.media_type}:${rec.tmdb_id}`)}
             />
           ))}
         </div>
@@ -433,6 +480,7 @@ function RecommendationCard({
   sharedCollections = [],
   onDismiss,
   isPending,
+  initialFeedback,
 }: {
   recommendation: Recommendation;
   username: string;
@@ -441,6 +489,7 @@ function RecommendationCard({
   sharedCollections?: MediaCollection[];
   onDismiss: () => void;
   isPending: boolean;
+  initialFeedback?: { is_seen: boolean; reaction: ReactionType | null };
 }) {
   const supabase = createClient();
   const [addingToReelDeck, setAddingToReelDeck] = useState(false);
@@ -801,6 +850,8 @@ function RecommendationCard({
               mediaType={recommendation.media_type}
               size="sm"
               variant="icon-only"
+              initialIsSeen={initialFeedback?.is_seen ?? false}
+              initialReaction={initialFeedback?.reaction ?? null}
             />
           </div>
 
