@@ -2,6 +2,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  if (pathname === "/sitemap.xml" || pathname === "/robots.txt") {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -52,7 +58,7 @@ export async function updateSession(request: NextRequest) {
     "/series",
     "/api",
     "/leaderboards",
-    "/u",  // Public profile prefix
+    "/u", // Public profile prefix
   ];
 
   const isPublicRoute = publicRoutes.some(
