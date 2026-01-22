@@ -23,6 +23,7 @@ import {
 } from "@tabler/icons-react";
 
 import { toast } from "sonner";
+import RewatchDialog from "./rewatch-dialog";
 
 interface Episode {
   id: string;
@@ -316,6 +317,7 @@ export default function SeriesProgressTracker({
   const [startingRewatch, setStartingRewatch] = useState(false);
   const [resettingSeries, setResettingSeries] = useState(false);
   const [hasOpenedDefaultSeason, setHasOpenedDefaultSeason] = useState(false);
+  const [showRewatchDialog, setShowRewatchDialog] = useState(false);
 
   // Optimistic state for episodes
   const [optimisticSeasons, setOptimisticSeasons] = useOptimistic(
@@ -973,26 +975,10 @@ export default function SeriesProgressTracker({
   }, [seriesId, userId, router]);
 
   const handleStartRewatch = useCallback(async () => {
-    const cycleNumber = watchCycle?.cycle_number || 1;
-    const confirmMessage = `Start Rewatch #${cycleNumber + 1}?
-
-A rewatch means you're starting the series over from the beginning — like rewatching your favorite show for the ${cycleNumber + 1}${getOrdinalSuffix(cycleNumber + 1)} time.
-
-This will:
-• Clear your current watch progress
-• Mark your previous watch as complete
-• Start a fresh viewing cycle
-
-Your rewatch count will be saved and contributes to achievements.
-
-Continue?`;
-
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
+    setShowRewatchDialog(false);
     setStartingRewatch(true);
 
+    const cycleNumber = watchCycle?.cycle_number || 1;
     const toastId = toast.loading("Starting rewatch...");
 
     try {
@@ -1113,7 +1099,7 @@ Continue?`;
 
         {hasAnyProgress && (
           <button
-            onClick={handleStartRewatch}
+            onClick={() => setShowRewatchDialog(true)}
             disabled={startingRewatch || resettingSeries}
             className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 border border-indigo-500/50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -1126,6 +1112,15 @@ Continue?`;
           </button>
         )}
       </div>
+
+      {/* Rewatch Dialog */}
+      <RewatchDialog
+        isOpen={showRewatchDialog}
+        onClose={() => setShowRewatchDialog(false)}
+        onConfirm={handleStartRewatch}
+        cycleNumber={watchCycle?.cycle_number || 1}
+        isLoading={startingRewatch}
+      />
 
       {/* Seasons */}
       {optimisticSeasons.map((season) => {

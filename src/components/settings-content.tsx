@@ -18,6 +18,8 @@ import {
   IconUsers,
   IconUserPlus,
   IconMessage,
+  IconHeart,
+  IconCoffee,
 } from "@tabler/icons-react";
 import type { VisibilityLevel } from "@/src/lib/types";
 import DeleteAccountModal from "./delete-account-modal";
@@ -676,6 +678,29 @@ export default function SettingsContent({
             </button>
           </label>
         </div>
+      </section>
+
+      {/* Support Section */}
+      <section className="bg-gradient-to-br from-amber-950/30 to-neutral-900 rounded-lg p-6 border border-amber-800/30">
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <IconHeart size={24} className="text-amber-400" />
+          Support JustReel
+        </h2>
+        <p className="text-neutral-300 mb-4">
+          JustReel is built with love and maintained by a small team. If you enjoy using the app, consider buying us a coffee to help keep the lights on and new features coming.
+        </p>
+        <p className="text-sm text-neutral-500 mb-6">
+          Your support helps cover server costs, development time, and keeps the app ad-free.
+        </p>
+        <a
+          href="https://ko-fi.com/justreel"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-400 text-neutral-900 font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-amber-500/20"
+        >
+          <IconCoffee size={20} />
+          Buy Us a Coffee
+        </a>
       </section>
 
       {/* Data & Account Section */}
