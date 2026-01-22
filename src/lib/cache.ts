@@ -103,15 +103,15 @@ export async function cacheDel(key: string): Promise<boolean> {
  */
 export async function cacheDelPattern(pattern: string): Promise<boolean> {
   try {
-    let cursor = 0;
+    let cursor = "0";
     do {
       const result = await redis.scan(cursor, { match: pattern, count: 100 });
-      cursor = result[0];
+      cursor = String(result[0]);
       const keys = result[1];
       if (keys.length > 0) {
         await redis.del(...keys);
       }
-    } while (cursor !== 0);
+    } while (cursor !== "0");
     return true;
   } catch (error) {
     console.error(`[Cache] Error deleting pattern ${pattern}:`, error);
