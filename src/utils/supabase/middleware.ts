@@ -53,12 +53,14 @@ export async function updateSession(request: NextRequest) {
     "/search",
     "/auth",
     "/login",
-    "/email-templates",
     "/movies",
     "/series",
     "/api",
     "/leaderboards",
     "/u", // Public profile prefix
+    "/blog",
+    "/privacy-policy",
+    "/terms-of-use",
   ];
 
   const isPublicRoute = publicRoutes.some(
