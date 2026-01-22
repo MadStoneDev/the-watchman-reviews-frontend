@@ -8,6 +8,14 @@ import {
   sendFollowerEmailNotification,
   sendMutualEmailNotification,
 } from "./email-notifications";
+import {
+  cacheKey,
+  cacheGet,
+  cacheSet,
+  CACHE_KEYS,
+  TTL,
+  invalidateFollowCaches,
+} from "@/src/lib/cache";
 
 /**
  * Follow a user
@@ -88,6 +96,9 @@ export async function followUser(
       sendMutualEmailNotification(targetUserId, user.id).catch(console.error);
     }
 
+    // Invalidate follow-related caches for both users
+    invalidateFollowCaches(user.id, targetUserId).catch(console.error);
+
     return { success: true };
   } catch (error) {
     console.error("Error in followUser:", error);
@@ -123,6 +134,9 @@ export async function unfollowUser(
       return { success: false, error: error.message };
     }
 
+    // Invalidate follow-related caches for both users
+    invalidateFollowCaches(user.id, targetUserId).catch(console.error);
+
     return { success: true };
   } catch (error) {
     console.error("Error in unfollowUser:", error);
@@ -150,33 +164,42 @@ export async function checkFollowStatus(
       };
     }
 
-    // Check if current user follows target
-    const { data: following } = await supabase
-      .from("user_follows")
-      .select("id")
-      .eq("follower_id", user.id)
-      .eq("following_id", targetUserId)
-      .single();
+    // Try cache first
+    const statusCacheKey = cacheKey(CACHE_KEYS.USER_FOLLOW_STATUS, user.id, targetUserId);
+    const cached = await cacheGet<FollowStatus>(statusCacheKey);
+    if (cached) {
+      return { success: true, status: cached };
+    }
 
-    // Check if target follows current user
-    const { data: followedBy } = await supabase
-      .from("user_follows")
-      .select("id")
-      .eq("follower_id", targetUserId)
-      .eq("following_id", user.id)
-      .single();
+    // Check both directions in parallel
+    const [followingResult, followedByResult] = await Promise.all([
+      supabase
+        .from("user_follows")
+        .select("id")
+        .eq("follower_id", user.id)
+        .eq("following_id", targetUserId)
+        .single(),
+      supabase
+        .from("user_follows")
+        .select("id")
+        .eq("follower_id", targetUserId)
+        .eq("following_id", user.id)
+        .single(),
+    ]);
 
-    const isFollowing = !!following;
-    const isFollowedBy = !!followedBy;
+    const isFollowing = !!followingResult.data;
+    const isFollowedBy = !!followedByResult.data;
 
-    return {
-      success: true,
-      status: {
-        isFollowing,
-        isFollowedBy,
-        isMutual: isFollowing && isFollowedBy,
-      },
+    const status: FollowStatus = {
+      isFollowing,
+      isFollowedBy,
+      isMutual: isFollowing && isFollowedBy,
     };
+
+    // Cache for 15 minutes
+    cacheSet(statusCacheKey, status, TTL.MEDIUM).catch(() => {});
+
+    return { success: true, status };
   } catch (error) {
     console.error("Error in checkFollowStatus:", error);
     return { success: false, error: "Failed to check follow status" };
@@ -190,37 +213,46 @@ export async function getFollowCounts(
   userId: string
 ): Promise<{ success: boolean; counts?: FollowCounts; error?: string }> {
   try {
+    // Try cache first
+    const countsCacheKey = cacheKey(CACHE_KEYS.USER_FOLLOW_COUNTS, userId);
+    const cached = await cacheGet<FollowCounts>(countsCacheKey);
+    if (cached) {
+      return { success: true, counts: cached };
+    }
+
     const supabase = await createClient();
 
-    // Count followers
-    const { count: followerCount, error: followerError } = await supabase
-      .from("user_follows")
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", userId);
+    // Count both in parallel
+    const [followersResult, followingResult] = await Promise.all([
+      supabase
+        .from("user_follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", userId),
+      supabase
+        .from("user_follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", userId),
+    ]);
 
-    if (followerError) {
-      console.error("Error counting followers:", followerError);
-      return { success: false, error: followerError.message };
+    if (followersResult.error) {
+      console.error("Error counting followers:", followersResult.error);
+      return { success: false, error: followersResult.error.message };
     }
 
-    // Count following
-    const { count: followingCount, error: followingError } = await supabase
-      .from("user_follows")
-      .select("*", { count: "exact", head: true })
-      .eq("follower_id", userId);
-
-    if (followingError) {
-      console.error("Error counting following:", followingError);
-      return { success: false, error: followingError.message };
+    if (followingResult.error) {
+      console.error("Error counting following:", followingResult.error);
+      return { success: false, error: followingResult.error.message };
     }
 
-    return {
-      success: true,
-      counts: {
-        followers: followerCount || 0,
-        following: followingCount || 0,
-      },
+    const counts: FollowCounts = {
+      followers: followersResult.count || 0,
+      following: followingResult.count || 0,
     };
+
+    // Cache for 15 minutes
+    cacheSet(countsCacheKey, counts, TTL.MEDIUM).catch(() => {});
+
+    return { success: true, counts };
   } catch (error) {
     console.error("Error in getFollowCounts:", error);
     return { success: false, error: "Failed to get follow counts" };
@@ -480,6 +512,9 @@ export async function blockUser(
       console.error("Error blocking user:", error);
       return { success: false, error: error.message };
     }
+
+    // Invalidate follow-related caches for both users (since follows were removed)
+    invalidateFollowCaches(user.id, targetUserId).catch(console.error);
 
     return { success: true };
   } catch (error) {

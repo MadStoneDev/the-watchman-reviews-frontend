@@ -7,6 +7,15 @@ import {
   checkVisibility,
   getUserVisibilitySettings,
 } from "@/src/lib/visibility-utils";
+import {
+  cacheKey,
+  cacheGet,
+  cacheSet,
+  cacheDel,
+  CACHE_KEYS,
+  TTL,
+  invalidateActivityCaches,
+} from "@/src/lib/cache";
 
 export type ActivityType =
   | "episode_watched"
@@ -83,6 +92,9 @@ export async function createActivity(
       return { success: false, error: error.message };
     }
 
+    // Invalidate activity caches for this user
+    invalidateActivityCaches(user.id).catch(() => {});
+
     return { success: true, activityId: activity.id };
   } catch (error) {
     console.error("[Activity Feed] Error in createActivity:", error);
@@ -120,6 +132,9 @@ export async function createActivityForUser(
       return { success: false, error: error.message };
     }
 
+    // Invalidate activity caches for this user
+    invalidateActivityCaches(userId).catch(() => {});
+
     return { success: true, activityId: activity.id };
   } catch (error) {
     console.error("[Activity Feed] Error in createActivityForUser:", error);
@@ -148,6 +163,17 @@ export async function getActivityFeed(
 
     if (!currentUserId) {
       return { success: false, error: "You must be logged in" };
+    }
+
+    // Try cache for first 3 pages (personalized, so shorter TTL)
+    const canUseCache = page <= 3;
+    const feedCacheKey = cacheKey(CACHE_KEYS.USER_ACTIVITY_FEED, currentUserId, page, limit);
+
+    if (canUseCache) {
+      const cached = await cacheGet<{ activities: ActivityFeedItem[]; hasMore: boolean }>(feedCacheKey);
+      if (cached) {
+        return { success: true, activities: cached.activities, hasMore: cached.hasMore };
+      }
     }
 
     // Get users that current user follows
@@ -220,10 +246,17 @@ export async function getActivityFeed(
       },
     }));
 
+    const hasMore = activities.length === limit + 1;
+
+    // Cache for 5 minutes (activity changes frequently)
+    if (canUseCache && activitiesWithUsers.length > 0) {
+      cacheSet(feedCacheKey, { activities: activitiesWithUsers, hasMore }, TTL.SHORT).catch(() => {});
+    }
+
     return {
       success: true,
       activities: activitiesWithUsers,
-      hasMore: activities.length === limit + 1,
+      hasMore,
     };
   } catch (error) {
     console.error("[Activity Feed] Error in getActivityFeed:", error);
@@ -265,33 +298,44 @@ export async function getUserActivity(
       }
     }
 
-    const offset = (page - 1) * limit;
+    // Try cache for first 3 pages of user activity
+    const canUseCache = page <= 3;
+    const activityCacheKey = cacheKey(CACHE_KEYS.USER_ACTIVITY, userId, page, limit);
 
-    // Fetch activities for the specific user
-    const { data: activities, error } = await supabase
-      .from("activity_feed")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit);
-
-    if (error) {
-      console.error("[Activity Feed] Error fetching user activity:", error);
-      return { success: false, error: error.message };
+    if (canUseCache) {
+      const cached = await cacheGet<{ activities: ActivityFeedItem[]; hasMore: boolean }>(activityCacheKey);
+      if (cached) {
+        return { success: true, activities: cached.activities, hasMore: cached.hasMore };
+      }
     }
 
-    if (!activities || activities.length === 0) {
+    const offset = (page - 1) * limit;
+
+    // Fetch activities and user data in parallel
+    const [activitiesResult, userResult] = await Promise.all([
+      supabase
+        .from("activity_feed")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit),
+      supabase
+        .from("profiles")
+        .select("id, username, avatar_path")
+        .eq("id", userId)
+        .single(),
+    ]);
+
+    if (activitiesResult.error) {
+      console.error("[Activity Feed] Error fetching user activity:", activitiesResult.error);
+      return { success: false, error: activitiesResult.error.message };
+    }
+
+    if (!activitiesResult.data || activitiesResult.data.length === 0) {
       return { success: true, activities: [], hasMore: false };
     }
 
-    // Fetch user data
-    const { data: user } = await supabase
-      .from("profiles")
-      .select("id, username, avatar_path")
-      .eq("id", userId)
-      .single();
-
-    const activitiesWithUser: ActivityFeedItem[] = activities.map((activity) => ({
+    const activitiesWithUser: ActivityFeedItem[] = activitiesResult.data.map((activity) => ({
       id: activity.id,
       user_id: activity.user_id,
       activity_type: activity.activity_type,
@@ -299,17 +343,24 @@ export async function getUserActivity(
       series_id: activity.series_id,
       episode_id: activity.episode_id,
       created_at: activity.created_at,
-      user: user || {
+      user: userResult.data || {
         id: userId,
         username: "Unknown User",
         avatar_path: null,
       },
     }));
 
+    const hasMore = activitiesResult.data.length === limit + 1;
+
+    // Cache for 5 minutes
+    if (canUseCache && activitiesWithUser.length > 0) {
+      cacheSet(activityCacheKey, { activities: activitiesWithUser, hasMore }, TTL.SHORT).catch(() => {});
+    }
+
     return {
       success: true,
       activities: activitiesWithUser,
-      hasMore: activities.length === limit + 1,
+      hasMore,
     };
   } catch (error) {
     console.error("[Activity Feed] Error in getUserActivity:", error);
@@ -355,6 +406,9 @@ export async function deleteActivity(
       console.error("[Activity Feed] Error deleting activity:", error);
       return { success: false, error: error.message };
     }
+
+    // Invalidate activity caches for this user
+    invalidateActivityCaches(user.id).catch(() => {});
 
     return { success: true };
   } catch (error) {

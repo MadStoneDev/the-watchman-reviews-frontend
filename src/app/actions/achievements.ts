@@ -4,6 +4,16 @@ import { createClient } from "@/src/utils/supabase/server";
 import { createNotification } from "./notifications";
 import { createActivityForUser } from "./activity-feed";
 import { sendAchievementEmailNotification } from "./email-notifications";
+import {
+  cacheKey,
+  cacheGet,
+  cacheSet,
+  cacheGetOrSet,
+  cacheDel,
+  invalidateAchievementCaches,
+  CACHE_KEYS,
+  TTL,
+} from "@/src/lib/cache";
 
 // Cache of already-checked achievements per user session to avoid redundant DB calls
 const checkedAchievements = new Map<string, Set<string>>();
@@ -58,6 +68,12 @@ export async function getAchievementDefinitions(): Promise<{
   error?: string;
 }> {
   try {
+    // Try cache first - definitions rarely change
+    const cached = await cacheGet<AchievementDefinition[]>(CACHE_KEYS.ACHIEVEMENT_DEFS);
+    if (cached) {
+      return { success: true, achievements: cached };
+    }
+
     const supabase = await createClient();
 
     const { data: achievements, error } = await supabase
@@ -69,6 +85,11 @@ export async function getAchievementDefinitions(): Promise<{
     if (error) {
       console.error("Error fetching achievement definitions:", error);
       return { success: false, error: error.message };
+    }
+
+    // Cache for 24 hours - definitions rarely change
+    if (achievements && achievements.length > 0) {
+      cacheSet(CACHE_KEYS.ACHIEVEMENT_DEFS, achievements, TTL.DAY).catch(() => {});
     }
 
     return { success: true, achievements: achievements || [] };
@@ -89,6 +110,13 @@ export async function getUserAchievements(
   error?: string;
 }> {
   try {
+    // Try cache first
+    const achievementsCacheKey = cacheKey(CACHE_KEYS.USER_ACHIEVEMENTS, userId);
+    const cached = await cacheGet<UserAchievement[]>(achievementsCacheKey);
+    if (cached) {
+      return { success: true, achievements: cached };
+    }
+
     const supabase = await createClient();
 
     const { data: userAchievements, error } = await supabase
@@ -106,19 +134,19 @@ export async function getUserAchievements(
       return { success: true, achievements: [] };
     }
 
-    // Fetch achievement definitions
-    const achievementIds = userAchievements.map((a) => a.achievement_id);
-    const { data: definitions } = await supabase
-      .from("achievement_definitions")
-      .select("*")
-      .in("id", achievementIds);
-
-    const definitionMap = new Map(definitions?.map((d) => [d.id, d]) || []);
+    // Get definitions from cache or DB
+    const defsResult = await getAchievementDefinitions();
+    const definitionMap = new Map(
+      defsResult.achievements?.map((d) => [d.id, d]) || []
+    );
 
     const achievementsWithDefinitions: UserAchievement[] = userAchievements.map((ua) => ({
       ...ua,
       achievement: definitionMap.get(ua.achievement_id),
     }));
+
+    // Cache for 30 minutes
+    cacheSet(achievementsCacheKey, achievementsWithDefinitions, TTL.LONG).catch(() => {});
 
     return { success: true, achievements: achievementsWithDefinitions };
   } catch (error) {
@@ -143,12 +171,24 @@ export async function getAchievementStats(
   error?: string;
 }> {
   try {
+    // Try cache first
+    const statsCacheKey = cacheKey(CACHE_KEYS.USER_ACHIEVEMENT_STATS, userId);
+    const cached = await cacheGet<{
+      unlocked: number;
+      total: number;
+      byCategory: Record<string, { unlocked: number; total: number }>;
+      recentUnlocks: UserAchievement[];
+    }>(statsCacheKey);
+
+    if (cached) {
+      return { success: true, stats: cached };
+    }
+
     const supabase = await createClient();
 
-    // Get all definitions
-    const { data: definitions } = await supabase
-      .from("achievement_definitions")
-      .select("*");
+    // Get all definitions from cache
+    const defsResult = await getAchievementDefinitions();
+    const definitions = defsResult.achievements || [];
 
     // Get user's achievements
     const { data: userAchievements } = await supabase
@@ -158,11 +198,11 @@ export async function getAchievementStats(
       .order("unlocked_at", { ascending: false });
 
     const unlockedIds = new Set(userAchievements?.map((a) => a.achievement_id) || []);
-    const definitionMap = new Map(definitions?.map((d) => [d.id, d]) || []);
+    const definitionMap = new Map(definitions.map((d) => [d.id, d]));
 
     // Calculate by category
     const byCategory: Record<string, { unlocked: number; total: number }> = {};
-    definitions?.forEach((def) => {
+    definitions.forEach((def) => {
       if (!byCategory[def.category]) {
         byCategory[def.category] = { unlocked: 0, total: 0 };
       }
@@ -178,15 +218,17 @@ export async function getAchievementStats(
       achievement: definitionMap.get(ua.achievement_id),
     }));
 
-    return {
-      success: true,
-      stats: {
-        unlocked: unlockedIds.size,
-        total: definitions?.length || 0,
-        byCategory,
-        recentUnlocks,
-      },
+    const stats = {
+      unlocked: unlockedIds.size,
+      total: definitions.length,
+      byCategory,
+      recentUnlocks,
     };
+
+    // Cache for 30 minutes
+    cacheSet(statsCacheKey, stats, TTL.LONG).catch(() => {});
+
+    return { success: true, stats };
   } catch (error) {
     console.error("Error in getAchievementStats:", error);
     return { success: false, error: "Failed to fetch achievement stats" };
@@ -261,6 +303,9 @@ export async function awardAchievement(
 
     // Send email notification (don't await)
     sendAchievementEmailNotification(userId, achievementId).catch(console.error);
+
+    // Invalidate achievement caches (don't await)
+    invalidateAchievementCaches(userId).catch(console.error);
 
     return { success: true };
   } catch (error) {

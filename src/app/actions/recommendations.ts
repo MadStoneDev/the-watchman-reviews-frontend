@@ -2,6 +2,15 @@
 
 import { createClient } from "@/src/utils/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
+import {
+  cacheKey,
+  cacheGet,
+  cacheSet,
+  cacheDel,
+  CACHE_KEYS,
+  TTL,
+  invalidateRecommendationCaches,
+} from "@/src/lib/cache";
 
 export interface Recommendation {
   id: string;
@@ -51,6 +60,13 @@ export async function canRequestRecommendations(): Promise<{
       return { success: false, error: "Not authenticated" };
     }
 
+    // Try cache first (short TTL since this changes when user requests)
+    const canRequestCacheKey = cacheKey(CACHE_KEYS.USER_CAN_REQUEST_RECS, user.id);
+    const cached = await cacheGet<{ canRequest: boolean; daysUntil: number }>(canRequestCacheKey);
+    if (cached !== null) {
+      return { success: true, canRequest: cached.canRequest, daysUntil: cached.daysUntil };
+    }
+
     const { data, error } = await supabase.rpc("can_request_recommendations", {
       p_user_id: user.id,
     });
@@ -60,10 +76,14 @@ export async function canRequestRecommendations(): Promise<{
       return { success: false, error: error.message };
     }
 
+    const result = { canRequest: data === 0, daysUntil: data };
+
+    // Cache for 5 minutes
+    cacheSet(canRequestCacheKey, result, TTL.SHORT).catch(() => {});
+
     return {
       success: true,
-      canRequest: data === 0,
-      daysUntil: data,
+      ...result,
     };
   } catch (error) {
     console.error("Error in canRequestRecommendations:", error);
@@ -89,6 +109,13 @@ export async function getUserViewingProfile(): Promise<{
       return { success: false, error: "Not authenticated" };
     }
 
+    // Try cache first
+    const profileCacheKey = cacheKey(CACHE_KEYS.USER_VIEWING_PROFILE, user.id);
+    const cached = await cacheGet<ViewingProfile>(profileCacheKey);
+    if (cached) {
+      return { success: true, profile: cached };
+    }
+
     const { data, error } = await supabase.rpc("get_user_watching_profile", {
       p_user_id: user.id,
     });
@@ -97,6 +124,9 @@ export async function getUserViewingProfile(): Promise<{
       console.error("Error fetching viewing profile:", error);
       return { success: false, error: error.message };
     }
+
+    // Cache for 15 minutes (profile changes with watch activity)
+    cacheSet(profileCacheKey, data, TTL.MEDIUM).catch(() => {});
 
     return { success: true, profile: data as ViewingProfile };
   } catch (error) {
@@ -125,6 +155,17 @@ export async function getUserRecommendations(filters?: {
 
     if (!user) {
       return { success: false, error: "Not authenticated" };
+    }
+
+    // Only cache unfiltered recommendations
+    const hasFilters = filters?.mediaType || filters?.decade || filters?.minRating;
+    const recsCacheKey = cacheKey(CACHE_KEYS.USER_RECOMMENDATIONS, user.id);
+
+    if (!hasFilters) {
+      const cached = await cacheGet<Recommendation[]>(recsCacheKey);
+      if (cached) {
+        return { success: true, recommendations: cached };
+      }
     }
 
     let query = supabase
@@ -158,6 +199,11 @@ export async function getUserRecommendations(filters?: {
       recommendations = recommendations.filter(
         (r) => r.release_year && r.release_year >= decadeStart && r.release_year <= decadeEnd
       );
+    }
+
+    // Cache unfiltered recommendations for 30 minutes
+    if (!hasFilters && recommendations.length > 0) {
+      cacheSet(recsCacheKey, recommendations, TTL.LONG).catch(() => {});
     }
 
     return { success: true, recommendations };
@@ -198,6 +244,9 @@ export async function dismissRecommendation(recommendationId: string): Promise<{
       return { success: false, error: error.message };
     }
 
+    // Invalidate recommendations cache
+    cacheDel(cacheKey(CACHE_KEYS.USER_RECOMMENDATIONS, user.id)).catch(() => {});
+
     return { success: true };
   } catch (error) {
     console.error("Error in dismissRecommendation:", error);
@@ -235,6 +284,9 @@ export async function markRecommendationWatched(recommendationId: string): Promi
       console.error("Error marking recommendation watched:", error);
       return { success: false, error: error.message };
     }
+
+    // Invalidate recommendations cache
+    cacheDel(cacheKey(CACHE_KEYS.USER_RECOMMENDATIONS, user.id)).catch(() => {});
 
     return { success: true };
   } catch (error) {
@@ -637,6 +689,9 @@ async function generateRecommendationsInternal(
         processing_time_ms: processingTime,
       })
       .eq("id", requestRecord.id);
+
+    // Invalidate all recommendation-related caches for this user
+    invalidateRecommendationCaches(userId).catch(() => {});
 
     return { success: true, recommendations: savedRecommendations };
   } catch (error) {

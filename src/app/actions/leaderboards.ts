@@ -1,6 +1,14 @@
 "use server";
 
 import { createClient } from "@/src/utils/supabase/server";
+import {
+  cacheKey,
+  cacheGet,
+  cacheSet,
+  cacheGetOrSet,
+  CACHE_KEYS,
+  TTL,
+} from "@/src/lib/cache";
 
 export type LeaderboardType = "episodes" | "shows" | "achievements" | "comments";
 export type TimePeriod = "all_time" | "weekly" | "monthly";
@@ -41,6 +49,22 @@ export async function getLeaderboard(
     // Get current user for friends scope
     const { data: userData } = await supabase.auth.getClaims();
     const currentUserId = userData?.claims?.sub;
+
+    // For global scope, try to get cached entries (first 5 pages)
+    const canUseCache = scope === "global" && page <= 5;
+    const entriesCacheKey = cacheKey(CACHE_KEYS.LEADERBOARD, type, period, page, limit);
+
+    if (canUseCache) {
+      const cachedEntries = await cacheGet<LeaderboardEntry[]>(entriesCacheKey);
+      if (cachedEntries) {
+        // Still need to get user rank if logged in
+        let userRank: LeaderboardEntry | null = null;
+        if (currentUserId) {
+          userRank = await getCachedUserRank(supabase, currentUserId, type, period);
+        }
+        return { success: true, entries: cachedEntries, userRank };
+      }
+    }
 
     const offset = (page - 1) * limit;
     let entries: LeaderboardEntry[] = [];
@@ -89,7 +113,7 @@ export async function getLeaderboard(
     let query = supabase.from(table).select("*");
 
     if (scope === "friends" && currentUserId) {
-      // Get friends list
+      // Get friends list (not cached - personalized)
       const { data: following } = await supabase
         .from("user_follows")
         .select("following_id")
@@ -134,48 +158,15 @@ export async function getLeaderboard(
         type === "achievements" ? entry.achievements_count : undefined,
     }));
 
+    // Cache global leaderboard entries
+    if (canUseCache && entries.length > 0) {
+      cacheSet(entriesCacheKey, entries, TTL.MEDIUM).catch(() => {});
+    }
+
     // Get current user's rank if logged in
     let userRank: LeaderboardEntry | null = null;
     if (currentUserId) {
-      const { data: userEntry } = await supabase
-        .from(table)
-        .select("*")
-        .eq("user_id", currentUserId)
-        .single();
-
-      if (userEntry) {
-        // Get actual rank
-        const { data: rankData, error: rankError } = await supabase.rpc(
-          "get_user_rank",
-          {
-            p_user_id: currentUserId,
-            p_leaderboard_type: type,
-            p_time_period: period,
-          }
-        );
-
-        userRank = {
-          user_id: userEntry.user_id,
-          username: userEntry.username,
-          avatar_path: userEntry.avatar_path,
-          rank: rankData || 0,
-          value: userEntry[valueColumn] || 0,
-          weekly_value:
-            type === "episodes"
-              ? userEntry.weekly_episodes
-              : type === "comments"
-              ? userEntry.weekly_comments
-              : undefined,
-          monthly_value:
-            type === "episodes"
-              ? userEntry.monthly_episodes
-              : type === "comments"
-              ? userEntry.monthly_comments
-              : undefined,
-          achievements_count:
-            type === "achievements" ? userEntry.achievements_count : undefined,
-        };
-      }
+      userRank = await getCachedUserRank(supabase, currentUserId, type, period);
     }
 
     return { success: true, entries, userRank };
@@ -183,6 +174,89 @@ export async function getLeaderboard(
     console.error("[Leaderboards] Error in getLeaderboard:", error);
     return { success: false, error: "Failed to fetch leaderboard" };
   }
+}
+
+/**
+ * Helper to get cached user rank
+ */
+async function getCachedUserRank(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  type: LeaderboardType,
+  period: TimePeriod
+): Promise<LeaderboardEntry | null> {
+  const rankCacheKey = cacheKey(CACHE_KEYS.USER_RANK, userId, type, period);
+
+  // Try cache first
+  const cached = await cacheGet<LeaderboardEntry>(rankCacheKey);
+  if (cached) return cached;
+
+  // Determine table and value column
+  let table: string;
+  let valueColumn: string;
+
+  switch (type) {
+    case "episodes":
+      table = "leaderboard_episodes";
+      valueColumn = period === "weekly" ? "weekly_episodes" : period === "monthly" ? "monthly_episodes" : "total_episodes";
+      break;
+    case "shows":
+      table = "leaderboard_shows";
+      valueColumn = "total_shows";
+      break;
+    case "achievements":
+      table = "leaderboard_achievements";
+      valueColumn = "total_points";
+      break;
+    case "comments":
+      table = "leaderboard_comments";
+      valueColumn = period === "weekly" ? "weekly_comments" : period === "monthly" ? "monthly_comments" : "total_comments";
+      break;
+    default:
+      return null;
+  }
+
+  const { data: userEntry } = await supabase
+    .from(table)
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (!userEntry) return null;
+
+  // Get actual rank
+  const { data: rankData } = await supabase.rpc("get_user_rank", {
+    p_user_id: userId,
+    p_leaderboard_type: type,
+    p_time_period: period,
+  });
+
+  const userRank: LeaderboardEntry = {
+    user_id: userEntry.user_id,
+    username: userEntry.username,
+    avatar_path: userEntry.avatar_path,
+    rank: rankData || 0,
+    value: userEntry[valueColumn] || 0,
+    weekly_value:
+      type === "episodes"
+        ? userEntry.weekly_episodes
+        : type === "comments"
+        ? userEntry.weekly_comments
+        : undefined,
+    monthly_value:
+      type === "episodes"
+        ? userEntry.monthly_episodes
+        : type === "comments"
+        ? userEntry.monthly_comments
+        : undefined,
+    achievements_count:
+      type === "achievements" ? userEntry.achievements_count : undefined,
+  };
+
+  // Cache for 10 minutes
+  cacheSet(rankCacheKey, userRank, TTL.MEDIUM).catch(() => {});
+
+  return userRank;
 }
 
 /**
@@ -239,6 +313,19 @@ export async function getLeaderboardStats(): Promise<{
   error?: string;
 }> {
   try {
+    // Try cache first
+    const cached = await cacheGet<{
+      totalEpisodesWatched: number;
+      totalShowsCompleted: number;
+      totalAchievementsUnlocked: number;
+      totalComments: number;
+      activeUsers: number;
+    }>(CACHE_KEYS.LEADERBOARD_STATS);
+
+    if (cached) {
+      return { success: true, stats: cached };
+    }
+
     const supabase = await createClient();
 
     // Get counts from each leaderboard
@@ -278,21 +365,23 @@ export async function getLeaderboardStats(): Promise<{
     const sumArray = (arr: any[] | null, key: string) =>
       arr?.reduce((sum, item) => sum + (item[key] || 0), 0) || 0;
 
-    return {
-      success: true,
-      stats: {
-        totalEpisodesWatched: sumArray(episodesTotal, "total_episodes"),
-        totalShowsCompleted: sumArray(showsTotal, "total_shows"),
-        totalAchievementsUnlocked: sumArray(achievementsTotal, "achievements_count"),
-        totalComments: sumArray(commentsTotal, "total_comments"),
-        activeUsers: Math.max(
-          episodesCount || 0,
-          showsCount || 0,
-          achievementsCount || 0,
-          commentsCount || 0
-        ),
-      },
+    const stats = {
+      totalEpisodesWatched: sumArray(episodesTotal, "total_episodes"),
+      totalShowsCompleted: sumArray(showsTotal, "total_shows"),
+      totalAchievementsUnlocked: sumArray(achievementsTotal, "achievements_count"),
+      totalComments: sumArray(commentsTotal, "total_comments"),
+      activeUsers: Math.max(
+        episodesCount || 0,
+        showsCount || 0,
+        achievementsCount || 0,
+        commentsCount || 0
+      ),
     };
+
+    // Cache for 15 minutes
+    cacheSet(CACHE_KEYS.LEADERBOARD_STATS, stats, TTL.MEDIUM).catch(() => {});
+
+    return { success: true, stats };
   } catch (error) {
     console.error("[Leaderboards] Error in getLeaderboardStats:", error);
     return { success: false, error: "Failed to get leaderboard stats" };

@@ -6,6 +6,13 @@ import {
   getUserVisibilitySettings,
 } from "@/src/lib/visibility-utils";
 import { VisibilityLevel } from "@/src/lib/types";
+import {
+  cacheKey,
+  cacheGet,
+  cacheSet,
+  CACHE_KEYS,
+  TTL,
+} from "@/src/lib/cache";
 
 export type ProfileVisibility = "public" | "followers_only" | "private";
 
@@ -123,59 +130,73 @@ export async function getPublicStats(
   userId: string
 ): Promise<{ success: boolean; stats?: PublicStats; error?: string }> {
   try {
+    // Try cache first
+    const statsCacheKey = cacheKey(CACHE_KEYS.USER_PUBLIC_STATS, userId);
+    const cached = await cacheGet<PublicStats>(statsCacheKey);
+    if (cached) {
+      return { success: true, stats: cached };
+    }
+
     const supabase = await createClient();
 
-    // Get episode count
-    const { count: episodesCount } = await supabase
-      .from("episode_watches")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId);
+    // Run all queries in parallel for better performance
+    const [
+      episodesResult,
+      showsResult,
+      completedResult,
+      achievementsResult,
+      followersResult,
+      followingResult,
+    ] = await Promise.all([
+      // Get episode count
+      supabase
+        .from("episode_watches")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId),
+      // Get unique shows started
+      supabase
+        .from("episode_watches")
+        .select("series_id")
+        .eq("user_id", userId),
+      // Get shows completed (from leaderboard materialized view)
+      supabase
+        .from("leaderboard_shows")
+        .select("total_shows")
+        .eq("user_id", userId)
+        .single(),
+      // Get achievements count
+      supabase
+        .from("user_achievements")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .not("unlocked_at", "is", null),
+      // Get followers count
+      supabase
+        .from("user_follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", userId),
+      // Get following count
+      supabase
+        .from("user_follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", userId),
+    ]);
 
-    // Get unique shows started
-    const { data: showsData } = await supabase
-      .from("episode_watches")
-      .select("series_id")
-      .eq("user_id", userId);
+    const uniqueShows = new Set(showsResult.data?.map((s) => s.series_id) || []);
 
-    const uniqueShows = new Set(showsData?.map((s) => s.series_id) || []);
-
-    // Get shows completed (from leaderboard materialized view if available)
-    const { data: completedData } = await supabase
-      .from("leaderboard_shows")
-      .select("total_shows")
-      .eq("user_id", userId)
-      .single();
-
-    // Get achievements count
-    const { count: achievementsCount } = await supabase
-      .from("user_achievements")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .not("unlocked_at", "is", null);
-
-    // Get followers count
-    const { count: followersCount } = await supabase
-      .from("user_follows")
-      .select("*", { count: "exact", head: true })
-      .eq("following_id", userId);
-
-    // Get following count
-    const { count: followingCount } = await supabase
-      .from("user_follows")
-      .select("*", { count: "exact", head: true })
-      .eq("follower_id", userId);
-
-    return {
-      success: true,
-      stats: {
-        episodes_watched: episodesCount || 0,
-        shows_started: uniqueShows.size,
-        shows_completed: completedData?.total_shows || 0,
-        achievements_count: achievementsCount || 0,
-        followers_count: followersCount || 0,
-        following_count: followingCount || 0,
-      },
+    const stats: PublicStats = {
+      episodes_watched: episodesResult.count || 0,
+      shows_started: uniqueShows.size,
+      shows_completed: completedResult.data?.total_shows || 0,
+      achievements_count: achievementsResult.count || 0,
+      followers_count: followersResult.count || 0,
+      following_count: followingResult.count || 0,
     };
+
+    // Cache for 30 minutes
+    cacheSet(statsCacheKey, stats, TTL.LONG).catch(() => {});
+
+    return { success: true, stats };
   } catch (error) {
     console.error("[Public Profiles] Error in getPublicStats:", error);
     return { success: false, error: "Failed to fetch stats" };
@@ -216,6 +237,17 @@ export async function getPublicCollections(
       }
     }
 
+    // Try cache for public collections (only cache first 5 pages)
+    const canUseCache = page <= 5;
+    const collectionsCacheKey = cacheKey(CACHE_KEYS.USER_PUBLIC_COLLECTIONS, userId, page, limit);
+
+    if (canUseCache) {
+      const cached = await cacheGet<{ collections: PublicCollection[]; hasMore: boolean }>(collectionsCacheKey);
+      if (cached) {
+        return { success: true, collections: cached.collections, hasMore: cached.hasMore };
+      }
+    }
+
     const offset = (page - 1) * limit;
 
     // Get public collections
@@ -232,7 +264,7 @@ export async function getPublicCollections(
       return { success: false, error: error.message };
     }
 
-    // Get item counts for each collection
+    // Get item counts for each collection in parallel
     const collectionsWithCounts: PublicCollection[] = await Promise.all(
       (collections || []).map(async (collection) => {
         const { count } = await supabase
@@ -247,10 +279,17 @@ export async function getPublicCollections(
       })
     );
 
+    const hasMore = (collections?.length || 0) === limit + 1;
+
+    // Cache for 15 minutes
+    if (canUseCache && collectionsWithCounts.length > 0) {
+      cacheSet(collectionsCacheKey, { collections: collectionsWithCounts, hasMore }, TTL.MEDIUM).catch(() => {});
+    }
+
     return {
       success: true,
       collections: collectionsWithCounts,
-      hasMore: (collections?.length || 0) === limit + 1,
+      hasMore,
     };
   } catch (error) {
     console.error("[Public Profiles] Error in getPublicCollections:", error);
@@ -292,41 +331,59 @@ export async function getPublicActivity(
       }
     }
 
-    const offset = (page - 1) * limit;
+    // Try cache for first 3 pages (activity changes more frequently)
+    const canUseCache = page <= 3;
+    const activityCacheKey = cacheKey(CACHE_KEYS.USER_PUBLIC_ACTIVITY, userId, page, limit);
 
-    // Get activities
-    const { data: activities, error } = await supabase
-      .from("activity_feed")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit);
-
-    if (error) {
-      console.error("[Public Profiles] Error fetching activity:", error);
-      return { success: false, error: error.message };
+    if (canUseCache) {
+      const cached = await cacheGet<{ activities: any[]; hasMore: boolean }>(activityCacheKey);
+      if (cached) {
+        return { success: true, activities: cached.activities, hasMore: cached.hasMore };
+      }
     }
 
-    // Get user data
-    const { data: user } = await supabase
-      .from("profiles")
-      .select("id, username, avatar_path")
-      .eq("id", userId)
-      .single();
+    const offset = (page - 1) * limit;
 
-    const activitiesWithUser = (activities || []).map((activity) => ({
+    // Get activities and user data in parallel
+    const [activitiesResult, userResult] = await Promise.all([
+      supabase
+        .from("activity_feed")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit),
+      supabase
+        .from("profiles")
+        .select("id, username, avatar_path")
+        .eq("id", userId)
+        .single(),
+    ]);
+
+    if (activitiesResult.error) {
+      console.error("[Public Profiles] Error fetching activity:", activitiesResult.error);
+      return { success: false, error: activitiesResult.error.message };
+    }
+
+    const activitiesWithUser = (activitiesResult.data || []).map((activity) => ({
       ...activity,
-      user: user || {
+      user: userResult.data || {
         id: userId,
         username: "Unknown User",
         avatar_path: null,
       },
     }));
 
+    const hasMore = (activitiesResult.data?.length || 0) === limit + 1;
+
+    // Cache for 5 minutes (activity changes more frequently)
+    if (canUseCache && activitiesWithUser.length > 0) {
+      cacheSet(activityCacheKey, { activities: activitiesWithUser, hasMore }, TTL.SHORT).catch(() => {});
+    }
+
     return {
       success: true,
       activities: activitiesWithUser,
-      hasMore: (activities?.length || 0) === limit + 1,
+      hasMore,
     };
   } catch (error) {
     console.error("[Public Profiles] Error in getPublicActivity:", error);
@@ -345,6 +402,13 @@ export async function getPublicAchievements(
   error?: string;
 }> {
   try {
+    // Try cache first
+    const achievementsCacheKey = cacheKey(CACHE_KEYS.USER_PUBLIC_ACHIEVEMENTS, userId);
+    const cached = await cacheGet<any[]>(achievementsCacheKey);
+    if (cached) {
+      return { success: true, achievements: cached };
+    }
+
     const supabase = await createClient();
 
     // Get user's achievements
@@ -377,6 +441,9 @@ export async function getPublicAchievements(
       ...ua,
       achievement: definitionMap.get(ua.achievement_id),
     }));
+
+    // Cache for 30 minutes
+    cacheSet(achievementsCacheKey, achievementsWithDefinitions, TTL.LONG).catch(() => {});
 
     return { success: true, achievements: achievementsWithDefinitions };
   } catch (error) {
