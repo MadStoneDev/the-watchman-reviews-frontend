@@ -924,6 +924,7 @@ export type Database = {
           updated_at: string | null
           is_seen: boolean | null
           reaction: string | null
+          media_id: string | null
         }
         Insert: {
           id?: string
@@ -934,6 +935,7 @@ export type Database = {
           updated_at?: string | null
           is_seen?: boolean | null
           reaction?: string | null
+          media_id?: string | null
         }
         Update: {
           id?: string
@@ -944,6 +946,7 @@ export type Database = {
           updated_at?: string | null
           is_seen?: boolean | null
           reaction?: string | null
+          media_id?: string | null
         }
         Relationships: []
       }
