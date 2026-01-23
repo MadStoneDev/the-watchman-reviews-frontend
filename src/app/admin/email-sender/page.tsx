@@ -36,12 +36,14 @@ export default async function AdminEmailSenderPage() {
   // Get previous sent emails for history
   const { data: sentEmails } = await supabase
     .from("sent_emails")
-    .select("id, subject, recipient_type, recipient_count, sent_at, greeting, message, sign_off, founder_name, cta_text, cta_url, changelog")
+    .select(
+      "id, subject, recipient_type, recipient_count, sent_at, greeting, message, sign_off, founder_name, cta_text, cta_url, changelog",
+    )
     .order("sent_at", { ascending: false })
     .limit(20);
 
   return (
-    <section className="mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out">
+    <section className="m-3 lg:m-6 transition-all duration-300 ease-in-out">
       <h1 className="mb-2 text-2xl sm:text-3xl md:text-4xl font-bold">
         Email Sender
       </h1>

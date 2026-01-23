@@ -169,9 +169,9 @@ export async function POST(request: NextRequest) {
           errors.push(`${recipient.username}: ${result.error}`);
         }
 
-        // Small delay to avoid rate limiting
+        // Delay to avoid rate limiting
         if (recipients.length > 1) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 600));
         }
       } catch (error) {
         errors.push(
