@@ -779,6 +779,54 @@ export type Database = {
         }
         Relationships: []
       }
+      sent_emails: {
+        Row: {
+          id: string
+          subject: string
+          greeting: string | null
+          message: string
+          sign_off: string | null
+          founder_name: string | null
+          cta_text: string | null
+          cta_url: string | null
+          changelog: Json | null
+          recipient_type: string
+          recipient_count: number
+          sent_by: string | null
+          sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          subject: string
+          greeting?: string | null
+          message: string
+          sign_off?: string | null
+          founder_name?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          changelog?: Json | null
+          recipient_type: string
+          recipient_count: number
+          sent_by?: string | null
+          sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          subject?: string
+          greeting?: string | null
+          message?: string
+          sign_off?: string | null
+          founder_name?: string | null
+          cta_text?: string | null
+          cta_url?: string | null
+          changelog?: Json | null
+          recipient_type?: string
+          recipient_count?: number
+          sent_by?: string | null
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
       series: {
         Row: {
           id: string

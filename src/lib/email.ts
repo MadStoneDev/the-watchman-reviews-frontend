@@ -1,8 +1,16 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const EMAIL_FROM =
+  process.env.EMAIL_FROM || "JustReel <notifications@justreel.app>";
 
-const EMAIL_FROM = process.env.EMAIL_FROM || "JustReel <notifications@justreel.app>";
+// Lazy-initialize Resend client to avoid errors when importing template utilities
+let resend: Resend | null = null;
+function getResendClient(): Resend {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 export interface SendEmailOptions {
   to: string;
@@ -21,7 +29,7 @@ export async function sendEmail({
   text,
 }: SendEmailOptions): Promise<{ success: boolean; error?: string }> {
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: EMAIL_FROM,
       to,
       subject,
@@ -63,13 +71,13 @@ export function wrapEmailTemplate(content: string): string {
                 border-radius: 0;
             }
             .ms-content-body {
-                padding: 30px !important;
+                padding: 20px !important;
             }
         }
     </style>
 </head>
 <body style="font-family:'Outfit', Helvetica, Arial, sans-serif; width: 100% !important; height: 100%; margin: 0; padding: 0; -webkit-text-size-adjust: none; background-color: #171717; color: #FAFAFA;">
-    <table class="ms-body" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;background-color:#171717;width:100%;margin:0;padding:0;">
+    <table class="ms-body" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;background-color:#171717;width:100%;margin:0 20px;padding:0;">
         <tr>
             <td align="center" style="word-break:break-word;font-family:'Outfit', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;">
                 <table class="ms-container" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0;padding:0;">
@@ -86,9 +94,9 @@ export function wrapEmailTemplate(content: string): string {
                     </tr>
                     <tr>
                         <td align="center" style="word-break:break-word;font-family:'Outfit', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;">
-                            <table class="ms-content" width="640" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;width:640px;margin:0 auto;padding:0;background-color:#262626;border-radius:6px;box-shadow:0 3px 6px 0 rgba(0,0,0,.05);">
+                            <table class="ms-content" width="640" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;width:640px;margin:0 auto;padding:0;background-color:#262626;border-radius:12px;box-shadow:0 3px 6px 0 rgba(0,0,0,.05);">
                                 <tr>
-                                    <td class="ms-content-body" style="word-break:break-word;font-family:'Outfit', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;padding:40px 50px;">
+                                    <td class="ms-content-body" style="word-break:break-word;font-family:'Outfit', Helvetica, Arial, sans-serif;font-size:16px;line-height:24px;padding:30px 30px;">
                                         ${content}
                                     </td>
                                 </tr>
@@ -128,7 +136,7 @@ export function emailButton(text: string, href: string): string {
     <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse;">
         <tr>
             <td align="center" style="padding:20px 0;">
-                <a href="${href}" style="display:inline-block;background-color:#B4D429;color:#171717;font-weight:600;text-decoration:none;padding:14px 32px;border-radius:6px;font-size:16px;">${text}</a>
+                <a href="${href}" style="display:inline-block;background-color:#B4D429;color:#171717;font-weight:600;text-decoration:none;padding:14px 32px;border-radius:12px;font-size:16px;">${text}</a>
             </td>
         </tr>
     </table>
@@ -163,13 +171,13 @@ export function emailDivider(): string {
   return `
     <table width="100%" style="border-collapse:collapse;">
         <tr>
-            <td height="20" style="font-size:0px;line-height:0px;">&nbsp;</td>
+            <td height="12" style="font-size:0px;line-height:0px;">&nbsp;</td>
         </tr>
         <tr>
             <td height="1" style="font-size:0px;line-height:0px;border-top:1px solid #444;">&nbsp;</td>
         </tr>
         <tr>
-            <td height="20" style="font-size:0px;line-height:0px;">&nbsp;</td>
+            <td height="12" style="font-size:0px;line-height:0px;">&nbsp;</td>
         </tr>
     </table>
   `;

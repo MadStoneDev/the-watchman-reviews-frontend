@@ -15,6 +15,13 @@ interface TrendingItem {
   media_type: "movie" | "series";
 }
 
+interface MostWatchedShow {
+  title: string;
+  poster_path: string | null;
+  db_id: string;
+  episodeCount: number;
+}
+
 interface WeeklyDigestEmailProps {
   username: string;
   trendingMovies: TrendingItem[];
@@ -22,37 +29,59 @@ interface WeeklyDigestEmailProps {
   weeklyStats?: {
     episodesWatched: number;
     showsCompleted: number;
+    mostWatchedShow?: MostWatchedShow | null;
   };
 }
 
-function trendingItemCard(item: TrendingItem, index: number): string {
+function trendingGridCard(item: TrendingItem): string {
   const posterUrl = item.poster_path
-    ? `https://image.tmdb.org/t/p/w92${item.poster_path}`
+    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
     : "https://justreel.app/placeholder-poster.png";
 
-  const itemUrl = item.media_type === "movie"
-    ? `https://justreel.app/movie/${item.db_id}`
-    : `https://justreel.app/series/${item.db_id}`;
+  const itemUrl =
+    item.media_type === "movie"
+      ? `https://justreel.app/movie/${item.db_id}`
+      : `https://justreel.app/series/${item.db_id}`;
 
   return `
-    <tr>
-      <td style="padding:8px 0;">
-        <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">
+    <td style="width:50%;padding:6px;vertical-align:top;">
+      <a href="${itemUrl}" style="text-decoration:none;display:block;">
+        <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;background:#171717;border-radius:24px;overflow:hidden;">
           <tr>
-            <td style="width:30px;color:#B4D429;font-weight:600;font-size:16px;vertical-align:middle;">
-              ${index + 1}.
+            <td style="padding:0;">
+              <img src="${posterUrl}" alt="${item.title}" width="100%" height="auto" style="display:block;border-radius:24px 24px 0 0;aspect-ratio:2/3;object-fit:cover;" />
             </td>
-            <td style="width:46px;vertical-align:middle;">
-              <img src="${posterUrl}" alt="${item.title}" width="46" height="69" style="border-radius:4px;display:block;" />
-            </td>
-            <td style="padding-left:12px;vertical-align:middle;">
-              <a href="${itemUrl}" style="color:#FAFAFA;font-weight:500;text-decoration:none;font-size:14px;line-height:20px;">${item.title}</a>
-              ${item.release_year ? `<div style="color:#666;font-size:12px;">${item.release_year}</div>` : ""}
+          </tr>
+          <tr>
+            <td style="padding:18px 24px 14px;">
+              <div style="color:#FAFAFA;font-weight:600;font-size:13px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.title}</div>
+              ${item.release_year ? `<div style="color:#737373;font-size:11px;margin-top:-3px;">${item.release_year}</div>` : ""}
             </td>
           </tr>
         </table>
-      </td>
-    </tr>
+      </a>
+    </td>
+  `;
+}
+
+function trendingGrid(items: TrendingItem[]): string {
+  const topFour = items.slice(0, 4);
+  if (topFour.length === 0) return "";
+
+  const row1 = topFour.slice(0, 2);
+  const row2 = topFour.slice(2, 4);
+
+  return `
+    <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:8px;">
+      <tr>
+        ${row1.map((item) => trendingGridCard(item)).join("")}
+      </tr>
+      ${
+        row2.length > 0
+          ? `<tr>${row2.map((item) => trendingGridCard(item)).join("")}</tr>`
+          : ""
+      }
+    </table>
   `;
 }
 
@@ -62,65 +91,88 @@ export function weeklyDigestEmail({
   trendingSeries,
   weeklyStats,
 }: WeeklyDigestEmailProps): { subject: string; html: string } {
-  const moviesList = trendingMovies
-    .slice(0, 5)
-    .map((item, i) => trendingItemCard(item, i))
-    .join("");
+  const hasActivity =
+    weeklyStats &&
+    (weeklyStats.episodesWatched > 0 || weeklyStats.showsCompleted > 0);
 
-  const seriesList = trendingSeries
-    .slice(0, 5)
-    .map((item, i) => trendingItemCard(item, i))
-    .join("");
+  const mostWatched = weeklyStats?.mostWatchedShow;
+  const mostWatchedPoster = mostWatched?.poster_path
+    ? `https://image.tmdb.org/t/p/w92${mostWatched.poster_path}`
+    : null;
 
-  const statsSection = weeklyStats && (weeklyStats.episodesWatched > 0 || weeklyStats.showsCompleted > 0)
+  const statsSection = hasActivity
     ? `
-      ${emailDivider()}
-      <h2 style="color:#FAFAFA;font-size:18px;font-weight:600;margin:0 0 16px 0;">Your Week in Numbers</h2>
-      <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:20px;">
+      <h2 style="color:#FAFAFA;font-size:18px;font-weight:600;margin:0 0 16px 0;">📊 Your Week in Numbers</h2>
+      <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:12px;">
         <tr>
-          <td style="background:#171717;border-radius:8px;padding:20px;text-align:center;width:50%;">
-            <div style="color:#B4D429;font-size:32px;font-weight:700;">${weeklyStats.episodesWatched}</div>
-            <div style="color:#A3A3A3;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Episodes Watched</div>
+          <td style="background:linear-gradient(135deg,#1a1a1a 0%,#171717 100%);border:1px solid #262626;border-radius:12px;padding:20px;text-align:center;width:50%;">
+            <div style="color:#B4D429;font-size:36px;font-weight:700;line-height:1;">${weeklyStats!.episodesWatched}</div>
+            <div style="color:#A3A3A3;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:6px;">Episodes</div>
           </td>
-          <td style="width:16px;"></td>
-          <td style="background:#171717;border-radius:8px;padding:20px;text-align:center;width:50%;">
-            <div style="color:#B4D429;font-size:32px;font-weight:700;">${weeklyStats.showsCompleted}</div>
-            <div style="color:#A3A3A3;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Shows Completed</div>
+          <td style="min-width:12px;">&nbsp;</td>
+          <td style="background:linear-gradient(135deg,#1a1a1a 0%,#171717 100%);border:1px solid #262626;border-radius:12px;padding:20px;text-align:center;width:50%;">
+            <div style="color:#B4D429;font-size:36px;font-weight:700;line-height:1;">${weeklyStats!.showsCompleted}</div>
+            <div style="color:#A3A3A3;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:6px;">Shows Completed</div>
           </td>
         </tr>
       </table>
+      ${
+        mostWatched
+          ? `
+        <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:24px;">
+          <tr>
+            <td style="background:#171717;border:1px solid #262626;border-radius:12px;padding:16px;">
+              <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">
+                <tr>
+                  ${
+                    mostWatchedPoster
+                      ? `<td style="width:60px;vertical-align:middle;">
+                      <img src="${mostWatchedPoster}" alt="${mostWatched.title}" width="60" height="90" style="border-radius:12px;display:block;" />
+                    </td>`
+                      : ""
+                  }
+                  <td style="padding-left:${mostWatchedPoster ? "14px" : "0"};vertical-align:middle;">
+                    <div style="color:#737373;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">🔥 Most Watched This Week</div>
+                    <a href="https://justreel.app/series/${mostWatched.db_id}" style="color:#FAFAFA;font-weight:600;font-size:16px;text-decoration:none;line-height:22px;">${mostWatched.title}</a>
+                    <div style="color:#B4D429;font-size:13px;margin-top:4px;">${mostWatched.episodeCount} episode${mostWatched.episodeCount !== 1 ? "s" : ""} watched</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      `
+          : ""
+      }
+      ${emailDivider()}
     `
     : "";
 
   const content = `
-    ${emailHeading(`Your Week in Just Reel`)}
-    ${emailParagraph(`Hey ${emailAccent(username)}, here's what's trending this week plus a recap of your activity.`)}
-
-    ${emailDivider()}
-
-    <h2 style="color:#FAFAFA;font-size:18px;font-weight:600;margin:0 0 16px 0;">Trending Movies</h2>
-    <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:20px;">
-      ${moviesList}
-    </table>
-
-    ${emailDivider()}
-
-    <h2 style="color:#FAFAFA;font-size:18px;font-weight:600;margin:0 0 16px 0;">Trending TV Shows</h2>
-    <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin-bottom:20px;">
-      ${seriesList}
-    </table>
+    ${emailHeading(`Hey ${username}🍿`)}
+    ${emailParagraph(`Here's your weekly recap and what everyone's watching right now.`)}
 
     ${statsSection}
 
-    ${emailButton("Explore More", "https://justreel.app/discover")}
+    <h2 style="color:#FAFAFA;font-size:18px;font-weight:600;margin:0 0 16px 0;">🎬 Trending Movies this Week</h2>
+    ${trendingGrid(trendingMovies)}
 
-    <p style="color:#666;font-size:12px;text-align:center;margin-top:20px;">
-      See you next Friday!
+    ${emailDivider()}
+
+    <h2 style="color:#FAFAFA;font-size:18px;font-weight:600;margin:0 0 16px 0;">📺 Trending TV Shows this Week</h2>
+    ${trendingGrid(trendingSeries)}
+
+    <div style="text-align:center;margin-top:28px;">
+      ${emailButton("Discover More", "https://justreel.app/discover")}
+    </div>
+
+    <p style="color:#525252;font-size:16px;text-align:center;margin-top:28px;">
+      See you next week! 🍿
     </p>
   `;
 
   return {
-    subject: `Your Week in Just Reel - ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+    subject: `${username}, here's your weekly recap 🎬`,
     html: wrapEmailTemplate(content),
   };
 }
