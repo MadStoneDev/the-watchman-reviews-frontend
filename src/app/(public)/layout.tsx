@@ -43,14 +43,16 @@ export default async function PublicLayout({
       />
 
       {/* Spacing */}
-      <div className={`md:min-w-62.5 min-h-17.5`}></div>
+      <div className={`md:min-w-62.5 min-h-25.5`}></div>
 
       <main
-        className={`grow relative flex flex-col w-full max-w-500 overflow-x-hidden transition-all duration-300 ease-in-out`}
+        className={`grow relative flex flex-col h-full max-h-dvh w-full max-w-500 overflow-x-hidden transition-all duration-300 ease-in-out`}
       >
-        <div className={`grow`}>{children}</div>
+        <div className={`grow pb-4 overflow-y-auto`}>{children}</div>
 
-        <MainFooter />
+        <section className={`hidden md:block`}>
+          <MainFooter />
+        </section>
       </main>
 
       <section className={`block md:hidden p-5 origin-left w-fit scale-75`}>

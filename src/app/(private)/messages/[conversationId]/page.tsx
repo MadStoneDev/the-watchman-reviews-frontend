@@ -39,18 +39,7 @@ export default async function ConversationPage({
   const messages = messagesResult.messages || [];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] lg:h-[calc(100vh-120px)]">
-      {/* Back button */}
-      <div className="shrink-0 mb-4">
-        <Link
-          href="/messages"
-          className="inline-flex items-center gap-2 text-neutral-400 hover:text-white transition-colors"
-        >
-          <IconArrowLeft size={20} />
-          <span>Back to messages</span>
-        </Link>
-      </div>
-
+    <div className="flex flex-col h-full">
       {/* Conversation thread */}
       <div className="flex-grow bg-neutral-900 rounded-xl overflow-hidden">
         <ConversationThread

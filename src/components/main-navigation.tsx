@@ -181,6 +181,10 @@ export default function MainNavigation({
           )}
         </article>
       </section>
+
+      <section className={`lg:hidden`}>
+        <MainFooter />
+      </section>
     </nav>
   );
 }

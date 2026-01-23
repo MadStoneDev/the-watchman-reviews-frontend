@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { IconLoader2 } from "@tabler/icons-react";
+import { IconArrowLeft, IconLoader2 } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/src/utils/supabase/client";
 import MessageInput from "./message-input";
@@ -35,7 +35,7 @@ export default function ConversationThread({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const otherUser = conversation.participants.find(
-    (p) => p.user_id !== currentUserId
+    (p) => p.user_id !== currentUserId,
   );
 
   useEffect(() => {
@@ -89,7 +89,9 @@ export default function ConversationThread({
 
   const getAvatarUrl = (avatarPath: string | null) => {
     if (avatarPath) {
-      const { data } = supabase.storage.from("avatars").getPublicUrl(avatarPath);
+      const { data } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(avatarPath);
       return data.publicUrl;
     }
     return null;
@@ -99,14 +101,20 @@ export default function ConversationThread({
     const date = new Date(dateString);
     const now = new Date();
     const diffDays = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     if (diffDays === 0) {
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } else if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: "short" }) + " " +
-        date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      return (
+        date.toLocaleDateString([], { weekday: "short" }) +
+        " " +
+        date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      );
     } else {
       return date.toLocaleDateString([], {
         month: "short",
@@ -131,33 +139,44 @@ export default function ConversationThread({
     <div className="flex flex-col h-full">
       {/* Header */}
       {otherUser && (
-        <div className="shrink-0 p-4 border-b border-neutral-700">
+        <div className="flex items-center gap-2 shrink-0 pb-4 border-b border-neutral-700">
+          {/* Back button */}
           <Link
-            href={`/${otherUser.user.username}`}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+            href="/messages"
+            className="inline-flex items-center gap-2 text-neutral-400 hover:text-white transition-colors"
+          >
+            <IconArrowLeft size={24} />
+          </Link>
+
+          <Link
+            href={`/u/${otherUser.user.username}`}
+            className="hover:opacity-80 transition-opacity"
           >
             {otherUser.user.avatar_path ? (
               <Image
                 src={getAvatarUrl(otherUser.user.avatar_path) || ""}
                 alt={otherUser.user.username}
-                width={40}
-                height={40}
-                className="rounded-full aspect-square object-cover"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-full aspect-square object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-lime-400 flex items-center justify-center text-neutral-900 text-lg font-bold">
+              <div className="w-8 h-8 rounded-full bg-lime-400 flex items-center justify-center text-neutral-900 text-sm font-bold">
                 {otherUser.user.username[0].toUpperCase()}
               </div>
             )}
-            <span className="font-medium text-white">
-              {otherUser.user.username}
-            </span>
           </Link>
+          <span className="font-medium text-white">
+            {otherUser.user.username}
+          </span>
         </div>
       )}
 
       {/* Messages */}
-      <div ref={containerRef} className="flex-grow overflow-y-auto p-4 space-y-4">
+      <div
+        ref={containerRef}
+        className="flex-grow overflow-y-auto pt-4 space-y-2.5"
+      >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-neutral-500">
             <p>No messages yet. Say hello!</p>
@@ -167,7 +186,8 @@ export default function ConversationThread({
             const isOwnMessage = message.sender_id === currentUserId;
             const showAvatar =
               !isOwnMessage &&
-              (index === 0 || messages[index - 1].sender_id !== message.sender_id);
+              (index === 0 ||
+                messages[index - 1].sender_id !== message.sender_id);
 
             return (
               <div
@@ -175,25 +195,27 @@ export default function ConversationThread({
                 className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`flex items-end gap-2 max-w-[75%] ${
+                  className={`flex items-start gap-3 max-w-[75%] ${
                     isOwnMessage ? "flex-row-reverse" : "flex-row"
                   }`}
                 >
                   {/* Avatar for other user's messages */}
                   {!isOwnMessage && (
-                    <div className="w-8 shrink-0">
+                    <div className="mt-1 w-10 shrink-0">
                       {showAvatar && (
-                        <Link href={`/${message.sender.username}`}>
+                        <Link href={`/u/${message.sender.username}`}>
                           {message.sender.avatar_path ? (
                             <Image
-                              src={getAvatarUrl(message.sender.avatar_path) || ""}
+                              src={
+                                getAvatarUrl(message.sender.avatar_path) || ""
+                              }
                               alt={message.sender.username}
-                              width={32}
-                              height={32}
+                              width={40}
+                              height={40}
                               className="rounded-full aspect-square object-cover"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-lime-400 flex items-center justify-center text-neutral-900 text-sm font-bold">
+                            <div className="w-10 h-10 rounded-full bg-lime-400 flex items-center justify-center text-neutral-900 text-base font-bold">
                               {message.sender.username[0].toUpperCase()}
                             </div>
                           )}
@@ -216,9 +238,9 @@ export default function ConversationThread({
                       </p>
                     </div>
                     <p
-                      className={`text-xs text-neutral-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity ${
-                        isOwnMessage ? "text-right" : "text-left"
-                      }`}
+                      className={`text-xs text-neutral-500 mt-1 opacity-0 group-hover:opacity-100 max-h-0 group-hover:max-h-40 transition-all ${
+                        isOwnMessage ? "text-right pr-2" : "text-left pl-2"
+                      } overflow-hidden`}
                     >
                       {formatMessageTime(message.created_at)}
                     </p>
@@ -238,7 +260,7 @@ export default function ConversationThread({
       </div>
 
       {/* Message input */}
-      <div className="shrink-0 p-4 border-t border-neutral-700">
+      <div className="shrink-0 py-4 border-t border-neutral-700">
         <MessageInput onSend={handleSendMessage} isLoading={isSending} />
       </div>
     </div>

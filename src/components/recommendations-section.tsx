@@ -249,7 +249,7 @@ export default function RecommendationsSection({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-stretch gap-2">
           {/* Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}

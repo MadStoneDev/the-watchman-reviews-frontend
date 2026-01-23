@@ -43,8 +43,8 @@ export default function MessageInput({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end gap-2">
-      <div className="flex-grow relative">
+    <form onSubmit={handleSubmit} className="flex items-center gap-2">
+      <div className="flex-grow relative p-2">
         <textarea
           ref={textareaRef}
           value={content}

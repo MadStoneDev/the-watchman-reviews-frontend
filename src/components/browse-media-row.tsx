@@ -38,14 +38,16 @@ export function BrowseMediaRow({
     if (linkType) {
       return linkType === "movie" ? `/movies/${item.id}` : `/series/${item.id}`;
     } else if (item.type) {
-        return item.type === "movie" ? `/movies/${item.id}` : `/series/${item.id}`;
+      return item.type === "movie"
+        ? `/movies/${item.id}`
+        : `/series/${item.id}`;
     } else {
-        return "";
+      return "";
     }
   };
 
   return (
-    <section className={`mt-24 flex flex-col`}>
+    <section className={`mt-12 flex flex-col`}>
       <h2 className={`max-w-60 text-base sm:lg md:text-xl font-semibold`}>
         {title}
       </h2>

@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <GoogleAnalytics gaId={"G-CTMZTR1EL5"} />
       <body
-        className={`${montserrat.variable} antialiased flex flex-col-reverse lg:flex-row min-h-dvh bg-neutral-900 text-neutral-50`}
+        className={`${montserrat.variable} antialiased flex flex-col-reverse lg:flex-row h-dvh bg-neutral-900 text-neutral-50`}
       >
         <ThemeProvider
           attribute="class"
