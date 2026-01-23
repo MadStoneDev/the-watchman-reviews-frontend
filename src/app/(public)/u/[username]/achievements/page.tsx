@@ -3,17 +3,21 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
-import { IconTrophy, IconMoodEmpty } from "@tabler/icons-react";
-import { formatDistanceToNow } from "date-fns";
+import { IconTrophy } from "@tabler/icons-react";
 import {
   getPublicProfile,
   getPublicStats,
-  getPublicAchievements,
 } from "@/src/app/actions/public-profiles";
+import {
+  getAchievementDefinitions,
+  getUserAchievements,
+  getAchievementStats,
+} from "@/src/app/actions/achievements";
 
 import PublicProfileHeader from "@/src/components/public-profile-header";
 import PrivateProfileNotice from "@/src/components/private-profile-notice";
-import AchievementBadge from "@/src/components/achievement-badge";
+import { AchievementGrid } from "@/src/components/achievement-badge";
+import AnimatedTabContent from "@/src/components/animated-tab-content";
 
 export async function generateMetadata({
   params,
@@ -64,8 +68,14 @@ export default async function PublicAchievementsPage({
     );
   }
 
-  const statsResult = await getPublicStats(profile.id);
-  const achievementsResult = await getPublicAchievements(profile.id);
+  // Fetch data in parallel
+  const [statsResult, definitionsResult, userAchievementsResult, achievementStatsResult] =
+    await Promise.all([
+      getPublicStats(profile.id),
+      getAchievementDefinitions(),
+      getUserAchievements(profile.id),
+      getAchievementStats(profile.id),
+    ]);
 
   const stats = statsResult.stats || {
     episodes_watched: 0,
@@ -76,30 +86,32 @@ export default async function PublicAchievementsPage({
     following_count: 0,
   };
 
-  const achievements = achievementsResult.achievements || [];
+  const definitions = definitionsResult.achievements || [];
+  const userAchievements = userAchievementsResult.achievements || [];
+  const achievementStats = achievementStatsResult.stats;
 
-  // Group achievements by category
-  const groupedAchievements = achievements.reduce(
-    (acc: Record<string, any[]>, achievement: any) => {
-      const category = achievement.achievement?.category || "other";
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(achievement);
-      return acc;
-    },
-    {}
+  // Create a map for easy lookup
+  const userAchievementsMap = new Map(
+    userAchievements.map((ua) => [ua.achievement_id, { unlocked_at: ua.unlocked_at }])
   );
+
+  // Group definitions by category
+  const categorizedAchievements = definitions.reduce((acc, def) => {
+    if (!acc[def.category]) {
+      acc[def.category] = [];
+    }
+    acc[def.category].push(def);
+    return acc;
+  }, {} as Record<string, typeof definitions>);
 
   const categoryLabels: Record<string, string> = {
     watching: "Watching",
     social: "Social",
     engagement: "Engagement",
     special: "Special",
-    other: "Other",
   };
 
-  const categoryOrder = ["watching", "social", "engagement", "special", "other"];
+  const categoryOrder = ["watching", "social", "engagement", "special"];
 
   return (
     <>
@@ -113,91 +125,77 @@ export default async function PublicAchievementsPage({
         />
       </section>
 
-      {/* Navigation tabs */}
+      {/* Navigation tabs - use profile.username for canonical URLs */}
       <nav className="mt-8 flex gap-4 border-b border-neutral-700 pb-4">
         <Link
-          href={`/u/${username}`}
+          href={`/u/${profile.username}`}
           className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors"
         >
           Activity
         </Link>
         <Link
-          href={`/u/${username}/collections`}
+          href={`/u/${profile.username}/collections`}
           className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors"
         >
           Collections
         </Link>
         <Link
-          href={`/u/${username}/achievements`}
+          href={`/u/${profile.username}/achievements`}
           className="px-4 py-2 rounded-lg bg-lime-400 text-neutral-900 font-medium"
         >
           Achievements
         </Link>
       </nav>
 
-      {/* Achievements */}
-      <section className="mt-8">
-        <h2 className="text-xl font-bold mb-4">
-          Achievements ({achievements.length})
-        </h2>
+      {/* Achievements Content */}
+      <AnimatedTabContent tabIndex={2}>
+        <section className="mt-8 mb-6">
+          <h2 className="text-2xl font-bold">{profile.username}'s Achievements</h2>
 
-        {achievements.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
-            <IconMoodEmpty size={48} className="mb-4" />
-            <p className="text-lg">No achievements yet</p>
-            <p className="text-sm mt-1">
-              This user hasn't unlocked any achievements
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {categoryOrder.map((category) => {
-              const categoryAchievements = groupedAchievements[category];
-              if (!categoryAchievements || categoryAchievements.length === 0) {
-                return null;
-              }
-
-              return (
-                <div key={category}>
-                  <h3 className="text-lg font-medium text-neutral-300 mb-4">
-                    {categoryLabels[category]}
-                  </h3>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {categoryAchievements.map((achievement: any) => (
-                      <div
-                        key={achievement.id}
-                        className="bg-neutral-800 rounded-xl p-4"
-                      >
-                        <div className="flex items-start gap-3">
-                          <AchievementBadge
-                            achievement={achievement.achievement}
-                            size="md"
-                          />
-                          <div className="min-w-0">
-                            <h4 className="font-medium text-white">
-                              {achievement.achievement?.name}
-                            </h4>
-                            <p className="text-sm text-neutral-400 mt-1">
-                              {achievement.achievement?.description}
-                            </p>
-                            <p className="text-xs text-neutral-500 mt-2">
-                              Unlocked{" "}
-                              {formatDistanceToNow(
-                                new Date(achievement.unlocked_at),
-                                { addSuffix: true }
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+          {/* Stats Summary */}
+          {achievementStats && (
+            <div className="mt-4 flex flex-wrap gap-4">
+              <div className="flex items-center gap-2 bg-neutral-800 rounded-lg px-4 py-2">
+                <IconTrophy size={20} className="text-amber-400" />
+                <span className="font-semibold">{achievementStats.unlocked}</span>
+                <span className="text-neutral-400">/ {achievementStats.total} Unlocked</span>
+              </div>
+              {Object.entries(achievementStats.byCategory).map(([category, data]) => (
+                <div
+                  key={category}
+                  className="flex items-center gap-2 bg-neutral-800/50 rounded-lg px-3 py-1.5 text-sm"
+                >
+                  <span className="text-neutral-400 capitalize">{category}:</span>
+                  <span className="font-medium">
+                    {data.unlocked}/{data.total}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Achievements by Category */}
+        <div className="space-y-8 pb-8">
+          {categoryOrder.map((category) => {
+            const achievements = categorizedAchievements[category];
+            if (!achievements || achievements.length === 0) return null;
+
+            return (
+              <section key={category}>
+                <h3 className="text-xl font-semibold mb-4 capitalize">
+                  {categoryLabels[category] || category}
+                </h3>
+                <AchievementGrid
+                  achievements={achievements}
+                  userAchievements={userAchievementsMap}
+                  showLocked={true}
+                />
+              </section>
+            );
+          })}
+        </div>
+      </AnimatedTabContent>
     </>
   );
 }

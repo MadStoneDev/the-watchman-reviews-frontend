@@ -1,7 +1,7 @@
 import React from "react";
-import { redirect, notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
-import { getNotifications, markAllAsRead } from "@/src/app/actions/notifications";
+import { getNotifications } from "@/src/app/actions/notifications";
 
 import BrowseNavigation from "@/src/components/browse-navigation";
 import NotificationsList from "@/src/components/notifications-list";
@@ -9,13 +9,10 @@ import NotificationsList from "@/src/components/notifications-list";
 export const revalidate = 0; // Always fresh
 
 export default async function NotificationsPage({
-  params,
   searchParams,
 }: {
-  params: Promise<{ username: string }>;
   searchParams: Promise<{ page?: string }>;
 }) {
-  const { username } = await params;
   const { page: pageParam } = await searchParams;
   const page = parseInt(pageParam || "1", 10);
 
@@ -28,20 +25,17 @@ export default async function NotificationsPage({
     redirect("/auth/portal");
   }
 
-  // Get profile for this username
+  const currentUserId = user.claims.sub;
+
+  // Get current user's profile
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .eq("username", username)
+    .eq("id", currentUserId)
     .single();
 
   if (profileError || !profile) {
-    notFound();
-  }
-
-  // Only the profile owner can view their notifications
-  if (profile.id !== user.claims.sub) {
-    redirect(`/${username}`);
+    redirect("/auth/portal");
   }
 
   // Get notifications
@@ -55,16 +49,16 @@ export default async function NotificationsPage({
     <>
       <BrowseNavigation
         items={[
-          { label: "Account", href: `/${username}` },
+          { label: "Account", href: "/me" },
           {
             label: "Collections",
-            href: `/${username}/collections`,
+            href: "/me/collections",
             textColor: "hover:text-indigo-500",
             bgColor: "bg-indigo-500",
           },
         ]}
         profileId={profile.id}
-        currentUserId={user.claims.sub}
+        currentUserId={currentUserId}
       />
 
       <section className="mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out">
@@ -87,7 +81,7 @@ export default async function NotificationsPage({
         initialUnreadCount={unreadCount}
         currentPage={page}
         totalPages={totalPages}
-        username={username}
+        username={profile.username}
       />
     </>
   );

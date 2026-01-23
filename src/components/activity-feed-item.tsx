@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   IconPlayerPlay,
   IconMovie,
@@ -20,6 +21,7 @@ interface ActivityFeedItemProps {
 
 export default function ActivityFeedItem({ activity }: ActivityFeedItemProps) {
   const supabase = createClient();
+  const router = useRouter();
 
   const getIcon = () => {
     switch (activity.activity_type) {
@@ -56,7 +58,7 @@ export default function ActivityFeedItem({ activity }: ActivityFeedItemProps) {
         return {
           action: "watched",
           detail: data.series_name
-            ? `${data.series_name} S${data.season_number}E${data.episode_number}`
+            ? `${data.series_name} S${data.season_number}E${data.episode_number}${data.episode_name ? ` "${data.episode_name}"` : ""}`
             : `Episode`,
         };
       case "series_started":
@@ -100,7 +102,7 @@ export default function ActivityFeedItem({ activity }: ActivityFeedItemProps) {
         }
         return null;
       case "achievement_unlocked":
-        return `/${activity.user.username}/achievements`;
+        return `/u/${activity.user.username}/achievements`;
       default:
         return null;
     }
@@ -128,10 +130,27 @@ export default function ActivityFeedItem({ activity }: ActivityFeedItemProps) {
     addSuffix: true,
   });
 
-  const content = (
-    <article className="group p-4 flex items-start gap-3 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 transition-colors">
+  const handleCardClick = () => {
+    if (link) {
+      router.push(link);
+    }
+  };
+
+  const handleLinkClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  return (
+    <article
+      className={`group p-4 flex items-start gap-3 rounded-lg bg-neutral-800/50 hover:bg-neutral-800 transition-colors ${link ? "cursor-pointer" : ""}`}
+      onClick={handleCardClick}
+    >
       {/* Avatar */}
-      <Link href={`/${activity.user.username}`} className="shrink-0">
+      <Link
+        href={`/u/${activity.user.username}`}
+        className="shrink-0"
+        onClick={handleLinkClick}
+      >
         {avatarUrl ? (
           <Image
             src={avatarUrl}
@@ -153,8 +172,9 @@ export default function ActivityFeedItem({ activity }: ActivityFeedItemProps) {
           <div className="flex-grow">
             <p className="text-sm">
               <Link
-                href={`/${activity.user.username}`}
+                href={`/u/${activity.user.username}`}
                 className="font-medium text-lime-400 hover:underline"
+                onClick={handleLinkClick}
               >
                 {activity.user.username}
               </Link>{" "}
@@ -195,10 +215,4 @@ export default function ActivityFeedItem({ activity }: ActivityFeedItemProps) {
       </div>
     </article>
   );
-
-  if (link) {
-    return <Link href={link}>{content}</Link>;
-  }
-
-  return content;
 }

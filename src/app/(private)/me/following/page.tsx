@@ -1,5 +1,5 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import { getFollowing } from "@/src/app/actions/follows";
 
@@ -8,14 +8,11 @@ import UserListItem from "@/src/components/user-list-item";
 
 export const revalidate = 60;
 
-export default async function FollowingPage({
-  params,
+export default async function MyFollowingPage({
   searchParams,
 }: {
-  params: Promise<{ username: string }>;
   searchParams: Promise<{ page?: string }>;
 }) {
-  const { username } = await params;
   const { page: pageParam } = await searchParams;
   const page = parseInt(pageParam || "1", 10);
   const limit = 20;
@@ -23,18 +20,23 @@ export default async function FollowingPage({
   const supabase = await createClient();
 
   // Get current user
-  const { data: user } = await supabase.auth.getClaims();
-  const currentUserId = user?.claims.sub || null;
+  const { data: user, error } = await supabase.auth.getClaims();
 
-  // Get profile for this username
+  if (error || !user) {
+    redirect("/auth/portal");
+  }
+
+  const currentUserId = user.claims.sub;
+
+  // Get current user's profile
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .eq("username", username)
+    .eq("id", currentUserId)
     .single();
 
   if (profileError || !profile) {
-    notFound();
+    redirect("/auth/portal");
   }
 
   // Get following
@@ -43,30 +45,28 @@ export default async function FollowingPage({
   const total = result.total || 0;
   const totalPages = Math.ceil(total / limit);
 
-  const isOwnProfile = currentUserId === profile.id;
-
   return (
     <>
       <BrowseNavigation
         items={[
           {
-            label: isOwnProfile ? "Account" : "Profile",
-            href: `/${profile.username}`,
+            label: "Account",
+            href: "/me",
           },
           {
             label: "Collections",
-            href: `/${profile.username}/collections`,
+            href: "/me/collections",
             textColor: "hover:text-indigo-500",
             bgColor: "bg-indigo-500",
           },
         ]}
         profileId={profile.id}
-        currentUserId={currentUserId || ""}
+        currentUserId={currentUserId}
       />
 
       <section className="mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out">
         <h1 className="max-w-3xl text-2xl sm:3xl md:text-4xl font-bold">
-          {isOwnProfile ? "Following" : `${username} is Following`}
+          Following
         </h1>
         <p className="text-neutral-400 mt-2">
           {total} {total === 1 ? "user" : "users"}
@@ -76,16 +76,14 @@ export default async function FollowingPage({
       <section className="space-y-1">
         {following.length === 0 ? (
           <div className="text-center py-12 text-neutral-500">
-            {isOwnProfile
-              ? "You're not following anyone yet."
-              : `${username} isn't following anyone yet.`}
+            You're not following anyone yet.
           </div>
         ) : (
-          following.map((user) => (
+          following.map((followedUser) => (
             <UserListItem
-              key={user.id}
-              user={user}
-              currentUserId={currentUserId || undefined}
+              key={followedUser.id}
+              user={followedUser}
+              currentUserId={currentUserId}
               showFollowButton={true}
             />
           ))
@@ -96,7 +94,7 @@ export default async function FollowingPage({
         <nav className="flex justify-center gap-2 mt-8 pb-8">
           {page > 1 && (
             <a
-              href={`/${username}/following?page=${page - 1}`}
+              href={`/me/following?page=${page - 1}`}
               className="px-4 py-2 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition-colors"
             >
               Previous
@@ -107,7 +105,7 @@ export default async function FollowingPage({
           </span>
           {page < totalPages && (
             <a
-              href={`/${username}/following?page=${page + 1}`}
+              href={`/me/following?page=${page + 1}`}
               className="px-4 py-2 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition-colors"
             >
               Next

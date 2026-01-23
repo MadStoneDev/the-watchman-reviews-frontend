@@ -12,6 +12,7 @@ import {
 
 import PublicProfileHeader from "@/src/components/public-profile-header";
 import PrivateProfileNotice from "@/src/components/private-profile-notice";
+import AnimatedTabContent from "@/src/components/animated-tab-content";
 
 export async function generateMetadata({
   params,
@@ -88,22 +89,22 @@ export default async function PublicCollectionsPage({
         />
       </section>
 
-      {/* Navigation tabs */}
+      {/* Navigation tabs - use profile.username for canonical URLs */}
       <nav className="mt-8 flex gap-4 border-b border-neutral-700 pb-4">
         <Link
-          href={`/u/${username}`}
+          href={`/u/${profile.username}`}
           className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors"
         >
           Activity
         </Link>
         <Link
-          href={`/u/${username}/collections`}
+          href={`/u/${profile.username}/collections`}
           className="px-4 py-2 rounded-lg bg-lime-400 text-neutral-900 font-medium"
         >
           Collections
         </Link>
         <Link
-          href={`/u/${username}/achievements`}
+          href={`/u/${profile.username}/achievements`}
           className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors"
         >
           Achievements
@@ -111,49 +112,64 @@ export default async function PublicCollectionsPage({
       </nav>
 
       {/* Collections */}
-      <section className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Public Collections</h2>
+      <AnimatedTabContent tabIndex={1}>
+        <section className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Public Collections</h2>
 
-        {collections.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
-            <IconMoodEmpty size={48} className="mb-4" />
-            <p className="text-lg">No public collections</p>
-            <p className="text-sm mt-1">
-              This user hasn't made any collections public yet
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {collections.map((collection) => (
-              <Link
-                key={collection.id}
-                href={`/collections/${collection.id}`}
-                className="block bg-neutral-800 rounded-xl p-4 hover:bg-neutral-700 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-indigo-500/20 flex items-center justify-center shrink-0">
-                    <IconFolder size={24} className="text-indigo-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-medium text-white truncate">
-                      {collection.name}
-                    </h3>
-                    {collection.description && (
-                      <p className="text-sm text-neutral-400 mt-1 line-clamp-2">
-                        {collection.description}
+          {collections.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
+              <IconMoodEmpty size={48} className="mb-4" />
+              <p className="text-lg">No public collections</p>
+              <p className="text-sm mt-1">
+                This user hasn't made any collections public yet
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {collections.map((collection) => (
+                <Link
+                  key={collection.id}
+                  href={`/collections/${collection.id}`}
+                  className="group relative block h-24 rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
+                >
+                  {/* Background Image */}
+                  {collection.backdrop_path ? (
+                    <div
+                      className="absolute inset-0 opacity-70 group-hover:opacity-90 transition-opacity"
+                      style={{
+                        backgroundImage: `url(https://image.tmdb.org/t/p/w780${collection.backdrop_path})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-neutral-800" />
+                  )}
+
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-neutral-900 via-neutral-900/60 to-transparent" />
+
+                  {/* Content */}
+                  <div className="relative z-10 flex items-center gap-3 h-full p-4">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-500/30 flex items-center justify-center shrink-0">
+                      <IconFolder size={20} className="text-indigo-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-white truncate">
+                        {collection.title}
+                      </h3>
+                      <p className="text-xs text-neutral-400 mt-1">
+                        {collection.item_count} item
+                        {collection.item_count !== 1 ? "s" : ""}
                       </p>
-                    )}
-                    <p className="text-xs text-neutral-500 mt-2">
-                      {collection.item_count} item
-                      {collection.item_count !== 1 ? "s" : ""}
-                    </p>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </AnimatedTabContent>
     </>
   );
 }

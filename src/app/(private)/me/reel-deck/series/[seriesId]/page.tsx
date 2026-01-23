@@ -1,4 +1,4 @@
-﻿import React, { Suspense } from "react";
+import React from "react";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,7 +17,6 @@ import ForceRefreshReelDeck from "@/src/components/force-refresh-reel-deck";
 
 interface SeriesProgressPageProps {
   params: Promise<{
-    username: string;
     seriesId: string;
   }>;
 }
@@ -25,7 +24,7 @@ interface SeriesProgressPageProps {
 export default async function SeriesProgressPage({
   params,
 }: SeriesProgressPageProps) {
-  const { username, seriesId } = await params;
+  const { seriesId } = await params;
   const supabase = await createClient();
 
   // Get current user
@@ -36,32 +35,15 @@ export default async function SeriesProgressPage({
     redirect("/auth/portal");
   }
 
-  // Get profile for the username in the URL - only needed fields
-  const { data: urlProfile } = await supabase
+  // Get current user's profile
+  const { data: profile } = await supabase
     .from("profiles")
     .select("id, username, role")
-    .eq("username", username)
+    .eq("id", currentUserId)
     .single();
 
-  if (!urlProfile) {
-    notFound();
-  }
-
-  // Check if this is the current user's profile
-  const isCurrentUser = currentUserId === urlProfile.id;
-
-  // Only allow users to view their own reel deck
-  if (!isCurrentUser) {
-    const { data: ownProfile } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", currentUserId)
-      .single();
-
-    if (ownProfile?.username) {
-      redirect(`/${ownProfile.username}/reel-deck`);
-    }
-    notFound();
+  if (!profile) {
+    redirect("/auth/portal");
   }
 
   // Get series data - only needed fields
@@ -133,23 +115,23 @@ export default async function SeriesProgressPage({
         items={[
           {
             label: "Account",
-            href: `/${username}`,
+            href: "/me",
           },
           {
             label: "Collections",
-            href: `/${username}/collections`,
+            href: "/me/collections",
             textColor: `hover:text-indigo-500`,
             bgColor: `bg-indigo-500`,
           },
         ]}
-        profileId={urlProfile.id}
+        profileId={profile.id}
         currentUserId={currentUserId}
       />
 
       <div className="mt-6 lg:mt-8 mb-6">
         {/* Back Button */}
         <Link
-          href={`/${username}/reel-deck`}
+          href="/me/reel-deck"
           className="inline-flex items-center gap-2 text-neutral-400 hover:text-lime-400 transition-colors mb-6"
         >
           <IconArrowLeft size={20} />
@@ -214,10 +196,10 @@ export default async function SeriesProgressPage({
               </Link>
 
               <div className={`mt-6 flex justify-end gap-2`}>
-                {urlProfile.role >= 10 && (
+                {profile.role >= 10 && (
                   <ForceRefreshReelDeck
                     userId={currentUserId}
-                    role={parseInt(urlProfile.role) || 0}
+                    role={parseInt(profile.role) || 0}
                     tmdbId={series.tmdb_id}
                     seriesId={seriesId}
                   />
@@ -226,7 +208,7 @@ export default async function SeriesProgressPage({
                 {user && (
                   <RemoveFromReelDeckButton
                     userId={currentUserId}
-                    username={username}
+                    username="me"
                     seriesId={seriesId}
                   />
                 )}
@@ -242,7 +224,7 @@ export default async function SeriesProgressPage({
             seasons={seasonsForTracker}
             seriesId={seriesId}
             userId={currentUserId}
-            username={username}
+            username="me"
             initialWatchedIds={Array.from(watchedEpisodeIds)}
             initialWatchCycle={watchCycle}
           />

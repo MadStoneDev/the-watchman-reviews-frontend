@@ -1,5 +1,5 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import {
   getAchievementDefinitions,
@@ -14,37 +14,31 @@ import { IconTrophy } from "@tabler/icons-react";
 
 export const revalidate = 60;
 
-export default async function AchievementsPage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
-  const { username } = await params;
-
+export default async function MyAchievementsPage() {
   const supabase = await createClient();
 
   // Get current user
-  const { data: user } = await supabase.auth.getClaims();
-  const currentUserId = user?.claims.sub || null;
+  const { data: user, error } = await supabase.auth.getClaims();
 
-  // Get profile for this username
+  if (error || !user) {
+    redirect("/auth/portal");
+  }
+
+  const currentUserId = user.claims.sub;
+
+  // Get current user's profile
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .eq("username", username)
+    .eq("id", currentUserId)
     .single();
 
   if (profileError || !profile) {
-    notFound();
+    redirect("/auth/portal");
   }
 
-  const isOwnProfile = currentUserId === profile.id;
-
-  // Backfill achievements for the current user (checks existing activity and awards any earned achievements)
-  // This ensures users who had activity before achievements were implemented get credit
-  if (isOwnProfile && currentUserId) {
-    await backfillUserAchievements(currentUserId);
-  }
+  // Backfill achievements for the current user
+  await backfillUserAchievements(currentUserId);
 
   // Fetch achievements data
   const [definitionsResult, userAchievementsResult, statsResult] = await Promise.all([
@@ -85,23 +79,23 @@ export default async function AchievementsPage({
       <BrowseNavigation
         items={[
           {
-            label: isOwnProfile ? "Account" : "Profile",
-            href: `/${profile.username}`,
+            label: "Account",
+            href: "/me",
           },
           {
             label: "Collections",
-            href: `/${profile.username}/collections`,
+            href: "/me/collections",
             textColor: "hover:text-indigo-500",
             bgColor: "bg-indigo-500",
           },
         ]}
         profileId={profile.id}
-        currentUserId={currentUserId || ""}
+        currentUserId={currentUserId}
       />
 
       <section className="mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out">
         <h1 className="text-2xl sm:3xl md:text-4xl font-bold">
-          {isOwnProfile ? "My Achievements" : `${username}'s Achievements`}
+          My Achievements
         </h1>
 
         {/* Stats Summary */}

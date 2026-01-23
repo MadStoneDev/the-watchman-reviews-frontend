@@ -35,7 +35,7 @@ export default function NotificationBell({
 
   return (
     <Link
-      href={`/${username}/notifications`}
+      href={`/me/notifications`}
       className={`flex items-center gap-6 max-w-fit ${
         pathname && pathname.includes(`notifications`)
           ? "text-lime-400"

@@ -36,12 +36,11 @@ export interface PublicStats {
 
 export interface PublicCollection {
   id: string;
-  name: string;
-  description: string | null;
+  title: string;
   is_public: boolean;
   item_count: number;
   created_at: string;
-  updated_at: string;
+  backdrop_path?: string | null;
 }
 
 /**
@@ -60,11 +59,11 @@ export async function getPublicProfile(
   try {
     const supabase = await createClient();
 
-    // Get the profile
+    // Get the profile (case-insensitive lookup)
     const { data: profile, error } = await supabase
       .from("profiles")
       .select("id, username, avatar_path, created_at, settings")
-      .eq("username", username)
+      .ilike("username", username)
       .single();
 
     if (error || !profile) {
@@ -182,6 +181,14 @@ export async function getPublicStats(
         .eq("follower_id", userId),
     ]);
 
+    // Log any RLS errors for debugging
+    if (episodesResult.error) {
+      console.error("[Public Profiles] Error fetching episodes:", episodesResult.error);
+    }
+    if (showsResult.error) {
+      console.error("[Public Profiles] Error fetching shows:", showsResult.error);
+    }
+
     const uniqueShows = new Set(showsResult.data?.map((s) => s.series_id) || []);
 
     const stats: PublicStats = {
@@ -253,10 +260,10 @@ export async function getPublicCollections(
     // Get public collections
     const { data: collections, error } = await supabase
       .from("collections")
-      .select("id, name, description, is_public, created_at, updated_at")
+      .select("id, title, is_public, created_at")
       .eq("owner", userId)
       .eq("is_public", true)
-      .order("updated_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .range(offset, offset + limit);
 
     if (error) {
@@ -264,17 +271,50 @@ export async function getPublicCollections(
       return { success: false, error: error.message };
     }
 
-    // Get item counts for each collection in parallel
-    const collectionsWithCounts: PublicCollection[] = await Promise.all(
+    // Get item counts and first media for backdrop for each collection
+    const collectionsWithDetails: PublicCollection[] = await Promise.all(
       (collections || []).map(async (collection) => {
-        const { count } = await supabase
-          .from("collection_items")
-          .select("*", { count: "exact", head: true })
-          .eq("collection_id", collection.id);
+        // Get count and first item in parallel
+        const [countResult, firstItemResult] = await Promise.all([
+          supabase
+            .from("medias_collections")
+            .select("*", { count: "exact", head: true })
+            .eq("collection_id", collection.id),
+          supabase
+            .from("medias_collections")
+            .select("media_id, media_type")
+            .eq("collection_id", collection.id)
+            .limit(1)
+            .single(),
+        ]);
+
+        let backdrop_path: string | null = null;
+
+        // Fetch backdrop from the first media item
+        if (firstItemResult.data) {
+          const { media_id, media_type } = firstItemResult.data;
+
+          if (media_type === "movie") {
+            const { data: movie } = await supabase
+              .from("movies")
+              .select("backdrop_path")
+              .eq("id", media_id)
+              .single();
+            backdrop_path = movie?.backdrop_path || null;
+          } else if (media_type === "tv") {
+            const { data: series } = await supabase
+              .from("series")
+              .select("backdrop_path")
+              .eq("id", media_id)
+              .single();
+            backdrop_path = series?.backdrop_path || null;
+          }
+        }
 
         return {
           ...collection,
-          item_count: count || 0,
+          item_count: countResult.count || 0,
+          backdrop_path,
         };
       })
     );
@@ -282,13 +322,13 @@ export async function getPublicCollections(
     const hasMore = (collections?.length || 0) === limit + 1;
 
     // Cache for 15 minutes
-    if (canUseCache && collectionsWithCounts.length > 0) {
-      cacheSet(collectionsCacheKey, { collections: collectionsWithCounts, hasMore }, TTL.MEDIUM).catch(() => {});
+    if (canUseCache && collectionsWithDetails.length > 0) {
+      cacheSet(collectionsCacheKey, { collections: collectionsWithDetails, hasMore }, TTL.MEDIUM).catch(() => {});
     }
 
     return {
       success: true,
-      collections: collectionsWithCounts,
+      collections: collectionsWithDetails,
       hasMore,
     };
   } catch (error) {

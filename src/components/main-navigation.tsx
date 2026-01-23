@@ -80,7 +80,7 @@ export default function MainNavigation({
 
           {profile && (
             <Link
-              href={`/${profile?.username}/reel-deck`}
+              href={`/me/reel-deck`}
               className={`flex gap-6 max-w-fit ${
                 pathname.includes(`reel-deck`)
                   ? "text-lime-400"
@@ -93,39 +93,38 @@ export default function MainNavigation({
           )}
 
           {profile && (
-              <NotificationBell username={profile.username} pathname={pathname || ""} />
+            <NotificationBell
+              username={profile.username}
+              pathname={pathname || ""}
+            />
           )}
 
-          {profile && (
-              <MessagesBell pathname={pathname || ""} />
-          )}
+          {profile && <MessagesBell pathname={pathname || ""} />}
 
           <article className={`flex lg:hidden items-center gap-2 lg:w-full`}>
             {isUser ? (
-                <div
-                    className={`grow flex flex-row-reverse items-center gap-2`}
-                >
-                  <Link
-                      href={"/me"}
-                      className={`grow p-2 flex items-center justify-center gap-2 rounded-lg ${
-                          profile?.username && pathname.includes(profile?.username)
-                              ? "bg-lime-400 text-neutral-900"
-                              : "text-lime-400 hover:text-neutral-900"
-                      } hover:bg-lime-400 border-2 border-lime-400 font-bold transition-all duration-300 ease-in-out`}
-                      title={`Profile`}
-                  >
-                    <IconUser size={26} />
-                  </Link>
-                </div>
-            ) : (
+              <div className={`grow flex flex-row-reverse items-center gap-2`}>
                 <Link
-                    href={"/auth/portal"}
-                    className={`grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
-                    title={`Login`}
+                  href={"/me"}
+                  className={`grow p-2 flex items-center justify-center gap-2 rounded-lg ${
+                    profile?.username && pathname.includes(profile?.username)
+                      ? "bg-lime-400 text-neutral-900"
+                      : "text-lime-400 hover:text-neutral-900"
+                  } hover:bg-lime-400 border-2 border-lime-400 font-bold transition-all duration-300 ease-in-out`}
+                  title={`Profile`}
                 >
                   <IconUser size={26} />
-                  <span className={`hidden lg:block text-sm`}>Login</span>
                 </Link>
+              </div>
+            ) : (
+              <Link
+                href={"/auth/portal"}
+                className={`grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}
+                title={`Login`}
+              >
+                <IconUser size={26} />
+                <span className={`hidden lg:block text-sm`}>Login</span>
+              </Link>
             )}
           </article>
 
@@ -144,9 +143,7 @@ export default function MainNavigation({
 
         <article className={`hidden lg:flex items-center gap-2 lg:w-full`}>
           {isUser ? (
-            <div
-              className={`grow flex flex-row-reverse items-center gap-2`}
-            >
+            <div className={`grow flex flex-row-reverse items-center gap-2`}>
               <Link
                 href={"/me"}
                 className={`grow p-2 flex items-center justify-center gap-2 bg-lime-400 rounded-lg border-2 border-lime-400 text-neutral-900 font-bold transition-all duration-300 ease-in-out`}

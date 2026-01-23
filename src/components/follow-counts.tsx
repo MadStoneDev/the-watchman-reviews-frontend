@@ -6,12 +6,15 @@ import type { FollowCounts } from "@/src/lib/types";
 interface FollowCountsDisplayProps {
   username: string;
   counts: FollowCounts;
+  basePath?: string; // Optional base path (e.g., "/me" instead of "/{username}")
 }
 
 export default function FollowCountsDisplay({
   username,
   counts,
+  basePath,
 }: FollowCountsDisplayProps) {
+  const base = basePath || `/${username}`;
   const formatCount = (count: number): string => {
     if (count >= 1000000) {
       return `${(count / 1000000).toFixed(1)}M`;
@@ -25,7 +28,7 @@ export default function FollowCountsDisplay({
   return (
     <div className="flex gap-4 text-sm">
       <Link
-        href={`/${username}/followers`}
+        href={`${base}/followers`}
         className="group flex items-center gap-1 hover:text-lime-400 transition-colors"
       >
         <span className="font-bold text-neutral-100 group-hover:text-lime-400">
@@ -36,7 +39,7 @@ export default function FollowCountsDisplay({
         </span>
       </Link>
       <Link
-        href={`/${username}/following`}
+        href={`${base}/following`}
         className="group flex items-center gap-1 hover:text-lime-400 transition-colors"
       >
         <span className="font-bold text-neutral-100 group-hover:text-lime-400">

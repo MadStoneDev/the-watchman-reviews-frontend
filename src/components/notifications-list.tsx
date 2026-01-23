@@ -31,9 +31,7 @@ export default function NotificationsList({
     startTransition(async () => {
       await markAllAsRead();
       // Mark all local notifications as read
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, read: true }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
       router.refresh();
     });
@@ -66,7 +64,8 @@ export default function NotificationsList({
             <IconBell size={48} className="mx-auto text-neutral-600 mb-4" />
             <p className="text-neutral-500">No notifications yet</p>
             <p className="text-sm text-neutral-600 mt-1">
-              When someone follows you or you unlock an achievement, you'll see it here.
+              When someone follows you or you unlock an achievement, you'll see
+              it here.
             </p>
           </div>
         ) : (
@@ -85,7 +84,7 @@ export default function NotificationsList({
         <nav className="flex justify-center gap-2 mt-8 pb-8">
           {currentPage > 1 && (
             <a
-              href={`/${username}/notifications?page=${currentPage - 1}`}
+              href={`/me/notifications?page=${currentPage - 1}`}
               className="px-4 py-2 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition-colors"
             >
               Previous
@@ -96,7 +95,7 @@ export default function NotificationsList({
           </span>
           {currentPage < totalPages && (
             <a
-              href={`/${username}/notifications?page=${currentPage + 1}`}
+              href={`/me/notifications?page=${currentPage + 1}`}
               className="px-4 py-2 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition-colors"
             >
               Next

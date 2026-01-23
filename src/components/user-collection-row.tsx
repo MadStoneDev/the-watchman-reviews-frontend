@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import {
   IconCheck,
   IconCloud,
+  IconEye,
+  IconEyeOff,
   IconMovie,
   IconPencil,
   IconTrash,
@@ -16,11 +18,13 @@ export const UserCollectionRow = ({
   collection,
   onUpdate,
   onDelete,
+  onToggleVisibility,
   currentUserId,
 }: {
   collection: MediaCollection;
   onUpdate: (id: string, newTitle: string) => void;
   onDelete: (id: string) => void;
+  onToggleVisibility?: (id: string, isPublic: boolean) => void;
   currentUserId: string | undefined;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -187,8 +191,21 @@ export const UserCollectionRow = ({
                   href={`/collections/${collection.id}`}
                   className={`grow flex flex-col justify-center h-10 hover:text-indigo-400 transition-all duration-300 ease-in-out`}
                 >
-                  <div className={`text-sm font-medium`}>
-                    {collection.title}
+                  <div className={`flex items-center gap-2`}>
+                    <span className={`text-sm font-medium`}>
+                      {collection.title}
+                    </span>
+                    {canEdit && (
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded ${
+                          collection.is_public
+                            ? "bg-lime-500/20 text-lime-400"
+                            : "bg-neutral-600/50 text-neutral-400"
+                        }`}
+                      >
+                        {collection.is_public ? "Public" : "Private"}
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-neutral-400">
                     {collection.item_count || 0}{" "}
@@ -200,6 +217,19 @@ export const UserCollectionRow = ({
                   <div
                     className={`flex text-neutral-400 group-hover:text-neutral-400 opacity-0 group-hover:opacity-100 transition-all duration-200 ease-in-out`}
                   >
+                    {onToggleVisibility && (
+                      <button
+                        onClick={() => onToggleVisibility(collection.id, !collection.is_public)}
+                        className={`p-1 grid place-content-center w-10 h-10 ${
+                          collection.is_public
+                            ? "hover:bg-amber-500 text-amber-400"
+                            : "hover:bg-lime-500 text-lime-400"
+                        } hover:text-neutral-900 rounded-sm transition-all duration-300 ease-in-out`}
+                        title={collection.is_public ? "Make private" : "Make public"}
+                      >
+                        {collection.is_public ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                      </button>
+                    )}
                     <button
                       onClick={handleEdit}
                       className={`p-1 grid place-content-center w-10 h-10 hover:bg-indigo-400 hover:text-neutral-900 rounded-sm transition-all duration-300 ease-in-out`}

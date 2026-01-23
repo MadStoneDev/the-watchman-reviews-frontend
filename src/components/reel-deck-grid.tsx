@@ -49,16 +49,24 @@ interface ReelDeckGridProps {
 }
 
 // Display status types for computed statuses
-type DisplayStatus = "watching" | "up_to_date" | "completed" | "waiting" | "paused";
+type DisplayStatus =
+  | "watching"
+  | "up_to_date"
+  | "completed"
+  | "waiting"
+  | "paused";
 
 // OPTIMIZATION 1: Move constants outside component to prevent recreation
-const STATUS_CONFIG: Record<DisplayStatus, {
-  label: string;
-  icon: typeof IconPlayerPlay;
-  color: string;
-  bgColor: string;
-  textColor: string;
-}> = {
+const STATUS_CONFIG: Record<
+  DisplayStatus,
+  {
+    label: string;
+    icon: typeof IconPlayerPlay;
+    color: string;
+    bgColor: string;
+    textColor: string;
+  }
+> = {
   watching: {
     label: "Watching",
     icon: IconPlayerPlay,
@@ -140,12 +148,16 @@ function computeDisplayStatus(item: MediaWithReelDeck): DisplayStatus {
   const seriesEnded = seriesStatus === "Ended" || seriesStatus === "Canceled";
 
   // Check if series is still airing
-  const seriesAiring = seriesStatus === "Returning Series" || seriesStatus === "In Production";
+  const seriesAiring =
+    seriesStatus === "Returning Series" || seriesStatus === "In Production";
 
   // User manually marked as completed OR (watched all + series ended + no upcoming)
   if (
     userStatus === "completed" ||
-    (watchedEpisodes >= totalEpisodes && totalEpisodes > 0 && seriesEnded && !hasUpcoming)
+    (watchedEpisodes >= totalEpisodes &&
+      totalEpisodes > 0 &&
+      seriesEnded &&
+      !hasUpcoming)
   ) {
     return "completed";
   }
@@ -215,9 +227,7 @@ const ReelDeckCard = React.memo(
     // Memoize computed values
     const detailUrl = useMemo(
       () =>
-        isMovie
-          ? `/movies/${item.id}`
-          : `/${username}/reel-deck/series/${item.id}`,
+        isMovie ? `/movies/${item.id}` : `/me/reel-deck/series/${item.id}`,
       [isMovie, item.id, username],
     );
 
@@ -336,9 +346,11 @@ const ReelDeckCard = React.memo(
       prevProps.item.reelDeckItem.last_watched_at ===
         nextProps.item.reelDeckItem.last_watched_at &&
       prevProps.item.watchedEpisodes === nextProps.item.watchedEpisodes &&
-      prevProps.item.watchedAiredEpisodes === nextProps.item.watchedAiredEpisodes &&
+      prevProps.item.watchedAiredEpisodes ===
+        nextProps.item.watchedAiredEpisodes &&
       prevProps.item.airedEpisodesCount === nextProps.item.airedEpisodesCount &&
-      prevProps.item.hasUpcomingEpisodes === nextProps.item.hasUpcomingEpisodes &&
+      prevProps.item.hasUpcomingEpisodes ===
+        nextProps.item.hasUpcomingEpisodes &&
       prevProps.item.seriesStatus === nextProps.item.seriesStatus &&
       prevProps.username === nextProps.username
     );

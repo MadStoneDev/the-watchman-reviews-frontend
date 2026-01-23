@@ -629,14 +629,13 @@ export default function SeriesProgressTracker({
 
       setPendingEpisodeId(episodeId);
 
-      // Optimistic update
-      setOptimisticSeasons({
-        seasonId: season.id,
-        episodeId,
-        watched: newWatchedState,
-      });
-
       startTransition(async () => {
+        // Optimistic update (must be inside transition in React 19)
+        setOptimisticSeasons({
+          seasonId: season.id,
+          episodeId,
+          watched: newWatchedState,
+        });
         try {
           const response = await fetch("/api/reel-deck/toggle-episode", {
             method: "POST",
@@ -787,13 +786,6 @@ export default function SeriesProgressTracker({
 
       setPendingSeasonId(seasonId);
 
-      // Optimistic update
-      setOptimisticSeasons({
-        seasonId,
-        allEpisodes: true,
-        watched: markAsWatched,
-      });
-
       const toastId = toast.loading(
         markAsWatched
           ? `Marking ${episodeIds.length} episodes as watched...`
@@ -801,6 +793,13 @@ export default function SeriesProgressTracker({
       );
 
       startTransition(async () => {
+        // Optimistic update (must be inside transition in React 19)
+        setOptimisticSeasons({
+          seasonId,
+          allEpisodes: true,
+          watched: markAsWatched,
+        });
+
         try {
           const response = await fetch("/api/reel-deck/toggle-season", {
             method: "POST",

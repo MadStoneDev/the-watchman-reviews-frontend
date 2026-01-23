@@ -1,5 +1,5 @@
-﻿import React from "react";
-import { notFound, redirect } from "next/navigation";
+import React from "react";
+import { redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import ReelDeckGrid from "@/src/components/reel-deck-grid";
@@ -8,7 +8,6 @@ import Link from "next/link";
 import { IconArrowLeft } from "@tabler/icons-react";
 
 interface UpcomingPageProps {
-  params: Promise<{ username: string }>;
   searchParams: Promise<{
     sort?: string;
   }>;
@@ -17,10 +16,8 @@ interface UpcomingPageProps {
 type SortOption = "next-episode" | "title-asc" | "title-desc" | "rating";
 
 export default async function UpcomingPage({
-  params,
   searchParams,
 }: UpcomingPageProps) {
-  const { username } = await params;
   const { sort: sortOption = "next-episode" } = await searchParams;
   const supabase = await createClient();
 
@@ -32,33 +29,18 @@ export default async function UpcomingPage({
     redirect("/auth/portal");
   }
 
-  // Get profile for the username in the URL
-  const { data: urlProfile } = await supabase
+  // Get current user's profile
+  const { data: profile } = await supabase
     .from("profiles")
-    .select()
-    .eq("username", username)
+    .select("id, username")
+    .eq("id", currentUserId)
     .single();
 
-  if (!urlProfile) {
-    notFound();
+  if (!profile) {
+    redirect("/auth/portal");
   }
 
-  // Check if this is the current user's profile
-  const isCurrentUser = currentUserId === urlProfile?.id;
-
-  // Only allow users to view their own reel deck
-  if (!isCurrentUser) {
-    const { data: ownProfile } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", currentUserId)
-      .single();
-
-    if (ownProfile?.username) {
-      redirect(`/${ownProfile.username}/reel-deck/upcoming`);
-    }
-    notFound();
-  }
+  const today = new Date().toISOString().split("T")[0];
 
   // Fetch all reel deck items (only TV shows have upcoming episodes)
   const { data: reelDeckItems } = await supabase
@@ -70,7 +52,6 @@ export default async function UpcomingPage({
 
   // Fetch full media details for each item
   const seriesWithDetails = [];
-  const today = new Date().toISOString().split("T")[0];
 
   if (reelDeckItems) {
     for (const item of reelDeckItems) {
@@ -175,16 +156,16 @@ export default async function UpcomingPage({
       <BrowseNavigation
         items={[
           {
-            label: `${urlProfile.id === currentUserId ? "Account" : "Profile"}`,
-            href: `/${urlProfile.username}`,
+            label: "Account",
+            href: "/me",
           },
           {
             label: "Collections",
-            href: `/${urlProfile.username}/collections`,
+            href: "/me/collections",
             textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
-        profileId={urlProfile.id}
+        profileId={profile.id}
         currentUserId={currentUserId || ""}
       />
 
@@ -193,7 +174,7 @@ export default async function UpcomingPage({
         <div className="flex-1 min-w-0">
           {/* Back Link */}
           <Link
-            href={`/${username}/reel-deck`}
+            href="/me/reel-deck"
             className="inline-flex items-center gap-2 text-neutral-400 hover:text-lime-400 mb-6 transition-colors"
           >
             <IconArrowLeft size={20} />
@@ -230,63 +211,11 @@ export default async function UpcomingPage({
           ) : (
             <ReelDeckGrid
               items={seriesWithDetails}
-              username={username}
+              username="me"
               userId={currentUserId}
             />
           )}
         </div>
-
-        {/* Sidebar Filters */}
-        {/*<aside className="hidden lg:block w-64 shrink-0">*/}
-        {/*  <div className="sticky top-24 space-y-6">*/}
-        {/*    /!* Sort Options *!/*/}
-        {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
-        {/*      <h3 className="font-semibold mb-4">Sort By</h3>*/}
-        {/*      <div className="space-y-2">*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/upcoming`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
-        {/*            sortOption === "next-episode"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          Next Episode*/}
-        {/*        </Link>*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/upcoming?sort=title-asc`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
-        {/*            sortOption === "title-asc"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          Title (A-Z)*/}
-        {/*        </Link>*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/upcoming?sort=title-desc`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
-        {/*            sortOption === "title-desc"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          Title (Z-A)*/}
-        {/*        </Link>*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/upcoming?sort=rating`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
-        {/*            sortOption === "rating"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          Highest Rated*/}
-        {/*        </Link>*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </div>*/}
-        {/*</aside>*/}
       </div>
     </>
   );

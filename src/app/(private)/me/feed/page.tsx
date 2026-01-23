@@ -1,5 +1,5 @@
 import React from "react";
-import { redirect, notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import { getActivityFeed } from "@/src/app/actions/activity-feed";
 
@@ -8,13 +8,7 @@ import ActivityFeed from "@/src/components/activity-feed";
 
 export const revalidate = 0; // Always fresh
 
-export default async function FeedPage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
-  const { username } = await params;
-
+export default async function FeedPage() {
   const supabase = await createClient();
 
   // Get current user
@@ -24,20 +18,17 @@ export default async function FeedPage({
     redirect("/auth/portal");
   }
 
-  // Get profile for this username
+  const currentUserId = user.claims.sub;
+
+  // Get current user's profile
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, username")
-    .eq("username", username)
+    .eq("id", currentUserId)
     .single();
 
   if (profileError || !profile) {
-    notFound();
-  }
-
-  // Only the profile owner can view their feed
-  if (profile.id !== user.claims.sub) {
-    redirect(`/${username}`);
+    redirect("/auth/portal");
   }
 
   // Get initial feed data
@@ -48,16 +39,16 @@ export default async function FeedPage({
     <>
       <BrowseNavigation
         items={[
-          { label: "Account", href: `/${username}` },
+          { label: "Account", href: "/me" },
           {
             label: "Collections",
-            href: `/${username}/collections`,
+            href: "/me/collections",
             textColor: "hover:text-indigo-500",
             bgColor: "bg-indigo-500",
           },
         ]}
         profileId={profile.id}
-        currentUserId={user.claims.sub}
+        currentUserId={currentUserId}
       />
 
       <section className="mt-6 lg:mt-8 mb-6 transition-all duration-300 ease-in-out">

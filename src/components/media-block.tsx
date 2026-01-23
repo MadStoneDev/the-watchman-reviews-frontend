@@ -702,7 +702,7 @@ export default function MediaBlock({
                       You don't have any collections yet.
                       {username && (
                         <Link
-                          href={`/${username}/collections`}
+                          href={`/me/collections`}
                           className="block mt-2 text-lime-400 hover:text-lime-300"
                         >
                           Create one now

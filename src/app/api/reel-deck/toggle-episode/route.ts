@@ -33,8 +33,8 @@ export async function POST(request: Request) {
     // OPTIMIZATION: Better validation with clear error messages
     if (!episodeId || typeof episodeId !== "string") {
       return NextResponse.json(
-          { error: "Invalid episode ID" },
-          { status: 400 },
+        { error: "Invalid episode ID" },
+        { status: 400 },
       );
     }
 
@@ -48,8 +48,8 @@ export async function POST(request: Request) {
 
     if (typeof isWatched !== "boolean") {
       return NextResponse.json(
-          { error: "isWatched must be a boolean" },
-          { status: 400 },
+        { error: "isWatched must be a boolean" },
+        { status: 400 },
       );
     }
 
@@ -69,10 +69,10 @@ export async function POST(request: Request) {
 
     // Get episode details to verify it exists and get air date
     const { data: episode, error: episodeError } = await supabase
-        .from("episodes")
-        .select("id, air_date, episode_number, season_number")
-        .eq("id", episodeId)
-        .single();
+      .from("episodes")
+      .select("id, title, air_date, episode_number, season_number")
+      .eq("id", episodeId)
+      .single();
 
     if (episodeError || !episode) {
       console.error("[Toggle Episode] Episode not found:", episodeError);
@@ -89,69 +89,69 @@ export async function POST(request: Request) {
         airDate: episode.air_date,
       });
       return NextResponse.json(
-          {
-            error: "Cannot mark unaired episodes as watched",
-            airDate: episode.air_date,
-          },
-          { status: 400 },
+        {
+          error: "Cannot mark unaired episodes as watched",
+          airDate: episode.air_date,
+        },
+        { status: 400 },
       );
     }
 
     if (isWatched) {
       // Mark episode as watched
       const { error: upsertError } = await supabase
-          .from("episode_watches")
-          .upsert(
-              {
-                user_id: userId,
-                episode_id: episodeId,
-                series_id: seriesId,
-                watched_at: new Date().toISOString(),
-              },
-              {
-                onConflict: "user_id,episode_id",
-              },
-          );
+        .from("episode_watches")
+        .upsert(
+          {
+            user_id: userId,
+            episode_id: episodeId,
+            series_id: seriesId,
+            watched_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "user_id,episode_id",
+          },
+        );
 
       if (upsertError) {
         console.error(
-            "[Toggle Episode] Error marking as watched:",
-            upsertError,
+          "[Toggle Episode] Error marking as watched:",
+          upsertError,
         );
         return NextResponse.json(
-            {
-              error: "Failed to mark episode as watched",
-              details: upsertError.message,
-            },
-            { status: 500 },
+          {
+            error: "Failed to mark episode as watched",
+            details: upsertError.message,
+          },
+          { status: 500 },
         );
       }
 
       // Update reel_deck last_watched_at
       const { error: updateError } = await supabase
-          .from("reel_deck")
-          .update({ last_watched_at: new Date().toISOString() })
-          .eq("user_id", userId)
-          .eq("media_id", seriesId)
-          .eq("media_type", "tv");
+        .from("reel_deck")
+        .update({ last_watched_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("media_id", seriesId)
+        .eq("media_type", "tv");
 
       if (updateError) {
         console.warn(
-            "[Toggle Episode] Failed to update reel_deck timestamp:",
-            updateError,
+          "[Toggle Episode] Failed to update reel_deck timestamp:",
+          updateError,
         );
         // Don't fail the request if this update fails
       }
 
       // Check watching achievements (don't await to avoid slowing down the response)
       checkWatchingAchievements(userId).catch((err) =>
-        console.error("[Toggle Episode] Achievement check error:", err)
+        console.error("[Toggle Episode] Achievement check error:", err),
       );
 
       // Get series info for activity feed
       const { data: series } = await supabase
         .from("series")
-        .select("name, poster_path")
+        .select("title, poster_path")
         .eq("id", seriesId)
         .single();
 
@@ -165,10 +165,10 @@ export async function POST(request: Request) {
               userId,
               "series_started",
               {
-                series_name: series?.name,
+                series_name: series?.title,
                 series_poster: series?.poster_path,
               },
-              seriesId
+              seriesId,
             );
           }
 
@@ -177,13 +177,14 @@ export async function POST(request: Request) {
             userId,
             "episode_watched",
             {
-              series_name: series?.name,
+              series_name: series?.title,
               series_poster: series?.poster_path,
               episode_number: episode.episode_number,
               season_number: episode.season_number,
+              episode_name: episode.title,
             },
             seriesId,
-            episodeId
+            episodeId,
           );
 
           // Check if series is now completed
@@ -193,10 +194,10 @@ export async function POST(request: Request) {
               userId,
               "series_completed",
               {
-                series_name: series?.name,
+                series_name: series?.title,
                 series_poster: series?.poster_path,
               },
-              seriesId
+              seriesId,
             );
           }
         } catch (err) {
@@ -205,48 +206,48 @@ export async function POST(request: Request) {
       })();
 
       console.log(
-          `[Toggle Episode] Marked S${episode.season_number}E${episode.episode_number} as watched`,
+        `[Toggle Episode] Marked S${episode.season_number}E${episode.episode_number} as watched`,
       );
     } else {
       // Mark episode as unwatched
       const { error: deleteError } = await supabase
-          .from("episode_watches")
-          .delete()
-          .eq("user_id", userId)
-          .eq("episode_id", episodeId);
+        .from("episode_watches")
+        .delete()
+        .eq("user_id", userId)
+        .eq("episode_id", episodeId);
 
       if (deleteError) {
         console.error(
-            "[Toggle Episode] Error marking as unwatched:",
-            deleteError,
+          "[Toggle Episode] Error marking as unwatched:",
+          deleteError,
         );
         return NextResponse.json(
-            {
-              error: "Failed to mark episode as unwatched",
-              details: deleteError.message,
-            },
-            { status: 500 },
+          {
+            error: "Failed to mark episode as unwatched",
+            details: deleteError.message,
+          },
+          { status: 500 },
         );
       }
 
       console.log(
-          `[Toggle Episode] Marked S${episode.season_number}E${episode.episode_number} as unwatched`,
+        `[Toggle Episode] Marked S${episode.season_number}E${episode.episode_number} as unwatched`,
       );
     }
 
     // OPTIMIZATION: Revalidate all affected pages
     const { data: profile } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("id", userId)
-        .single();
+      .from("profiles")
+      .select("username")
+      .eq("id", userId)
+      .single();
 
     if (profile?.username) {
-      revalidatePath(`/${profile.username}/reel-deck`);
-      revalidatePath(`/${profile.username}/reel-deck/next-up`);
-      revalidatePath(`/${profile.username}/reel-deck/upcoming`);
-      revalidatePath(`/${profile.username}/reel-deck/completed`);
-      revalidatePath(`/${profile.username}/reel-deck/series/${seriesId}`);
+      revalidatePath(`/me/reel-deck`);
+      revalidatePath(`/me/reel-deck/next-up`);
+      revalidatePath(`/me/reel-deck/upcoming`);
+      revalidatePath(`/me/reel-deck/completed`);
+      revalidatePath(`/me/reel-deck/series/${seriesId}`);
       console.log("[Toggle Episode] Revalidated reel deck pages");
     }
 
@@ -263,11 +264,11 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[Toggle Episode] Unexpected error:", error);
     return NextResponse.json(
-        {
-          error: "Internal server error",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-        { status: 500 },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
     );
   }
 }

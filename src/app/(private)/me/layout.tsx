@@ -1,13 +1,12 @@
-﻿import React from "react";
+import React from "react";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import Logo from "@/src/components/logo";
 import MainFooter from "@/src/components/main-footer";
 import MainNavigation from "@/src/components/main-navigation";
 
 import {
-  IconChartBar,
-  IconDeviceTv,
   IconHome,
   IconLayout2,
   IconSearch,
@@ -15,25 +14,16 @@ import {
 
 import { createClient } from "@/src/utils/supabase/server";
 
-type Props = {
-  params: Promise<{ username: string }>;
+export const metadata: Metadata = {
+  title: "My Account | JustReel",
+  description: "Manage your JustReel account",
 };
 
-export async function generateMetadata({ params }: Props) {
-  const { username } = await params;
-
-  return {
-    title: `${username} | JustReel`,
-    description: `Follow ${username} on  JustReel`,
-  };
-}
-
-export default async function PublicLayout({
+export default async function MeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Supabase
   const supabase = await createClient();
   const { data: user } = await supabase.auth.getClaims();
 
@@ -63,20 +53,18 @@ export default async function PublicLayout({
       />
 
       {/* Spacing */}
-      <div className={`md:min-w-[250px] min-h-[70px]`}></div>
+      <div className="md:min-w-[250px] min-h-[70px]"></div>
 
-      <main
-        className={`grow flex flex-col w-full max-w-[2000px] overflow-x-hidden transition-all duration-300 ease-in-out`}
-      >
-        <div className={`px-5 md:px-10 pt-5 md:pt-10 grow`}>
+      <main className="grow flex flex-col w-full max-w-[2000px] overflow-x-hidden transition-all duration-300 ease-in-out">
+        <div className="px-5 md:px-10 pt-5 md:pt-10 grow">
           {children}
         </div>
 
         <MainFooter />
       </main>
 
-      <section className={`block md:hidden p-5 origin-left w-fit scale-75`}>
-        <Link href={`/`}>
+      <section className="block md:hidden p-5 origin-left w-fit scale-75">
+        <Link href="/">
           <Logo />
         </Link>
       </section>

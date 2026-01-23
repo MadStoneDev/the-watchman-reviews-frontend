@@ -102,12 +102,15 @@ export default function RecommendationsSection({
           setRecommendations(recsResult.recommendations || []);
 
           // Fetch feedback for all recommendations
-          if (recsResult.recommendations && recsResult.recommendations.length > 0) {
+          if (
+            recsResult.recommendations &&
+            recsResult.recommendations.length > 0
+          ) {
             const feedbackResult = await getMultipleMediaFeedback(
               recsResult.recommendations.map((rec) => ({
                 tmdbId: rec.tmdb_id,
                 mediaType: rec.media_type,
-              }))
+              })),
             );
             if (feedbackResult.success && feedbackResult.feedbackMap) {
               setFeedbackMap(feedbackResult.feedbackMap);
@@ -145,7 +148,7 @@ export default function RecommendationsSection({
             result.recommendations.map((rec) => ({
               tmdbId: rec.tmdb_id,
               mediaType: rec.media_type,
-            }))
+            })),
           );
           if (feedbackResult.success && feedbackResult.feedbackMap) {
             setFeedbackMap(feedbackResult.feedbackMap);
@@ -181,7 +184,7 @@ export default function RecommendationsSection({
             result.recommendations.map((rec) => ({
               tmdbId: rec.tmdb_id,
               mediaType: rec.media_type,
-            }))
+            })),
           );
           if (feedbackResult.success && feedbackResult.feedbackMap) {
             setFeedbackMap(feedbackResult.feedbackMap);
@@ -1072,7 +1075,7 @@ function RecommendationCard({
                       You don't have any collections yet.
                       {username && (
                         <Link
-                          href={`/${username}/collections`}
+                          href={`/me/collections`}
                           className="block mt-2 text-lime-400 hover:text-lime-300"
                         >
                           Create one now

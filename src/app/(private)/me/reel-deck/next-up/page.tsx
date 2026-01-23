@@ -1,5 +1,5 @@
-﻿import React from "react";
-import { notFound, redirect } from "next/navigation";
+import React from "react";
+import { redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import ReelDeckGrid from "@/src/components/reel-deck-grid";
@@ -8,7 +8,6 @@ import Link from "next/link";
 import { IconArrowLeft } from "@tabler/icons-react";
 
 interface NextUpPageProps {
-  params: Promise<{ username: string }>;
   searchParams: Promise<{
     type?: string;
     sort?: string;
@@ -18,10 +17,8 @@ interface NextUpPageProps {
 type SortOption = "latest-aired" | "title-asc" | "title-desc" | "rating";
 
 export default async function NextUpPage({
-  params,
   searchParams,
 }: NextUpPageProps) {
-  const { username } = await params;
   const { type: filterType, sort: sortOption = "latest-aired" } =
     await searchParams;
   const supabase = await createClient();
@@ -34,33 +31,18 @@ export default async function NextUpPage({
     redirect("/auth/portal");
   }
 
-  // Get profile for the username in the URL
-  const { data: urlProfile } = await supabase
+  // Get current user's profile
+  const { data: profile } = await supabase
     .from("profiles")
-    .select()
-    .eq("username", username)
+    .select("id, username")
+    .eq("id", currentUserId)
     .single();
 
-  if (!urlProfile) {
-    notFound();
+  if (!profile) {
+    redirect("/auth/portal");
   }
 
-  // Check if this is the current user's profile
-  const isCurrentUser = currentUserId === urlProfile?.id;
-
-  // Only allow users to view their own reel deck
-  if (!isCurrentUser) {
-    const { data: ownProfile } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", currentUserId)
-      .single();
-
-    if (ownProfile?.username) {
-      redirect(`/${ownProfile.username}/reel-deck/next-up`);
-    }
-    notFound();
-  }
+  const today = new Date().toISOString().split("T")[0];
 
   // Fetch all reel deck items
   let query = supabase
@@ -79,7 +61,6 @@ export default async function NextUpPage({
   // Fetch full media details for each item
   const moviesWithDetails = [];
   const seriesWithDetails = [];
-  const today = new Date().toISOString().split("T")[0];
 
   if (reelDeckItems) {
     for (const item of reelDeckItems) {
@@ -220,11 +201,6 @@ export default async function NextUpPage({
   });
 
   // Count all items for type filter
-  const { data: allReelDeckItems } = await supabase
-    .from("reel_deck")
-    .select("*")
-    .eq("user_id", currentUserId);
-
   const typeCounts = {
     all: allMediaWithDetails.length,
     movie: allMediaWithDetails.filter(
@@ -240,16 +216,16 @@ export default async function NextUpPage({
       <BrowseNavigation
         items={[
           {
-            label: `${urlProfile.id === currentUserId ? "Account" : "Profile"}`,
-            href: `/${urlProfile.username}`,
+            label: "Account",
+            href: "/me",
           },
           {
             label: "Collections",
-            href: `/${urlProfile.username}/collections`,
+            href: "/me/collections",
             textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
-        profileId={urlProfile.id}
+        profileId={profile.id}
         currentUserId={currentUserId || ""}
       />
 
@@ -258,7 +234,7 @@ export default async function NextUpPage({
         <div className="flex-1 min-w-0">
           {/* Back Link */}
           <Link
-            href={`/${username}/reel-deck`}
+            href="/me/reel-deck"
             className="inline-flex items-center gap-2 text-neutral-400 hover:text-lime-400 mb-6 transition-colors"
           >
             <IconArrowLeft size={20} />
@@ -281,143 +257,16 @@ export default async function NextUpPage({
                 <h2 className="text-xl font-semibold mb-2">
                   No unwatched content
                 </h2>
-                {/*<p className="text-neutral-400 mb-6">*/}
-                {/*  {filterType*/}
-                {/*    ? "Try adjusting your filters or check your upcoming shows"*/}
-                {/*    : "You're all caught up! Check your upcoming shows or browse for new content."}*/}
-                {/*</p>*/}
-                {/*<div className="flex gap-3 justify-center">*/}
-                {/*  {filterType && (*/}
-                {/*    <Link*/}
-                {/*      href={`/${username}/reel-deck/next-up`}*/}
-                {/*      className="inline-flex px-6 py-3 bg-neutral-800 text-neutral-200 hover:bg-neutral-700 rounded-lg font-medium transition-colors"*/}
-                {/*    >*/}
-                {/*      Clear Filters*/}
-                {/*    </Link>*/}
-                {/*  )}*/}
-                {/*  <Link*/}
-                {/*    href="/search"*/}
-                {/*    className="inline-flex px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium transition-colors"*/}
-                {/*  >*/}
-                {/*    Browse Media*/}
-                {/*  </Link>*/}
-                {/*</div>*/}
               </div>
             </div>
           ) : (
             <ReelDeckGrid
               items={allMediaWithDetails}
-              username={username}
+              username="me"
               userId={currentUserId}
             />
           )}
         </div>
-
-        {/* Sidebar Filters */}
-        {/*<aside className="hidden lg:block w-64 shrink-0">*/}
-        {/*  <div className="sticky top-24 space-y-6">*/}
-        {/*    /!* Type Filter *!/*/}
-        {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
-        {/*      <h3 className="font-semibold mb-4">Type</h3>*/}
-        {/*      <div className="space-y-2">*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/next-up`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors ${*/}
-        {/*            !filterType*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          <div className="flex items-center justify-between">*/}
-        {/*            <span>All</span>*/}
-        {/*            <span className="text-sm">{typeCounts.all}</span>*/}
-        {/*          </div>*/}
-        {/*        </Link>*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/next-up?type=movie`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors ${*/}
-        {/*            filterType === "movie"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          <div className="flex items-center justify-between">*/}
-        {/*            <span>Movies</span>*/}
-        {/*            <span className="text-sm">{typeCounts.movie}</span>*/}
-        {/*          </div>*/}
-        {/*        </Link>*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/next-up?type=tv`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors ${*/}
-        {/*            filterType === "tv"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          <div className="flex items-center justify-between">*/}
-        {/*            <span>TV Shows</span>*/}
-        {/*            <span className="text-sm">{typeCounts.tv}</span>*/}
-        {/*          </div>*/}
-        {/*        </Link>*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        
-        {/*    /!* Sort Options *!/*/}
-        {/*    <div className="bg-neutral-900 rounded-lg border border-neutral-800 p-4">*/}
-        {/*      <h3 className="font-semibold mb-4">Sort By</h3>*/}
-        {/*      <div className="space-y-2">*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/next-up${*/}
-        {/*            filterType ? `?type=${filterType}` : ""*/}
-        {/*          }`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
-        {/*            sortOption === "latest-aired"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          Latest Aired*/}
-        {/*        </Link>*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/next-up?sort=title-asc${*/}
-        {/*            filterType ? `&type=${filterType}` : ""*/}
-        {/*          }`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
-        {/*            sortOption === "title-asc"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          Title (A-Z)*/}
-        {/*        </Link>*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/next-up?sort=title-desc${*/}
-        {/*            filterType ? `&type=${filterType}` : ""*/}
-        {/*          }`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
-        {/*            sortOption === "title-desc"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          Title (Z-A)*/}
-        {/*        </Link>*/}
-        {/*        <Link*/}
-        {/*          href={`/${username}/reel-deck/next-up?sort=rating${*/}
-        {/*            filterType ? `&type=${filterType}` : ""*/}
-        {/*          }`}*/}
-        {/*          className={`block px-3 py-2 rounded-lg transition-colors text-sm ${*/}
-        {/*            sortOption === "rating"*/}
-        {/*              ? "bg-lime-400 text-neutral-900 font-medium"*/}
-        {/*              : "text-neutral-300 hover:bg-neutral-800"*/}
-        {/*          }`}*/}
-        {/*        >*/}
-        {/*          Highest Rated*/}
-        {/*        </Link>*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </div>*/}
-        {/*</aside>*/}
       </div>
     </>
   );

@@ -130,7 +130,7 @@ export default function EditableUsername({
       setIsEditing(false);
       setIsSubmitting(false);
 
-      router.push(`/${newUsername}`);
+      router.push(`/me`);
     }
   };
 

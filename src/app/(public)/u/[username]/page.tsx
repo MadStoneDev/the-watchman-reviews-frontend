@@ -12,6 +12,7 @@ import {
 import PublicProfileHeader from "@/src/components/public-profile-header";
 import PrivateProfileNotice from "@/src/components/private-profile-notice";
 import ActivityFeed from "@/src/components/activity-feed";
+import AnimatedTabContent from "@/src/components/animated-tab-content";
 
 export async function generateMetadata({
   params,
@@ -106,22 +107,22 @@ export default async function PublicProfilePage({
         />
       </section>
 
-      {/* Navigation tabs */}
+      {/* Navigation tabs - use profile.username for canonical URLs */}
       <nav className="mt-8 flex gap-4 border-b border-neutral-700 pb-4">
         <Link
-          href={`/u/${username}`}
+          href={`/u/${profile.username}`}
           className="px-4 py-2 rounded-lg bg-lime-400 text-neutral-900 font-medium"
         >
           Activity
         </Link>
         <Link
-          href={`/u/${username}/collections`}
+          href={`/u/${profile.username}/collections`}
           className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors"
         >
           Collections
         </Link>
         <Link
-          href={`/u/${username}/achievements`}
+          href={`/u/${profile.username}/achievements`}
           className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors"
         >
           Achievements
@@ -129,13 +130,15 @@ export default async function PublicProfilePage({
       </nav>
 
       {/* Recent Activity */}
-      <section className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
-        <ActivityFeed
-          userId={profile.id}
-          initialActivities={activityResult.activities || []}
-        />
-      </section>
+      <AnimatedTabContent tabIndex={0}>
+        <section className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+          <ActivityFeed
+            userId={profile.id}
+            initialActivities={activityResult.activities || []}
+          />
+        </section>
+      </AnimatedTabContent>
     </>
   );
 }

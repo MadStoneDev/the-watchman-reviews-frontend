@@ -40,8 +40,8 @@ export async function POST(request: Request) {
 
     if (typeof markAsWatched !== "boolean") {
       return NextResponse.json(
-          { error: "markAsWatched must be a boolean" },
-          { status: 400 },
+        { error: "markAsWatched must be a boolean" },
+        { status: 400 },
       );
     }
 
@@ -61,9 +61,9 @@ export async function POST(request: Request) {
 
     // Get episodes - filter for aired if marking as watched
     let query = supabase
-        .from("episodes")
-        .select("id, air_date")
-        .eq("season_id", seasonId);
+      .from("episodes")
+      .select("id, air_date")
+      .eq("season_id", seasonId);
 
     // ✅ ALREADY CORRECT: Only include aired episodes when marking as watched
     if (markAsWatched) {
@@ -75,23 +75,23 @@ export async function POST(request: Request) {
     if (episodesError) {
       console.error("[Toggle Season] Error fetching episodes:", episodesError);
       return NextResponse.json(
-          { error: "Failed to fetch episodes", details: episodesError.message },
-          { status: 500 },
+        { error: "Failed to fetch episodes", details: episodesError.message },
+        { status: 500 },
       );
     }
 
     if (!episodes || episodes.length === 0) {
       console.error("[Toggle Season] No episodes found for season:", seasonId);
       return NextResponse.json(
-          { error: "No episodes found for this season" },
-          { status: 404 },
+        { error: "No episodes found for this season" },
+        { status: 404 },
       );
     }
 
     console.log(
-        `[Toggle Season] Found ${episodes.length} ${
-            markAsWatched ? "aired" : ""
-        } episodes`,
+      `[Toggle Season] Found ${episodes.length} ${
+        markAsWatched ? "aired" : ""
+      } episodes`,
     );
 
     if (markAsWatched) {
@@ -104,84 +104,84 @@ export async function POST(request: Request) {
       }));
 
       const { error: upsertError } = await supabase
-          .from("episode_watches")
-          .upsert(episodeWatches, {
-            onConflict: "user_id,episode_id",
-          });
+        .from("episode_watches")
+        .upsert(episodeWatches, {
+          onConflict: "user_id,episode_id",
+        });
 
       if (upsertError) {
         console.error("[Toggle Season] Error marking as watched:", upsertError);
         return NextResponse.json(
-            {
-              error: "Failed to mark episodes as watched",
-              details: upsertError.message,
-            },
-            { status: 500 },
+          {
+            error: "Failed to mark episodes as watched",
+            details: upsertError.message,
+          },
+          { status: 500 },
         );
       }
 
       // Update reel_deck last_watched_at
       const { error: updateError } = await supabase
-          .from("reel_deck")
-          .update({ last_watched_at: new Date().toISOString() })
-          .eq("user_id", userId)
-          .eq("media_id", seriesId)
-          .eq("media_type", "tv");
+        .from("reel_deck")
+        .update({ last_watched_at: new Date().toISOString() })
+        .eq("user_id", userId)
+        .eq("media_id", seriesId)
+        .eq("media_type", "tv");
 
       if (updateError) {
         console.warn(
-            "[Toggle Season] Failed to update reel_deck timestamp:",
-            updateError,
+          "[Toggle Season] Failed to update reel_deck timestamp:",
+          updateError,
         );
         // Don't fail the request if this update fails
       }
 
       console.log(
-          `[Toggle Season] Marked ${episodes.length} aired episodes as watched`,
+        `[Toggle Season] Marked ${episodes.length} aired episodes as watched`,
       );
     } else {
       // OPTIMIZATION: Bulk delete with single query
       const episodeIds = episodes.map((ep) => ep.id);
 
       const { error: deleteError } = await supabase
-          .from("episode_watches")
-          .delete()
-          .eq("user_id", userId)
-          .eq("series_id", seriesId)
-          .in("episode_id", episodeIds);
+        .from("episode_watches")
+        .delete()
+        .eq("user_id", userId)
+        .eq("series_id", seriesId)
+        .in("episode_id", episodeIds);
 
       if (deleteError) {
         console.error(
-            "[Toggle Season] Error marking as unwatched:",
-            deleteError,
+          "[Toggle Season] Error marking as unwatched:",
+          deleteError,
         );
         return NextResponse.json(
-            {
-              error: "Failed to mark episodes as unwatched",
-              details: deleteError.message,
-            },
-            { status: 500 },
+          {
+            error: "Failed to mark episodes as unwatched",
+            details: deleteError.message,
+          },
+          { status: 500 },
         );
       }
 
       console.log(
-          `[Toggle Season] Marked ${episodes.length} episodes as unwatched`,
+        `[Toggle Season] Marked ${episodes.length} episodes as unwatched`,
       );
     }
 
     // OPTIMIZATION: Revalidate all affected pages
     const { data: profile } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("id", userId)
-        .single();
+      .from("profiles")
+      .select("username")
+      .eq("id", userId)
+      .single();
 
     if (profile?.username) {
-      revalidatePath(`/${profile.username}/reel-deck`);
-      revalidatePath(`/${profile.username}/reel-deck/next-up`);
-      revalidatePath(`/${profile.username}/reel-deck/upcoming`);
-      revalidatePath(`/${profile.username}/reel-deck/completed`);
-      revalidatePath(`/${profile.username}/reel-deck/series/${seriesId}`);
+      revalidatePath(`/me/reel-deck`);
+      revalidatePath(`/me/reel-deck/next-up`);
+      revalidatePath(`/me/reel-deck/upcoming`);
+      revalidatePath(`/me/reel-deck/completed`);
+      revalidatePath(`/me/reel-deck/series/${seriesId}`);
       console.log("[Toggle Season] Revalidated reel deck pages");
     }
 
@@ -195,11 +195,11 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[Toggle Season] Unexpected error:", error);
     return NextResponse.json(
-        {
-          error: "Internal server error",
-          details: error instanceof Error ? error.message : "Unknown error",
-        },
-        { status: 500 },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
     );
   }
 }

@@ -107,6 +107,25 @@ export default function UserCollectionsBlock({
     }
   };
 
+  const toggleVisibility = async (id: string, isPublic: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("collections")
+        .update({ is_public: isPublic })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setCollections(
+        collections.map((col) =>
+          col.id === id ? { ...col, is_public: isPublic } : col,
+        ),
+      );
+    } catch (err) {
+      console.error("Error toggling collection visibility:", err);
+    }
+  };
+
   return (
     <div className="my-4">
       {isCurrentUser && (
@@ -133,6 +152,7 @@ export default function UserCollectionsBlock({
               collection={collection}
               onUpdate={updateCollection}
               onDelete={deleteCollection}
+              onToggleVisibility={isCurrentUser ? toggleVisibility : undefined}
               currentUserId={currentUserProfile?.id}
             />
           ))}

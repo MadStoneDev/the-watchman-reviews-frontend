@@ -1,5 +1,5 @@
-﻿import React from "react";
-import { notFound, redirect } from "next/navigation";
+import React from "react";
+import { redirect } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
 import BrowseNavigation from "@/src/components/browse-navigation";
 import ReelDeckGrid from "@/src/components/reel-deck-grid";
@@ -9,7 +9,6 @@ import Link from "next/link";
 export const revalidate = 300;
 
 interface ReelDeckPageProps {
-  params: Promise<{ username: string }>;
   searchParams: Promise<{
     type?: string;
   }>;
@@ -22,10 +21,8 @@ const MEDIA_TYPES = {
 } as const;
 
 export default async function ReelDeckPage({
-  params,
   searchParams,
 }: ReelDeckPageProps) {
-  const { username } = await params;
   const { type: filterType } = await searchParams;
   const supabase = await createClient();
 
@@ -37,32 +34,15 @@ export default async function ReelDeckPage({
     redirect("/auth/portal");
   }
 
-  // Get profile for the username in the URL - only select needed fields
-  const { data: urlProfile } = await supabase
+  // Get current user's profile
+  const { data: profile } = await supabase
     .from("profiles")
     .select("id, username")
-    .eq("username", username)
+    .eq("id", currentUserId)
     .single();
 
-  if (!urlProfile) {
-    notFound();
-  }
-
-  // Check if this is the current user's profile
-  const isCurrentUser = currentUserId === urlProfile.id;
-
-  // Only allow users to view their own reel deck
-  if (!isCurrentUser) {
-    const { data: ownProfile } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", currentUserId)
-      .single();
-
-    if (ownProfile?.username) {
-      redirect(`/${ownProfile.username}/reel-deck`);
-    }
-    notFound();
+  if (!profile) {
+    redirect("/auth/portal");
   }
 
   const today = new Date().toISOString().split("T")[0];
@@ -91,7 +71,7 @@ export default async function ReelDeckPage({
   const { data: reelDeckItems } = await reelDeckQuery;
 
   if (!reelDeckItems || reelDeckItems.length === 0) {
-    return renderEmptyState(username, urlProfile, currentUserId, filterType);
+    return renderEmptyState(profile, currentUserId, filterType);
   }
 
   // Separate movie and TV series IDs
@@ -197,16 +177,16 @@ export default async function ReelDeckPage({
       <BrowseNavigation
         items={[
           {
-            label: `${urlProfile.id === currentUserId ? "Account" : "Profile"}`,
-            href: `/${urlProfile.username}`,
+            label: "Account",
+            href: "/me",
           },
           {
             label: "Collections",
-            href: `/${urlProfile.username}/collections`,
+            href: "/me/collections",
             textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
-        profileId={urlProfile.id}
+        profileId={profile.id}
         currentUserId={currentUserId || ""}
       />
 
@@ -225,7 +205,6 @@ export default async function ReelDeckPage({
 
             {/* Type Filter */}
             {/*<TypeFilters*/}
-            {/*  username={username}*/}
             {/*  filterType={filterType}*/}
             {/*  typeCounts={typeCounts}*/}
             {/*/>*/}
@@ -238,7 +217,6 @@ export default async function ReelDeckPage({
           description="Unwatched content with aired episodes"
           items={nextUpItems}
           preview={nextUpPreview}
-          username={username}
           currentUserId={currentUserId}
           filterType={filterType}
           route="next-up"
@@ -254,7 +232,6 @@ export default async function ReelDeckPage({
           description="Caught up and waiting for new episodes"
           items={upcomingItems}
           preview={upcomingPreview}
-          username={username}
           currentUserId={currentUserId}
           filterType={filterType}
           route="upcoming"
@@ -270,7 +247,6 @@ export default async function ReelDeckPage({
           description="Fully watched content"
           items={completedItems}
           preview={completedPreview}
-          username={username}
           currentUserId={currentUserId}
           filterType={filterType}
           route="completed"
@@ -352,11 +328,9 @@ function calculateTypeCounts(items: any[]) {
 
 // Extract components to reduce duplication
 function TypeFilters({
-  username,
   filterType,
   typeCounts,
 }: {
-  username: string;
   filterType: string | undefined;
   typeCounts: { all: number; movie: number; tv: number };
 }) {
@@ -370,19 +344,19 @@ function TypeFilters({
   return (
     <div className="flex gap-2">
       <Link
-        href={`/${username}/reel-deck`}
+        href="/me/reel-deck"
         className={filterClass(!filterType)}
       >
         All ({typeCounts.all})
       </Link>
       <Link
-        href={`/${username}/reel-deck?type=movie`}
+        href="/me/reel-deck?type=movie"
         className={filterClass(filterType === "movie")}
       >
         Movies ({typeCounts.movie})
       </Link>
       <Link
-        href={`/${username}/reel-deck?type=tv`}
+        href="/me/reel-deck?type=tv"
         className={filterClass(filterType === "tv")}
       >
         TV Shows ({typeCounts.tv})
@@ -396,7 +370,6 @@ function MediaSection({
   description,
   items,
   preview,
-  username,
   currentUserId,
   filterType,
   route,
@@ -406,7 +379,6 @@ function MediaSection({
   description: string;
   items: any[];
   preview: any[];
-  username: string;
   currentUserId: string;
   filterType?: string;
   route: string;
@@ -421,7 +393,7 @@ function MediaSection({
         </div>
         {items.length > 12 && (
           <Link
-            href={`/${username}/reel-deck/${route}${
+            href={`/me/reel-deck/${route}${
               filterType ? `?type=${filterType}` : ""
             }`}
             className="text-lime-400 hover:text-lime-500 text-sm font-medium transition-colors"
@@ -437,7 +409,7 @@ function MediaSection({
       ) : (
         <ReelDeckGrid
           items={preview}
-          username={username}
+          username="me"
           userId={currentUserId}
         />
       )}
@@ -446,8 +418,7 @@ function MediaSection({
 }
 
 function renderEmptyState(
-  username: string,
-  urlProfile: any,
+  profile: any,
   currentUserId: string,
   filterType?: string,
 ) {
@@ -456,16 +427,16 @@ function renderEmptyState(
       <BrowseNavigation
         items={[
           {
-            label: `${urlProfile.id === currentUserId ? "Account" : "Profile"}`,
-            href: `/${urlProfile.username}`,
+            label: "Account",
+            href: "/me",
           },
           {
             label: "Collections",
-            href: `/${urlProfile.username}/collections`,
+            href: "/me/collections",
             textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
           },
         ]}
-        profileId={urlProfile.id}
+        profileId={profile.id}
         currentUserId={currentUserId}
       />
       <div className="mt-6 lg:mt-8 mb-6">

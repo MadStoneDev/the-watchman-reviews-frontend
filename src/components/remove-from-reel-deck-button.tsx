@@ -47,7 +47,7 @@ export default function RemoveFromReelDeckButton({
         throw new Error(data.error || "Failed to remove from Reel Deck");
       }
 
-      router.push(`/${username}/reel-deck`);
+      router.push(`/me/reel-deck`);
       router.refresh();
     } catch (error) {
       console.error("Error removing from deck:", error);
