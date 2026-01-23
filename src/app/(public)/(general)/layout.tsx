@@ -5,7 +5,5 @@ export default async function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className={`px-5 md:px-10 pt-5 md:pt-10 grow`}>{children}</div>
-  );
+  return <div className={`px-5 lg:px-10 pt-3 lg:pt-10 grow`}>{children}</div>;
 }

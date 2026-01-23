@@ -8,6 +8,7 @@ import MainNavigation from "@/src/components/main-navigation";
 import { IconHome, IconLayout2, IconSearch } from "@tabler/icons-react";
 
 import { createClient } from "@/src/utils/supabase/server";
+import LogoutButton from "@/src/components/auth/LogoutButton";
 
 export const metadata = {
   title: "Messages | JustReel",
@@ -53,17 +54,21 @@ export default async function MessagesLayout({
       <main
         className={`grow flex flex-col h-full w-full max-w-[2000px] overflow-x-hidden transition-all duration-300 ease-in-out`}
       >
-        <div className={`px-5 md:px-10 pt-5 md:pt-10 grow`}>{children}</div>
+        <div className={`px-5 lg:px-10 pt-3 lg:pt-10 grow`}>{children}</div>
 
-        <section className={`hidden md:block`}>
+        <section className={`hidden lg:block`}>
           <MainFooter />
         </section>
       </main>
 
-      <section className={`block md:hidden p-5 origin-left w-fit scale-75`}>
-        <Link href={`/`}>
+      <section
+        className={`flex lg:hidden items-center justify-between p-5 w-full`}
+      >
+        <Link href={`/`} className={`origin-left w-fit scale-75`}>
           <Logo />
         </Link>
+
+        <LogoutButton />
       </section>
     </>
   );

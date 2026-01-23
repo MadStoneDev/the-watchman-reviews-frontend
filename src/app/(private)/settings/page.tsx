@@ -44,15 +44,14 @@ export default async function SettingsPage() {
       <BrowseNavigation
         items={[
           {
-            label: `${
-              profileData.id === user.claims.sub ? "Account" : "Profile"
-            }`,
-            href: `/${profileData.username}`,
+            label: `Account`,
+            href: `/me`,
           },
           {
             label: "Collections",
-            href: `/${profileData.username}/collections`,
-              textColor: `hover:text-indigo-500`, bgColor: `bg-indigo-500`,
+            href: `/me/collections`,
+            textColor: `hover:text-indigo-500`,
+            bgColor: `bg-indigo-500`,
           },
         ]}
         profileId={profileData.id}

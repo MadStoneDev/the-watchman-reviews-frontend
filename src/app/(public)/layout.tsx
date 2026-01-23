@@ -4,9 +4,16 @@ import Logo from "@/src/components/logo";
 import MainFooter from "@/src/components/main-footer";
 import MainNavigation from "@/src/components/main-navigation";
 
-import { IconHome, IconLayout2, IconSearch } from "@tabler/icons-react";
+import {
+  IconHome,
+  IconLayout2,
+  IconPower,
+  IconSearch,
+} from "@tabler/icons-react";
 import Link from "next/link";
+
 import { createClient } from "@/src/utils/supabase/server";
+import LogoutButton from "@/src/components/auth/LogoutButton";
 
 export default async function PublicLayout({
   children,
@@ -50,15 +57,19 @@ export default async function PublicLayout({
       >
         <div className={`grow pb-4 overflow-y-auto`}>{children}</div>
 
-        <section className={`hidden md:block`}>
+        <section className={`hidden lg:block`}>
           <MainFooter />
         </section>
       </main>
 
-      <section className={`block md:hidden p-5 origin-left w-fit scale-75`}>
-        <Link href={`/`}>
+      <section
+        className={`flex lg:hidden items-center justify-between p-5 w-full`}
+      >
+        <Link href={`/`} className={`origin-left w-fit scale-75`}>
           <Logo />
         </Link>
+
+        <LogoutButton />
       </section>
     </>
   );
