@@ -154,7 +154,7 @@ export default async function PublicReelDeckPage({
               <section className="mt-8">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                   <IconCheck size={20} className="text-lime-400" />
-                  Completed
+                  All Caught Up
                 </h2>
                 <ReelDeckGrid items={completedItems} />
               </section>
