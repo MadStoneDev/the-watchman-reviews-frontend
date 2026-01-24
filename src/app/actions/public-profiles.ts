@@ -509,3 +509,125 @@ export async function getPublicAchievements(
     return { success: false, error: "Failed to fetch achievements" };
   }
 }
+
+export interface PublicReelDeckItem {
+  id: string;
+  media_id: string;
+  media_type: "movie" | "tv";
+  status: string;
+  added_at: string;
+  title: string;
+  poster_path: string | null;
+  release_year: number | null;
+}
+
+/**
+ * Get public reel deck for a user (what they're currently watching)
+ */
+export async function getPublicReelDeck(
+  userId: string
+): Promise<{
+  success: boolean;
+  items?: PublicReelDeckItem[];
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+
+    // Check if user has show_watching_deck enabled
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("settings")
+      .eq("id", userId)
+      .single();
+
+    const showWatchingDeck = profile?.settings?.show_watching_deck ?? true;
+
+    if (!showWatchingDeck) {
+      return { success: true, items: [] };
+    }
+
+    // Try cache first
+    const reelDeckCacheKey = cacheKey(CACHE_KEYS.USER_PUBLIC_STATS, userId, "reel-deck");
+    const cached = await cacheGet<PublicReelDeckItem[]>(reelDeckCacheKey);
+    if (cached) {
+      return { success: true, items: cached };
+    }
+
+    // Fetch reel deck items (watching status only for public view)
+    const { data: reelDeckItems, error: reelDeckError } = await supabase
+      .from("reel_deck")
+      .select("id, media_id, media_type, status, added_at")
+      .eq("user_id", userId)
+      .in("status", ["watching", "plan_to_watch"])
+      .order("added_at", { ascending: false })
+      .limit(50);
+
+    if (reelDeckError) {
+      console.error("[Public Profiles] Error fetching reel deck:", reelDeckError);
+      return { success: false, error: reelDeckError.message };
+    }
+
+    if (!reelDeckItems || reelDeckItems.length === 0) {
+      return { success: true, items: [] };
+    }
+
+    // Separate movie and TV series IDs
+    const movieIds = reelDeckItems
+      .filter((i) => i.media_type === "movie")
+      .map((i) => i.media_id);
+    const seriesIds = reelDeckItems
+      .filter((i) => i.media_type === "tv")
+      .map((i) => i.media_id);
+
+    // Fetch media details in parallel
+    const [moviesResult, seriesResult] = await Promise.all([
+      movieIds.length > 0
+        ? supabase
+            .from("movies")
+            .select("id, title, poster_path, release_year")
+            .in("id", movieIds)
+        : Promise.resolve({ data: [] }),
+      seriesIds.length > 0
+        ? supabase
+            .from("series")
+            .select("id, title, poster_path, release_year")
+            .in("id", seriesIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const movieMap = new Map((moviesResult.data || []).map((m) => [m.id, m]));
+    const seriesMap = new Map((seriesResult.data || []).map((s) => [s.id, s]));
+
+    // Build final items with media details
+    const itemsWithDetails: PublicReelDeckItem[] = reelDeckItems
+      .map((item) => {
+        const media =
+          item.media_type === "movie"
+            ? movieMap.get(item.media_id)
+            : seriesMap.get(item.media_id);
+
+        if (!media) return null;
+
+        return {
+          id: item.id,
+          media_id: item.media_id,
+          media_type: item.media_type as "movie" | "tv",
+          status: item.status,
+          added_at: item.added_at,
+          title: media.title,
+          poster_path: media.poster_path,
+          release_year: media.release_year,
+        };
+      })
+      .filter((item): item is PublicReelDeckItem => item !== null);
+
+    // Cache for 15 minutes
+    cacheSet(reelDeckCacheKey, itemsWithDetails, TTL.MEDIUM).catch(() => {});
+
+    return { success: true, items: itemsWithDetails };
+  } catch (error) {
+    console.error("[Public Profiles] Error in getPublicReelDeck:", error);
+    return { success: false, error: "Failed to fetch reel deck" };
+  }
+}

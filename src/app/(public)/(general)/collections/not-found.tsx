@@ -1,14 +1,44 @@
-﻿export default function NotFound() {
+import Link from "next/link";
+import { IconFolderOff } from "@tabler/icons-react";
+
+export default function CollectionNotFound() {
   return (
-    <div className="grow flex flex-col items-center justify-center px-4 text-center">
-      <h1 className="text-4xl font-bold mb-4">404</h1>
-      <p className="text-2xl font-semibold mb-6">
-        "Houston, we have a problem. This collection doesn't exist."
-      </p>
-      <p className="text-neutral-400 mb-8">
-        The collection you're looking for might have been deleted or never
-        existed.
-      </p>
-    </div>
+    <main className="min-h-screen px-5 md:px-10 xl:px-24 py-20">
+      <div className="max-w-2xl mx-auto text-center">
+        {/* Icon */}
+        <div className="mb-6 flex justify-center">
+          <div className="p-6 bg-indigo-900/20 rounded-full border-2 border-indigo-800/50">
+            <IconFolderOff size={64} className="text-indigo-400" />
+          </div>
+        </div>
+
+        {/* Heading */}
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">
+          Collection Not Found
+        </h1>
+
+        <p className="text-neutral-400 text-lg mb-8">
+          The collection you're looking for might have been deleted or never
+          existed.
+        </p>
+
+        {/* CTA */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link
+            href="/"
+            className="px-6 py-3 bg-lime-400 text-neutral-900 hover:bg-lime-500 rounded-lg font-medium transition-colors"
+          >
+            Go Home
+          </Link>
+
+          <Link
+            href="/search"
+            className="px-6 py-3 bg-neutral-800 text-neutral-200 hover:bg-neutral-700 rounded-lg font-medium transition-colors"
+          >
+            Search
+          </Link>
+        </div>
+      </div>
+    </main>
   );
 }

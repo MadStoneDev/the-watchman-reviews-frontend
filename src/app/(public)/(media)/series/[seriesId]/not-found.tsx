@@ -8,8 +8,8 @@ export default function SeriesNotFound() {
       <div className="max-w-2xl mx-auto text-center">
         {/* Icon */}
         <div className="mb-6 flex justify-center">
-          <div className="p-6 bg-red-900/20 rounded-full border-2 border-red-800/50">
-            <IconAlertCircle size={64} className="text-red-400" />
+          <div className="p-6 bg-indigo-900/20 rounded-full border-2 border-indigo-800/50">
+            <IconAlertCircle size={64} className="text-indigo-400" />
           </div>
         </div>
 

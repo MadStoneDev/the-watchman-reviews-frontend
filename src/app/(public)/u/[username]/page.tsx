@@ -108,22 +108,28 @@ export default async function PublicProfilePage({
       </section>
 
       {/* Navigation tabs - use profile.username for canonical URLs */}
-      <nav className="mt-8 flex gap-4 border-b border-neutral-700 pb-4">
+      <nav className="mt-8 flex gap-4 border-b border-neutral-700 pb-4 overflow-x-auto">
         <Link
           href={`/u/${profile.username}`}
-          className="px-4 py-2 rounded-lg bg-lime-400 text-neutral-900 font-medium"
+          className="px-4 py-2 rounded-lg bg-lime-400 text-neutral-900 font-medium whitespace-nowrap"
         >
           Activity
         </Link>
         <Link
+          href={`/u/${profile.username}/reel-deck`}
+          className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors whitespace-nowrap"
+        >
+          Reel Deck
+        </Link>
+        <Link
           href={`/u/${profile.username}/collections`}
-          className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors"
+          className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors whitespace-nowrap"
         >
           Collections
         </Link>
         <Link
           href={`/u/${profile.username}/achievements`}
-          className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors"
+          className="px-4 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 font-medium transition-colors whitespace-nowrap"
         >
           Achievements
         </Link>

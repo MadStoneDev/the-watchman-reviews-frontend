@@ -198,7 +198,7 @@ export default function SettingsContent({
                   year: series?.release_year || null,
                 };
               }
-            })
+            }),
           );
 
           return {
@@ -207,7 +207,7 @@ export default function SettingsContent({
             createdAt: collection.created_at,
             items: itemsWithTitles,
           };
-        })
+        }),
       );
 
       // Fetch Reel Deck (currently watching/tracking)
@@ -245,7 +245,7 @@ export default function SettingsContent({
               addedAt: item.added_at,
             };
           }
-        })
+        }),
       );
 
       // Fetch episode watch progress grouped by series
@@ -285,16 +285,14 @@ export default function SettingsContent({
       }
 
       // Convert map to array and sort episodes
-      const tvProgress = Array.from(seriesMap.entries()).map(
-        ([_, data]) => ({
-          series: data.title,
-          episodesWatched: data.episodes.length,
-          episodes: data.episodes.sort((a: any, b: any) => {
-            if (a.season !== b.season) return a.season - b.season;
-            return a.episode - b.episode;
-          }),
-        })
-      );
+      const tvProgress = Array.from(seriesMap.entries()).map(([_, data]) => ({
+        series: data.title,
+        episodesWatched: data.episodes.length,
+        episodes: data.episodes.sort((a: any, b: any) => {
+          if (a.season !== b.season) return a.season - b.season;
+          return a.episode - b.episode;
+        }),
+      }));
 
       const exportData = {
         exportedAt: new Date().toISOString(),
@@ -457,6 +455,50 @@ export default function SettingsContent({
           </div>
         </div>
 
+        {/* Default Collection Privacy */}
+        <div>
+          <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
+            Default Collection Privacy
+          </label>
+          <p className="text-sm text-neutral-500 mb-3">
+            New collections will use this privacy setting by default
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() =>
+                updateSettings({
+                  ...settings,
+                  default_collection_privacy: "public",
+                })
+              }
+              disabled={isSaving}
+              className={`flex-1 px-4 py-2 rounded-lg border transition-colors ${
+                settings.default_collection_privacy === "public"
+                  ? "bg-lime-400 text-neutral-900 border-lime-400"
+                  : "bg-neutral-800 text-neutral-300 border-neutral-700 hover:border-neutral-600"
+              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              Public
+            </button>
+            <button
+              onClick={() =>
+                updateSettings({
+                  ...settings,
+                  default_collection_privacy: "private",
+                })
+              }
+              disabled={isSaving}
+              className={`flex-1 px-4 py-2 rounded-lg border transition-colors ${
+                settings.default_collection_privacy === "private"
+                  ? "bg-lime-400 text-neutral-900 border-lime-400"
+                  : "bg-neutral-800 text-neutral-300 border-neutral-700 hover:border-neutral-600"
+              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              Private
+            </button>
+          </div>
+        </div>
+
         {/* Show Watching Deck */}
         <div className="mb-6">
           <label className="flex items-center justify-between cursor-pointer">
@@ -489,50 +531,6 @@ export default function SettingsContent({
               />
             </button>
           </label>
-        </div>
-
-        {/* Default Collection Privacy */}
-        <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
-            Default Collection Privacy
-          </label>
-          <p className="text-sm text-neutral-500 mb-3">
-            New collections will use this privacy setting by default
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() =>
-                updateSettings({
-                  ...settings,
-                  default_collection_privacy: "private",
-                })
-              }
-              disabled={isSaving}
-              className={`flex-1 px-4 py-2 rounded-lg border transition-colors ${
-                settings.default_collection_privacy === "private"
-                  ? "bg-lime-400 text-neutral-900 border-lime-400"
-                  : "bg-neutral-800 text-neutral-300 border-neutral-700 hover:border-neutral-600"
-              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              Private
-            </button>
-            <button
-              onClick={() =>
-                updateSettings({
-                  ...settings,
-                  default_collection_privacy: "public",
-                })
-              }
-              disabled={isSaving}
-              className={`flex-1 px-4 py-2 rounded-lg border transition-colors ${
-                settings.default_collection_privacy === "public"
-                  ? "bg-lime-400 text-neutral-900 border-lime-400"
-                  : "bg-neutral-800 text-neutral-300 border-neutral-700 hover:border-neutral-600"
-              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              Public
-            </button>
-          </div>
         </div>
       </section>
 
@@ -729,9 +727,7 @@ export default function SettingsContent({
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  settings.email_new_mutuals
-                    ? "translate-x-6"
-                    : "translate-x-1"
+                  settings.email_new_mutuals ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
@@ -742,9 +738,7 @@ export default function SettingsContent({
         <div className="mb-4 pb-4 border-b border-neutral-800">
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="text-sm font-medium text-neutral-200">
-                Messages
-              </p>
+              <p className="text-sm font-medium text-neutral-200">Messages</p>
               <p className="text-sm text-neutral-500 mt-1">
                 Get notified when you receive a new message (max 1 per hour)
               </p>
@@ -763,9 +757,7 @@ export default function SettingsContent({
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  settings.email_messages
-                    ? "translate-x-6"
-                    : "translate-x-1"
+                  settings.email_messages ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
@@ -814,7 +806,8 @@ export default function SettingsContent({
                 Weekly Digest
               </p>
               <p className="text-sm text-neutral-500 mt-1">
-                Receive a weekly summary of trending content and your stats every Friday afternoon
+                Receive a weekly summary of trending content and your stats
+                every Friday afternoon
               </p>
             </div>
             <button
@@ -848,10 +841,13 @@ export default function SettingsContent({
           Support JustReel
         </h2>
         <p className="text-neutral-300 mb-4">
-          JustReel is built with love and maintained by a small team. If you enjoy using the app, consider buying us a coffee to help keep the lights on and new features coming.
+          JustReel is built with love and maintained by a small team. If you
+          enjoy using the app, consider buying us a coffee to help keep the
+          lights on and new features coming.
         </p>
         <p className="text-sm text-neutral-500 mb-6">
-          Your support helps cover server costs, development time, and keeps the app ad-free.
+          Your support helps cover server costs, development time, and keeps the
+          app ad-free.
         </p>
         <a
           href="https://ko-fi.com/justreel"
