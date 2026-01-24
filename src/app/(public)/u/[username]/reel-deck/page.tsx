@@ -8,6 +8,8 @@ import {
   IconDeviceTv,
   IconMoodEmpty,
   IconCheck,
+  IconPlayerPlay,
+  IconChecks,
 } from "@tabler/icons-react";
 import {
   getPublicProfile,
@@ -145,7 +147,10 @@ export default async function PublicReelDeckPage({
             {watchingItems.length > 0 && (
               <section className="mt-8">
                 <h2 className="text-xl font-bold mb-4">Currently Watching</h2>
-                <ReelDeckGrid items={watchingItems} />
+                <ReelDeckGrid
+                  items={watchingItems}
+                  status={`currently watching`}
+                />
               </section>
             )}
 
@@ -156,7 +161,7 @@ export default async function PublicReelDeckPage({
                   <IconCheck size={20} className="text-lime-400" />
                   All Caught Up
                 </h2>
-                <ReelDeckGrid items={completedItems} />
+                <ReelDeckGrid items={completedItems} status={`completed`} />
               </section>
             )}
           </>
@@ -166,9 +171,15 @@ export default async function PublicReelDeckPage({
   );
 }
 
-function ReelDeckGrid({ items }: { items: PublicReelDeckItem[] }) {
+function ReelDeckGrid({
+  items,
+  status,
+}: {
+  items: PublicReelDeckItem[];
+  status: "currently watching" | "completed";
+}) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {items.map((item) => (
         <Link
           key={item.id}
@@ -200,15 +211,13 @@ function ReelDeckGrid({ items }: { items: PublicReelDeckItem[] }) {
           <div className="relative z-10 flex items-center gap-3 h-full p-4">
             <div
               className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                item.media_type === "movie"
-                  ? "bg-lime-500/30"
-                  : "bg-indigo-500/30"
+                status === "currently watching" ? "bg-blue-500" : "bg-teal-500"
               }`}
             >
-              {item.media_type === "movie" ? (
-                <IconMovie size={20} className="text-lime-400" />
+              {status === "currently watching" ? (
+                <IconPlayerPlay size={20} className="text-netural-50" />
               ) : (
-                <IconDeviceTv size={20} className="text-indigo-400" />
+                <IconChecks size={20} className="text-netural-50" />
               )}
             </div>
             <div className="min-w-0">
