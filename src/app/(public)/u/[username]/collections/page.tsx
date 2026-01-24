@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
-import { IconFolder, IconMoodEmpty } from "@tabler/icons-react";
+import { IconFolder, IconMoodEmpty, IconLock } from "@tabler/icons-react";
 import {
   getPublicProfile,
   getPublicStats,
@@ -122,12 +122,20 @@ export default async function PublicCollectionsPage({
         <section className="mt-8">
           <h2 className="text-xl font-bold mb-4">Public Collections</h2>
 
-          {collections.length === 0 ? (
+          {collectionsResult.hidden ? (
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
+              <IconLock size={48} className="mb-4" />
+              <p className="text-lg">Collections are hidden</p>
+              <p className="text-sm mt-1">
+                {profile.username} has chosen to keep their collections private
+              </p>
+            </div>
+          ) : collections.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
               <IconMoodEmpty size={48} className="mb-4" />
               <p className="text-lg">No public collections</p>
               <p className="text-sm mt-1">
-                This user hasn't made any collections public yet
+                {profile.username} does not have any public collections
               </p>
             </div>
           ) : (

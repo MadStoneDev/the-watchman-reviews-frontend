@@ -10,6 +10,7 @@ import {
   IconCheck,
   IconPlayerPlay,
   IconChecks,
+  IconLock,
 } from "@tabler/icons-react";
 import {
   getPublicProfile,
@@ -131,13 +132,23 @@ export default async function PublicReelDeckPage({
 
       {/* Reel Deck */}
       <AnimatedTabContent tabIndex={1}>
-        {allItems.length === 0 ? (
+        {reelDeckResult.hidden ? (
+          <section className="mt-8">
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
+              <IconLock size={48} className="mb-4" />
+              <p className="text-lg">Reel Deck is hidden</p>
+              <p className="text-sm mt-1">
+                {profile.username} has chosen to keep their watch progress private
+              </p>
+            </div>
+          </section>
+        ) : allItems.length === 0 ? (
           <section className="mt-8">
             <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
               <IconMoodEmpty size={48} className="mb-4" />
               <p className="text-lg">No items in reel deck</p>
               <p className="text-sm mt-1">
-                This user hasn't shared what they're watching
+                {profile.username} does not have any shows in their reel deck
               </p>
             </div>
           </section>

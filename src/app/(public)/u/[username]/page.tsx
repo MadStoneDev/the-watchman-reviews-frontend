@@ -8,6 +8,7 @@ import {
   getPublicStats,
   getPublicActivity,
 } from "@/src/app/actions/public-profiles";
+import { IconLock, IconMoodEmpty } from "@tabler/icons-react";
 
 import PublicProfileHeader from "@/src/components/public-profile-header";
 import PrivateProfileNotice from "@/src/components/private-profile-notice";
@@ -139,10 +140,28 @@ export default async function PublicProfilePage({
       <AnimatedTabContent tabIndex={0}>
         <section className="mt-8">
           <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
-          <ActivityFeed
-            userId={profile.id}
-            initialActivities={activityResult.activities || []}
-          />
+          {activityResult.hidden ? (
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
+              <IconLock size={48} className="mb-4" />
+              <p className="text-lg">Activity is hidden</p>
+              <p className="text-sm mt-1">
+                {profile.username} has chosen to keep their activity private
+              </p>
+            </div>
+          ) : (activityResult.activities || []).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
+              <IconMoodEmpty size={48} className="mb-4" />
+              <p className="text-lg">No activity yet</p>
+              <p className="text-sm mt-1">
+                {profile.username} does not have any activity to show
+              </p>
+            </div>
+          ) : (
+            <ActivityFeed
+              userId={profile.id}
+              initialActivities={activityResult.activities || []}
+            />
+          )}
         </section>
       </AnimatedTabContent>
     </>

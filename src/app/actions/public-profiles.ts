@@ -224,6 +224,7 @@ export async function getPublicCollections(
   success: boolean;
   collections?: PublicCollection[];
   hasMore?: boolean;
+  hidden?: boolean;
   error?: string;
 }> {
   try {
@@ -243,7 +244,7 @@ export async function getPublicCollections(
       );
 
       if (!visibilityCheck.canView) {
-        return { success: true, collections: [], hasMore: false };
+        return { success: true, collections: [], hasMore: false, hidden: true };
       }
     }
 
@@ -351,6 +352,7 @@ export async function getPublicActivity(
   success: boolean;
   activities?: any[];
   hasMore?: boolean;
+  hidden?: boolean;
   error?: string;
 }> {
   try {
@@ -370,7 +372,7 @@ export async function getPublicActivity(
       );
 
       if (!visibilityCheck.canView) {
-        return { success: true, activities: [], hasMore: false };
+        return { success: true, activities: [], hasMore: false, hidden: true };
       }
     }
 
@@ -535,6 +537,7 @@ export async function getPublicReelDeck(
 ): Promise<{
   success: boolean;
   items?: PublicReelDeckItem[];
+  hidden?: boolean;
   error?: string;
 }> {
   try {
@@ -554,7 +557,7 @@ export async function getPublicReelDeck(
       );
 
       if (!visibilityCheck.canView) {
-        return { success: true, items: [] };
+        return { success: true, items: [], hidden: true };
       }
     }
 
@@ -568,7 +571,7 @@ export async function getPublicReelDeck(
     const showWatchingDeck = profile?.settings?.show_watching_deck ?? true;
 
     if (!showWatchingDeck) {
-      return { success: true, items: [] };
+      return { success: true, items: [], hidden: true };
     }
 
     // Try cache first
