@@ -442,6 +442,7 @@ export async function getPublicAchievements(
 ): Promise<{
   success: boolean;
   achievements?: any[];
+  hidden?: boolean;
   error?: string;
 }> {
   try {
@@ -461,7 +462,7 @@ export async function getPublicAchievements(
       );
 
       if (!visibilityCheck.canView) {
-        return { success: true, achievements: [] };
+        return { success: true, achievements: [], hidden: true };
       }
     }
 
