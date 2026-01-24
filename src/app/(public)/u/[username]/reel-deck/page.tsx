@@ -138,7 +138,8 @@ export default async function PublicReelDeckPage({
               <IconLock size={48} className="mb-4" />
               <p className="text-lg">Reel Deck is hidden</p>
               <p className="text-sm mt-1">
-                {profile.username} has chosen to keep their watch progress private
+                {profile.username} has chosen to keep their watch progress
+                private
               </p>
             </div>
           </section>
@@ -157,7 +158,7 @@ export default async function PublicReelDeckPage({
             {/* Currently Watching */}
             {watchingItems.length > 0 && (
               <section className="mt-8">
-                <h2 className="text-xl font-bold mb-4">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                   <IconPlayerPlay size={20} className="text-blue-500" />
                   Currently Watching
                 </h2>

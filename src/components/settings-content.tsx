@@ -508,21 +508,21 @@ export default function SettingsContent({
           Social Privacy
         </h2>
 
-        {/* Show Collections To */}
+        {/* Show Activity To */}
         <div className="mb-6">
           <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
-            <IconEye size={18} />
-            Who can see your collections
+            <IconActivity size={18} />
+            Who can see your activity
           </label>
           <p className="text-sm text-neutral-500 mb-3">
-            Control who can view your public collections
+            Control who can see your activity feed on your profile
           </p>
           <select
-            value={settings.show_collections_to}
+            value={settings.show_activity_to}
             onChange={(e) =>
               updateSettings({
                 ...settings,
-                show_collections_to: e.target.value as VisibilityLevel,
+                show_activity_to: e.target.value as VisibilityLevel,
               })
             }
             disabled={isSaving}
@@ -566,21 +566,21 @@ export default function SettingsContent({
           </select>
         </div>
 
-        {/* Show Activity To */}
+        {/* Show Collections To */}
         <div className="mb-6">
           <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
-            <IconActivity size={18} />
-            Who can see your activity
+            <IconEye size={18} />
+            Who can see your collections
           </label>
           <p className="text-sm text-neutral-500 mb-3">
-            Control who can see your activity feed on your profile
+            Control who can view your public collections
           </p>
           <select
-            value={settings.show_activity_to}
+            value={settings.show_collections_to}
             onChange={(e) =>
               updateSettings({
                 ...settings,
-                show_activity_to: e.target.value as VisibilityLevel,
+                show_collections_to: e.target.value as VisibilityLevel,
               })
             }
             disabled={isSaving}
