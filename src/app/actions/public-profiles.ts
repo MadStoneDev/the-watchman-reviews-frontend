@@ -520,6 +520,7 @@ export interface PublicReelDeckItem {
   title: string;
   poster_path: string | null;
   release_year: number | null;
+  isCompleted: boolean;
 }
 
 /**
@@ -580,8 +581,8 @@ export async function getPublicReelDeck(
       .filter((i) => i.media_type === "tv")
       .map((i) => i.media_id);
 
-    // Fetch media details in parallel
-    const [moviesResult, seriesResult] = await Promise.all([
+    // Fetch media details and series stats in parallel
+    const [moviesResult, seriesResult, seriesStatsResult] = await Promise.all([
       movieIds.length > 0
         ? supabase
             .from("movies")
@@ -591,13 +592,22 @@ export async function getPublicReelDeck(
       seriesIds.length > 0
         ? supabase
             .from("series")
-            .select("id, title, poster_path, release_year")
+            .select("id, title, poster_path, release_year, status")
             .in("id", seriesIds)
+        : Promise.resolve({ data: [] }),
+      // Fetch user's watch stats to determine actual completion
+      seriesIds.length > 0
+        ? supabase
+            .from("user_series_stats")
+            .select("series_id, watched_episodes, total_episodes, aired_episodes_count, has_upcoming_episodes")
+            .eq("user_id", userId)
+            .in("series_id", seriesIds)
         : Promise.resolve({ data: [] }),
     ]);
 
     const movieMap = new Map((moviesResult.data || []).map((m) => [m.id, m]));
     const seriesMap = new Map((seriesResult.data || []).map((s) => [s.id, s]));
+    const statsMap = new Map((seriesStatsResult.data || []).map((s: any) => [s.series_id, s]));
 
     // Build final items with media details
     const itemsWithDetails: PublicReelDeckItem[] = reelDeckItems
@@ -609,6 +619,20 @@ export async function getPublicReelDeck(
 
         if (!media) return null;
 
+        // Determine if item is completed
+        let isCompleted = item.status === "completed";
+
+        if (item.media_type === "tv" && !isCompleted) {
+          const stats = statsMap.get(item.media_id);
+          if (stats) {
+            // A series is completed if all episodes are watched and no upcoming episodes
+            isCompleted =
+              stats.watched_episodes >= stats.total_episodes &&
+              stats.total_episodes > 0 &&
+              !stats.has_upcoming_episodes;
+          }
+        }
+
         return {
           id: item.id,
           media_id: item.media_id,
@@ -619,6 +643,7 @@ export async function getPublicReelDeck(
           title: media.title,
           poster_path: media.poster_path,
           release_year: media.release_year,
+          isCompleted,
         };
       })
       .filter((item): item is PublicReelDeckItem => item !== null);

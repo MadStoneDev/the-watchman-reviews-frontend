@@ -3,7 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/server";
-import { IconMovie, IconDeviceTv, IconMoodEmpty, IconCheck } from "@tabler/icons-react";
+import {
+  IconMovie,
+  IconDeviceTv,
+  IconMoodEmpty,
+  IconCheck,
+} from "@tabler/icons-react";
 import {
   getPublicProfile,
   getPublicStats,
@@ -78,15 +83,13 @@ export default async function PublicReelDeckPage({
 
   const allItems = reelDeckResult.items || [];
 
-  // Split into currently watching and completed
-  const watchingItems = allItems.filter(
-    (item) => item.status === "watching" || item.status === "plan_to_watch"
-  );
-  const completedItems = allItems.filter((item) => item.status === "completed");
+  // Split into currently watching and completed based on actual watch progress
+  const watchingItems = allItems.filter((item) => !item.isCompleted);
+  const completedItems = allItems.filter((item) => item.isCompleted);
 
   return (
     <>
-      <section className="mt-6 lg:mt-8 transition-all duration-300 ease-in-out">
+      <section className="my-6 lg:my-8 transition-all duration-300 ease-in-out">
         <PublicProfileHeader
           profile={profile}
           stats={stats}
