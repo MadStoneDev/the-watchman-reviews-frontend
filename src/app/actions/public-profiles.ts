@@ -62,7 +62,7 @@ export async function getPublicProfile(
     // Get the profile (case-insensitive lookup)
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("id, username, avatar_path, created_at, settings")
+      .select("id, username, avatar_path, created_at, settings, profile_visibility")
       .ilike("username", username)
       .single();
 
@@ -70,9 +70,9 @@ export async function getPublicProfile(
       return { success: false, error: "Profile not found" };
     }
 
-    // Extract profile visibility from settings
+    // Extract profile visibility (it's a column, not in settings JSON)
     const visibility: ProfileVisibility =
-      profile.settings?.profile_visibility || "public";
+      profile.profile_visibility || "public";
 
     // Get current user (if logged in)
     const { data: userData } = await supabase.auth.getClaims();

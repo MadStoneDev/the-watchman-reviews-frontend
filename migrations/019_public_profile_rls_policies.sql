@@ -4,6 +4,9 @@
 -- unauthenticated users viewing public profiles.
 --
 -- Run this AFTER 018_feedback_add_media_id.sql
+--
+-- IMPORTANT: profile_visibility is a COLUMN on the profiles table,
+-- NOT a field inside the settings JSON column!
 
 -- =====================================================
 -- EPISODE_WATCHES: Allow public viewing for public profiles
@@ -18,11 +21,7 @@ USING (
   EXISTS (
     SELECT 1 FROM public.profiles p
     WHERE p.id = episode_watches.user_id
-    AND (
-      p.settings IS NULL
-      OR p.settings->>'profile_visibility' IS NULL
-      OR p.settings->>'profile_visibility' = 'public'
-    )
+    AND (p.profile_visibility IS NULL OR p.profile_visibility = 'public')
   )
 );
 
@@ -38,11 +37,7 @@ USING (
   EXISTS (
     SELECT 1 FROM public.profiles p
     WHERE p.id = reel_deck.user_id
-    AND (
-      p.settings IS NULL
-      OR p.settings->>'profile_visibility' IS NULL
-      OR p.settings->>'profile_visibility' = 'public'
-    )
+    AND (p.profile_visibility IS NULL OR p.profile_visibility = 'public')
   )
 );
 
@@ -51,7 +46,7 @@ USING (
 -- =====================================================
 -- 1. These policies only allow SELECT (read) access, not INSERT/UPDATE/DELETE
 -- 2. Data is only visible for users with public profiles (default behavior)
--- 3. Users with 'followers_only' or 'private' profiles will NOT have their
---    episode_watches or reel_deck visible to the public
+-- 3. Users with 'private' profiles will NOT have their episode_watches or
+--    reel_deck visible to the public
 -- 4. The user_series_stats VIEW will automatically work once these policies
 --    are in place, since it joins reel_deck and episode_watches
