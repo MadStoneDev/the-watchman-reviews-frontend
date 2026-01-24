@@ -366,7 +366,7 @@ export async function getPublicActivity(
       const visibilityCheck = await checkVisibility(
         userId,
         viewerId,
-        settings.show_watch_progress_to
+        settings.show_activity_to
       );
 
       if (!visibilityCheck.canView) {
@@ -539,7 +539,25 @@ export async function getPublicReelDeck(
   try {
     const supabase = await createClient();
 
-    // Check if user has show_watching_deck enabled
+    // Get current viewer
+    const { data: userData } = await supabase.auth.getClaims();
+    const viewerId = userData?.claims?.sub || null;
+
+    // Check visibility settings (reel deck is watch progress)
+    const settings = await getUserVisibilitySettings(userId);
+    if (settings) {
+      const visibilityCheck = await checkVisibility(
+        userId,
+        viewerId,
+        settings.show_watch_progress_to
+      );
+
+      if (!visibilityCheck.canView) {
+        return { success: true, items: [] };
+      }
+    }
+
+    // Also check if user has show_watching_deck toggle enabled
     const { data: profile } = await supabase
       .from("profiles")
       .select("settings")

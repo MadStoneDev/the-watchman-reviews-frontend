@@ -22,6 +22,7 @@ import {
   IconCoffee,
   IconLoader2,
   IconTrophy,
+  IconActivity,
 } from "@tabler/icons-react";
 import type { VisibilityLevel } from "@/src/lib/types";
 import DeleteAccountModal from "./delete-account-modal";
@@ -49,10 +50,10 @@ export default function SettingsContent({
     email_messages: true,
     email_achievements: true,
     email_weekly_digest: true,
-    show_watching_deck: true,
     default_collection_privacy: "private",
     show_collections_to: "everyone" as VisibilityLevel,
     show_watch_progress_to: "everyone" as VisibilityLevel,
+    show_activity_to: "everyone" as VisibilityLevel,
     show_achievements_to: "everyone" as VisibilityLevel,
     allow_messages_from: "everyone" as VisibilityLevel,
     ...profileData.settings,
@@ -498,40 +499,6 @@ export default function SettingsContent({
             </button>
           </div>
         </div>
-
-        {/* Show Watching Deck */}
-        <div className="mb-6">
-          <label className="flex items-center justify-between cursor-pointer">
-            <div>
-              <p className="text-sm font-medium text-neutral-200">
-                Show My Deck
-              </p>
-              <p className="text-sm text-neutral-500 mt-1">
-                Allow others to see what you're currently watching
-              </p>
-            </div>
-            <button
-              onClick={() =>
-                updateSettings({
-                  ...settings,
-                  show_watching_deck: !settings.show_watching_deck,
-                })
-              }
-              disabled={isSaving}
-              className={`relative inline-flex h-6 min-w-11 items-center rounded-full transition-colors ${
-                settings.show_watching_deck ? "bg-lime-400" : "bg-neutral-700"
-              } ${isSaving ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  settings.show_watching_deck
-                    ? "translate-x-6"
-                    : "translate-x-1"
-                }`}
-              />
-            </button>
-          </label>
-        </div>
       </section>
 
       {/* Social Privacy Section */}
@@ -585,6 +552,35 @@ export default function SettingsContent({
               updateSettings({
                 ...settings,
                 show_watch_progress_to: e.target.value as VisibilityLevel,
+              })
+            }
+            disabled={isSaving}
+            className={`w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 focus:outline-none focus:border-lime-400 ${
+              isSaving ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            <option value="everyone">Everyone</option>
+            <option value="followers">Followers only</option>
+            <option value="mutuals">Mutuals only</option>
+            <option value="nobody">Only me</option>
+          </select>
+        </div>
+
+        {/* Show Activity To */}
+        <div className="mb-6">
+          <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
+            <IconActivity size={18} />
+            Who can see your activity
+          </label>
+          <p className="text-sm text-neutral-500 mb-3">
+            Control who can see your activity feed on your profile
+          </p>
+          <select
+            value={settings.show_activity_to}
+            onChange={(e) =>
+              updateSettings({
+                ...settings,
+                show_activity_to: e.target.value as VisibilityLevel,
               })
             }
             disabled={isSaving}
