@@ -516,6 +516,7 @@ export interface PublicReelDeckItem {
   media_type: "movie" | "tv";
   status: string;
   added_at: string;
+  last_watched_at: string | null;
   title: string;
   poster_path: string | null;
   release_year: number | null;
@@ -554,14 +555,13 @@ export async function getPublicReelDeck(
       return { success: true, items: cached };
     }
 
-    // Fetch reel deck items (watching status only for public view)
+    // Fetch reel deck items (all statuses for public view, we'll categorize on the page)
     const { data: reelDeckItems, error: reelDeckError } = await supabase
       .from("reel_deck")
-      .select("id, media_id, media_type, status, added_at")
+      .select("id, media_id, media_type, status, added_at, last_watched_at")
       .eq("user_id", userId)
-      .in("status", ["watching", "plan_to_watch"])
-      .order("added_at", { ascending: false })
-      .limit(50);
+      .order("last_watched_at", { ascending: false, nullsFirst: false })
+      .limit(100);
 
     if (reelDeckError) {
       console.error("[Public Profiles] Error fetching reel deck:", reelDeckError);
@@ -615,6 +615,7 @@ export async function getPublicReelDeck(
           media_type: item.media_type as "movie" | "tv",
           status: item.status,
           added_at: item.added_at,
+          last_watched_at: item.last_watched_at,
           title: media.title,
           poster_path: media.poster_path,
           release_year: media.release_year,
