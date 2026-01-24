@@ -76,8 +76,8 @@ export default async function PublicReelDeckPage({
 
   const stats = statsResult.stats || {
     episodes_watched: 0,
-    shows_started: 0,
-    shows_completed: 0,
+    currently_watching: 0,
+    up_to_date: 0,
     achievements_count: 0,
     followers_count: 0,
     following_count: 0,

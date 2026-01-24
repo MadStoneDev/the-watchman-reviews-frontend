@@ -123,9 +123,9 @@ export default function PublicProfileHeader({
             <IconMovie size={20} className="text-cyan-400" />
           </div>
           <div className="text-xl font-bold text-white">
-            {stats.shows_started.toLocaleString()}
+            {stats.currently_watching.toLocaleString()}
           </div>
-          <div className="text-xs text-neutral-400">Shows Started</div>
+          <div className="text-xs text-neutral-400">Currently Watching</div>
         </div>
 
         <div className="bg-neutral-700/50 rounded-lg p-4 text-center">
@@ -133,9 +133,9 @@ export default function PublicProfileHeader({
             <IconMovie size={20} className="text-emerald-400" />
           </div>
           <div className="text-xl font-bold text-white">
-            {stats.shows_completed.toLocaleString()}
+            {stats.up_to_date.toLocaleString()}
           </div>
-          <div className="text-xs text-neutral-400">Completed</div>
+          <div className="text-xs text-neutral-400">Up to Date</div>
         </div>
 
         <div className="bg-neutral-700/50 rounded-lg p-4 text-center">

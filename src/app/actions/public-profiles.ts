@@ -27,8 +27,8 @@ export interface PublicProfile {
 
 export interface PublicStats {
   episodes_watched: number;
-  shows_started: number;
-  shows_completed: number;
+  currently_watching: number;
+  up_to_date: number;
   achievements_count: number;
   followers_count: number;
   following_count: number;
@@ -139,25 +139,21 @@ export async function getPublicStats(
     const supabase = await createClient();
 
     // Run all queries in parallel for better performance
+    // Use leaderboard materialized views to bypass RLS restrictions on episode_watches
     const [
-      episodesResult,
-      showsResult,
-      completedResult,
+      episodesLeaderboardResult,
+      upToDateResult,
       achievementsResult,
       followersResult,
       followingResult,
     ] = await Promise.all([
-      // Get episode count
+      // Get episode count from leaderboard (no RLS issues - materialized view)
       supabase
-        .from("episode_watches")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId),
-      // Get unique shows started
-      supabase
-        .from("episode_watches")
-        .select("series_id")
-        .eq("user_id", userId),
-      // Get shows completed (from leaderboard materialized view)
+        .from("leaderboard_episodes")
+        .select("total_episodes")
+        .eq("user_id", userId)
+        .single(),
+      // Get shows up to date (from leaderboard materialized view - no RLS issues)
       supabase
         .from("leaderboard_shows")
         .select("total_shows")
@@ -181,20 +177,27 @@ export async function getPublicStats(
         .eq("follower_id", userId),
     ]);
 
-    // Log any RLS errors for debugging
-    if (episodesResult.error) {
-      console.error("[Public Profiles] Error fetching episodes:", episodesResult.error);
-    }
-    if (showsResult.error) {
-      console.error("[Public Profiles] Error fetching shows:", showsResult.error);
+    // Log any errors for debugging (PGRST116 = no rows found, which is ok)
+    if (episodesLeaderboardResult.error && episodesLeaderboardResult.error.code !== 'PGRST116') {
+      console.error("[Public Profiles] Error fetching episodes leaderboard:", episodesLeaderboardResult.error);
     }
 
-    const uniqueShows = new Set(showsResult.data?.map((s) => s.series_id) || []);
+    const upToDateCount = upToDateResult.data?.total_shows || 0;
 
+    // For currently watching count, we need to fetch from reel deck
+    // Note: reel_deck and user_series_stats have RLS - this will work only if proper policies are added
+    // or if the viewing user is logged in as the profile owner
+    const reelDeckResult = await getPublicReelDeck(userId);
+    const reelDeckItems = reelDeckResult.items || [];
+    const tvShows = reelDeckItems.filter(item => item.media_type === 'tv');
+    const currentlyWatchingShows = tvShows.filter(item => !item.isCompleted);
+    const upToDateShowsFromDeck = tvShows.filter(item => item.isCompleted);
+
+    // Use reel deck counts if available, otherwise fall back to leaderboard for up to date
     const stats: PublicStats = {
-      episodes_watched: episodesResult.count || 0,
-      shows_started: uniqueShows.size,
-      shows_completed: completedResult.data?.total_shows || 0,
+      episodes_watched: episodesLeaderboardResult.data?.total_episodes || 0,
+      currently_watching: currentlyWatchingShows.length,
+      up_to_date: upToDateShowsFromDeck.length > 0 ? upToDateShowsFromDeck.length : upToDateCount,
       achievements_count: achievementsResult.count || 0,
       followers_count: followersResult.count || 0,
       following_count: followingResult.count || 0,
