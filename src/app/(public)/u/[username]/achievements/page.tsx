@@ -7,10 +7,10 @@ import { IconTrophy } from "@tabler/icons-react";
 import {
   getPublicProfile,
   getPublicStats,
+  getPublicAchievements,
 } from "@/src/app/actions/public-profiles";
 import {
   getAchievementDefinitions,
-  getUserAchievements,
   getAchievementStats,
 } from "@/src/app/actions/achievements";
 
@@ -73,7 +73,7 @@ export default async function PublicAchievementsPage({
     await Promise.all([
       getPublicStats(profile.id),
       getAchievementDefinitions(),
-      getUserAchievements(profile.id),
+      getPublicAchievements(profile.id),
       getAchievementStats(profile.id),
     ]);
 
