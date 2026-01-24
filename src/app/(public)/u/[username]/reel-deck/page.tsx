@@ -146,7 +146,10 @@ export default async function PublicReelDeckPage({
             {/* Currently Watching */}
             {watchingItems.length > 0 && (
               <section className="mt-8">
-                <h2 className="text-xl font-bold mb-4">Currently Watching</h2>
+                <h2 className="text-xl font-bold mb-4">
+                  <IconPlayerPlay size={20} className="text-blue-500" />
+                  Currently Watching
+                </h2>
                 <ReelDeckGrid
                   items={watchingItems}
                   status={`currently watching`}
@@ -158,7 +161,7 @@ export default async function PublicReelDeckPage({
             {completedItems.length > 0 && (
               <section className="mt-8">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <IconCheck size={20} className="text-lime-400" />
+                  <IconChecks size={20} className="text-teal-500" />
                   All Caught Up
                 </h2>
                 <ReelDeckGrid items={completedItems} status={`completed`} />
