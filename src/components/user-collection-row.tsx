@@ -200,7 +200,7 @@ export const UserCollectionRow = ({
                         className={`text-[10px] px-1.5 py-0.5 rounded ${
                           collection.is_public
                             ? "bg-lime-500/20 text-lime-400"
-                            : "bg-neutral-600/50 text-neutral-400"
+                            : "bg-indigo-500/50 text-indigo-400"
                         }`}
                       >
                         {collection.is_public ? "Public" : "Private"}
@@ -219,15 +219,26 @@ export const UserCollectionRow = ({
                   >
                     {onToggleVisibility && (
                       <button
-                        onClick={() => onToggleVisibility(collection.id, !collection.is_public)}
+                        onClick={() =>
+                          onToggleVisibility(
+                            collection.id,
+                            !collection.is_public,
+                          )
+                        }
                         className={`p-1 grid place-content-center w-10 h-10 ${
                           collection.is_public
                             ? "hover:bg-amber-500 text-amber-400"
                             : "hover:bg-lime-500 text-lime-400"
                         } hover:text-neutral-900 rounded-sm transition-all duration-300 ease-in-out`}
-                        title={collection.is_public ? "Make private" : "Make public"}
+                        title={
+                          collection.is_public ? "Make private" : "Make public"
+                        }
                       >
-                        {collection.is_public ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+                        {collection.is_public ? (
+                          <IconEyeOff size={20} />
+                        ) : (
+                          <IconEye size={20} />
+                        )}
                       </button>
                     )}
                     <button

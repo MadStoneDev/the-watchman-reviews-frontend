@@ -442,14 +442,32 @@ export async function getPublicAchievements(
   error?: string;
 }> {
   try {
+    const supabase = await createClient();
+
+    // Get current viewer
+    const { data: userData } = await supabase.auth.getClaims();
+    const viewerId = userData?.claims?.sub || null;
+
+    // Check visibility settings
+    const settings = await getUserVisibilitySettings(userId);
+    if (settings) {
+      const visibilityCheck = await checkVisibility(
+        userId,
+        viewerId,
+        settings.show_achievements_to
+      );
+
+      if (!visibilityCheck.canView) {
+        return { success: true, achievements: [] };
+      }
+    }
+
     // Try cache first
     const achievementsCacheKey = cacheKey(CACHE_KEYS.USER_PUBLIC_ACHIEVEMENTS, userId);
     const cached = await cacheGet<any[]>(achievementsCacheKey);
     if (cached) {
       return { success: true, achievements: cached };
     }
-
-    const supabase = await createClient();
 
     // Get user's achievements
     const { data: userAchievements, error } = await supabase

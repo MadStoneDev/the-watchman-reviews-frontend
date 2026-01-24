@@ -21,6 +21,7 @@ import {
   IconHeart,
   IconCoffee,
   IconLoader2,
+  IconTrophy,
 } from "@tabler/icons-react";
 import type { VisibilityLevel } from "@/src/lib/types";
 import DeleteAccountModal from "./delete-account-modal";
@@ -52,6 +53,7 @@ export default function SettingsContent({
     default_collection_privacy: "private",
     show_collections_to: "everyone" as VisibilityLevel,
     show_watch_progress_to: "everyone" as VisibilityLevel,
+    show_achievements_to: "everyone" as VisibilityLevel,
     allow_messages_from: "everyone" as VisibilityLevel,
     ...profileData.settings,
   };
@@ -585,6 +587,35 @@ export default function SettingsContent({
               updateSettings({
                 ...settings,
                 show_watch_progress_to: e.target.value as VisibilityLevel,
+              })
+            }
+            disabled={isSaving}
+            className={`w-full px-4 py-2 bg-neutral-800 border border-neutral-700 rounded-lg text-neutral-200 focus:outline-none focus:border-lime-400 ${
+              isSaving ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            <option value="everyone">Everyone</option>
+            <option value="followers">Followers only</option>
+            <option value="mutuals">Mutuals only</option>
+            <option value="nobody">Only me</option>
+          </select>
+        </div>
+
+        {/* Show Achievements To */}
+        <div className="mb-6">
+          <label className="flex items-center gap-2 text-sm font-medium text-neutral-200 mb-2">
+            <IconTrophy size={18} />
+            Who can see your achievements
+          </label>
+          <p className="text-sm text-neutral-500 mb-3">
+            Control who can view your unlocked achievements
+          </p>
+          <select
+            value={settings.show_achievements_to}
+            onChange={(e) =>
+              updateSettings({
+                ...settings,
+                show_achievements_to: e.target.value as VisibilityLevel,
               })
             }
             disabled={isSaving}

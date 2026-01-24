@@ -9,6 +9,7 @@ export interface VisibilityCheckResult {
 export interface UserVisibilitySettings {
   show_collections_to: VisibilityLevel;
   show_watch_progress_to: VisibilityLevel;
+  show_achievements_to: VisibilityLevel;
   default_collection_privacy: "public" | "private";
 }
 
@@ -33,6 +34,7 @@ export async function getUserVisibilitySettings(
   return {
     show_collections_to: profile.settings?.show_collections_to || "everyone",
     show_watch_progress_to: profile.settings?.show_watch_progress_to || "everyone",
+    show_achievements_to: profile.settings?.show_achievements_to || "everyone",
     default_collection_privacy: profile.settings?.default_collection_privacy || "private",
   };
 }
@@ -119,7 +121,7 @@ export async function checkVisibility(
 export async function batchCheckVisibility(
   ownerIds: string[],
   viewerId: string | null,
-  settingKey: "show_collections_to" | "show_watch_progress_to"
+  settingKey: "show_collections_to" | "show_watch_progress_to" | "show_achievements_to"
 ): Promise<Map<string, boolean>> {
   const result = new Map<string, boolean>();
 
