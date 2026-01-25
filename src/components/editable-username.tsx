@@ -149,19 +149,19 @@ export default function EditableUsername({
   }, [lastUsernameChange, daysSinceLastChange]);
 
   return (
-    <section>
+    <>
       {isEditing ? (
-        <div className={`flex flex-col gap-1`}>
+        <div className={`flex flex-col gap-1 max-w-full`}>
           <article
-            className={`p-2 flex flex-col gap-2 w-fit rounded-sm bg-neutral-600 transition-all duration-300 ease-in-out`}
+            className={`p-2 flex flex-col gap-2 rounded-sm bg-neutral-600 transition-all duration-300 ease-in-out`}
           >
-            <div className={`flex items-center gap-2`}>
+            <div className={`flex flex-row items-center gap-2 max-w-full`}>
               <input
                 type="text"
                 value={editUsername}
                 onChange={handleChange}
                 onKeyDown={handleKeyDown}
-                className={`p-2 border ${
+                className={`min-w-0 flex-1 p-2 border ${
                   error ? "border-red-500" : "border-neutral-300"
                 } bg-neutral-900 rounded focus:outline-hidden focus:border-lime-400 font-bold text-2xl sm:3xl md:text-4xl`}
                 autoFocus
@@ -237,6 +237,6 @@ export default function EditableUsername({
           ) : null}
         </article>
       )}
-    </section>
+    </>
   );
 }
