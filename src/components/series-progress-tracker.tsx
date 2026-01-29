@@ -1020,10 +1020,13 @@ export default function SeriesProgressTracker({
         setWatchCycle(data.cycle);
       }
 
-      toast.success(`Started rewatch #${data.cycle?.cycle_number || cycleNumber + 1}`, {
-        id: toastId,
-        description: "Your progress has been reset. Enjoy rewatching!",
-      });
+      toast.success(
+        `Started rewatch #${data.cycle?.cycle_number || cycleNumber + 1}`,
+        {
+          id: toastId,
+          description: "Your progress has been reset. Enjoy rewatching!",
+        },
+      );
 
       router.refresh();
     } catch (error) {
@@ -1218,8 +1221,7 @@ export default function SeriesProgressTracker({
                   )}
 
                   <button
-                    onClick={() => toggleSeason(season.season_number)}
-                    className="p-2 text-neutral-400 hover:text-lime-400 transition-colors"
+                    className="pointer-events-none p-2 text-neutral-400 hover:text-lime-400 transition-colors"
                     aria-label={isOpen ? "Collapse season" : "Expand season"}
                   >
                     {isOpen ? (
